@@ -1,7 +1,7 @@
-from ...hardware.national_instruments.daq_NIDAQmx import DAQ_NIDAQmx_Viewer
+from ..hardware.national_instruments.daq_NIDAQmx import DAQ_NIDAQmx_Actuator
 
 
-class DAQ_0DViewer_NIDAQmx2(DAQ_NIDAQmx_Viewer):
+class DAQ_Move_NIDAQmx2(DAQ_NIDAQmx_Actuator):
     """
         ==================== ========================
         **Attributes**         **Type**
@@ -14,8 +14,6 @@ class DAQ_0DViewer_NIDAQmx2(DAQ_NIDAQmx_Viewer):
         --------
         refresh_hardware
     """
-    control_type = "0D"  # could be "0D", "1D"
-
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, control_type=self.control_type, **kwargs)
+        super().__init__(*args, **kwargs)
 

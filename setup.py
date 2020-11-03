@@ -36,40 +36,6 @@ setupOpts = dict(
         "Topic :: Software Development :: User Interfaces",
         ],)
 
-def listAllPackages(pkgroot):
-    path = os.getcwd()
-    n = len(path.split(os.path.sep))
-    subdirs = [i[0].split(os.path.sep)[n:] for i in os.walk(os.path.join(path, pkgroot)) if '__init__.py' in i[2]]
-    return ['.'.join(p) for p in subdirs]
-
-
-allPackages = (listAllPackages(pkgroot='pymodaq_plugins')) #+
-               #['pyqtgraph.'+x for x in helpers.listAllPackages(pkgroot='examples')])
-
-
-
-def get_packages():
-
-    packages=find_packages()
-    for pkg in packages:
-        if 'hardware.' in pkg:
-            packages.pop(packages.index(pkg))
-    return packages
-
-allPackages = get_packages()
-
-hardware_path=os.path.join('pymodaq_plugins','hardware')
-
-def get_hardware_packages(base_dir='',packages={}):
-    for pack in os.scandir(base_dir):
-        if pack.is_dir():
-            if '__pycache__' != pack.name:
-                packages.update({os.path.relpath(pack.path,'pymodaq_plugins'): '*.*'})
-                get_hardware_packages(pack.path,packages)
-    return packages
-
-packages_data=dict([])
-get_hardware_packages(hardware_path,packages_data)
 
 setup(
     version=get_version(),

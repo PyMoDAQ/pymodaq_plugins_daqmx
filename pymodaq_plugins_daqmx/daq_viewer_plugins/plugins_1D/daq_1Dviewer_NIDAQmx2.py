@@ -1,7 +1,7 @@
-from pymodaq_plugins.hardware.NIDAQmx.daq_NIDAQmx import DAQ_NIDAQmx
+from ...hardware.national_instruments.daq_NIDAQmx import DAQ_NIDAQmx_Viewer
 
 
-class DAQ_1DViewer_NIDAQmx(DAQ_NIDAQmx):
+class DAQ_1DViewer_NIDAQmx2(DAQ_NIDAQmx_Viewer):
     """
         ==================== ========================
         **Attributes**         **Type**
@@ -17,5 +17,5 @@ class DAQ_1DViewer_NIDAQmx(DAQ_NIDAQmx):
     control_type = "1D"  # could be "0D", "1D"
 
     def __init__(self, *args, **kwargs):
-        super(DAQ_1DViewer_NIDAQmx, self).__init__(*args, control_type=self.control_type, **kwargs)
+        super().__init__(*args, control_type=self.control_type, **kwargs)
 

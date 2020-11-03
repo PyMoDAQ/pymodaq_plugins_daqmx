@@ -1,7 +1,7 @@
 import PyDAQmx
 import ctypes
 from enum import IntEnum
-
+import numpy as np
 
 class DAQ_NIDAQ_source(IntEnum):
     """
@@ -90,14 +90,25 @@ class Edge(IntEnum):
     def names(cls):
         return [name for name, member in cls.__members__.items()]
 
+class ClockMode(IntEnum):
+    """
+    """
+    Finite = PyDAQmx.DAQmx_Val_Rising
+    Continuous = PyDAQmx.DAQmx_Val_Falling
+
+    @classmethod
+    def names(cls):
+        return [name for name, member in cls.__members__.items()]
+
+
 
 class ClockSettings:
-    def __init__(self, frequency=1000, Nsamples=100, edge=Edge.names()[0], ):
+    def __init__(self, frequency=1000, Nsamples=100, edge=Edge.names()[0], mode=PyDAQmx.DAQmx_Val_FiniteSamps):
         assert edge in Edge.names()
         self.frequency = frequency
         self.Nsamples = Nsamples
         self.edge = edge
-        self.mode = PyDAQmx.DAQmx_Val_FiniteSamps
+        self.mode = mode
 
 
 class Channel:
@@ -126,7 +137,7 @@ class AChannel(Channel):
         self.analog_type = analog_type
 
 class AIChannel(AChannel):
-    def __init__(self, termination = DAQ_termination.names()[0], **kwargs):
+    def __init__(self, termination=DAQ_termination.names()[0], **kwargs):
         super().__init__(**kwargs)
         assert termination in DAQ_termination.names()
         self.termination = termination
@@ -148,38 +159,24 @@ class Counter(Channel):
         super().__init__(**kwargs)
         self.edge = edge
 
-class NiDAQmx:
+class DAQmx:
 
     def __init__(self):
         super().__init__()
         self.devices = []
         self.channels = []
-        self._selected_channels = []
         self._device = None
         self._task = None
         self.update_NIDAQ_devices()
         self.update_NIDAQ_channels()
+        self.c_callback = None
 
+        self.is_scalar = True
+        self.write_buffer = np.array([0.])
 
     @property
-    def selected_channels(self):
-        return self._selected_channels
-
-    @selected_channels.setter
-    def selected_channels(self, selected_channels):
-        """
-
-        Parameters
-        ----------
-        selected_channels: list of Channel Object or inherited ones
-
-        """
-        assert(isinstance(selected_channels, list))
-        for sel in selected_channels:
-            assert(isinstance(sel, Channel))
-            if sel['ch_name'] not in self.channels:
-                raise IOError(f'your selected channel: {str(sel)} is not known or connected')
-        self._selected_channels = selected_channels
+    def task(self):
+        return self._task
 
     @property
     def device(self):
@@ -206,7 +203,7 @@ class NiDAQmx:
         try:
             buff = PyDAQmx.create_string_buffer(128)
             PyDAQmx.DAQmxGetSysDevNames(buff, len(buff))
-            devices = buff.value.decode().split(',')
+            devices = buff.value.decode().split(', ')
             return devices
         except:
             return []
@@ -251,13 +248,57 @@ class NiDAQmx:
                     elif source == DAQ_NIDAQ_source['Analog_Output'].name:  # analog output
                         PyDAQmx.DAQmxGetDevAOPhysicalChans(device, buff, len(buff))
 
-                    channels = buff.value.decode()[:].split(',')
+                    channels = buff.value.decode()[:].split(', ')
                     if channels != ['']:
                         channels_tot.extend(channels)
 
         return channels_tot
 
-    def update_task(self, channels=[AIChannel()], clock_settings=ClockSettings()):
+    @classmethod
+    def getAOMaxRate(cls, device):
+        data = PyDAQmx.c_double()
+        PyDAQmx.DAQmxGetDevAOMaxRate(device, PyDAQmx.byref(data))
+        return data.value
+
+    @classmethod
+    def getAIMaxRate(cls, device):
+        data = PyDAQmx.c_double()
+        PyDAQmx.DAQmxGetDevAIMaxSingleChanRate(device, PyDAQmx.byref(data))
+        return data.value
+
+    @classmethod
+    def isAnalogTriggeringSupported(cls, device):
+        data = PyDAQmx.c_uint32()
+        PyDAQmx.DAQmxGetDevAnlgTrigSupported(device, PyDAQmx.byref(data))
+        return bool(data.value)
+
+    @classmethod
+    def isDigitalTriggeringSupported(cls, device):
+        data = PyDAQmx.c_uint32()
+        PyDAQmx.DAQmxGetDevDigTrigSupported(device, PyDAQmx.byref(data))
+        return bool(data.value)
+
+    @classmethod
+    def getTriggeringSources(cls, devices=None):
+        sources = []
+        if devices is None:
+            devices = cls.get_NIDAQ_devices()
+
+        for device in devices:
+            if cls.isDigitalTriggeringSupported(device):
+                buff = PyDAQmx.create_string_buffer(1024)
+                PyDAQmx.DAQmxGetDevTerminals(device, buff, len(buff))
+                channels = [chan[1:] for chan in buff.value.decode().split(', ') if 'PFI' in chan]
+                if channels != ['']:
+                    sources.extend(channels)
+            if cls.isAnalogTriggeringSupported(device):
+                channels = cls.get_NIDAQ_channels(devices=[device], source_type='Analog_Input')
+                if channels != ['']:
+                    sources.extend(channels)
+        return sources
+
+
+    def update_task(self, channels=[], clock_settings=ClockSettings()):
         """
 
         """
@@ -266,8 +307,8 @@ class NiDAQmx:
             if self._task is not None:
                 if isinstance(self._task, PyDAQmx.Task):
                     self._task.ClearTask()
-                else:
-                    self._task = None
+                self._task = None
+                self.c_callback = None
 
             self._task = PyDAQmx.Task()
 
@@ -319,15 +360,168 @@ class NiDAQmx:
                         status = self._task.GetErrorString(err_code)
                         raise IOError(status)
 
-            self.status.initialized = True
-            self.status.controller = self._task
+                elif channel.source == 'Analog_Output':  # Analog_Output
+                    if channel.analog_type == "Voltage":
+                        err_code = self._task.CreateAOVoltageChan(channel.name, "",
+                                     channel.value_min,
+                                     channel.value_max,
+                                     PyDAQmx.DAQmx_Val_Volts, None)
+
+                    if channel.analog_type == "Current":
+                        err_code = self._task.CreateAOCurrentChan(channel.name, "",
+                                     channel.value_min,
+                                     channel.value_max,
+                                     PyDAQmx.DAQmx_Val_Amps, None)
+
+                    if clock_settings.Nsamples > 1 and err_code is None:
+                        err_code = self._task.CfgSampClkTiming(None,
+                                                               clock_settings.frequency,
+                                                               Edge[clock_settings.edge].value,
+                                                               PyDAQmx.DAQmx_Val_FiniteSamps,
+                                                               clock_settings.Nsamples)
+
+                        if err_code is not None:
+                            status = self._task.GetErrorString(err_code)
+                            raise IOError(status)
+
+
         except Exception as e:
             print(e)
 
-    def close(self):
+    def register_callback(self, callback):
+        self.c_callback = PyDAQmx.DAQmxDoneEventCallbackPtr(callback)
+        self._task.RegisterDoneEvent(0, self.c_callback, None)
+
+    def get_last_write_index(self):
+        if self.task is not None:
+            index_buffer = PyDAQmx.c_uint64()
+            ret = self._task.GetWriteCurrWritePos(PyDAQmx.byref(index_buffer))
+            if ret is not None:
+                raise IOError(self.DAQmxGetErrorString(ret))
+            else:
+                return index_buffer.value
+        else:
+            return -1
+
+    def get_last_write(self):
+        if self.is_scalar:
+            return self.write_buffer[-1]
+        else:
+            index = self.get_last_write_index()
+            if index != -1:
+                return self.write_buffer[index % len(self.write_buffer)]
+
+            else:
+                return 0.
+
+    def writeAnalog(self, Nsamples, Nchannels, values, autostart=False):
+        """
+        Write Nsamples on N analog output channels
+        Parameters
+        ----------
+        Nsamples: (int) numver of samples to write on each channel
+        Nchannels: (int) number of AO channels defined in the task
+        values: (ndarray) 2D array (or flattened array) of size Nsamples * Nchannels
+
+        Returns
+        -------
+
+        """
+        if np.prod(values.shape) != Nsamples * Nchannels:
+            raise ValueError(f'The shape of analog outputs values is incorrect, should be {Nsamples} x {Nchannels}')
+
+        if len(values.shape) != 1:
+            values.reshape((Nchannels * Nsamples))
+        self.write_buffer = values
+
+        timeout = -1
+        if values.size == 1:
+            self._task.WriteAnalogScalarF64(autostart, timeout, values[0], None)
+            self.is_scalar = True
+
+        else:
+            self.is_scalar = False
+            read = PyDAQmx.int32()
+            self._task.WriteAnalogF64(Nsamples, autostart, timeout, PyDAQmx.DAQmx_Val_GroupByChannel, values,
+                                           PyDAQmx.byref(read), None)
+            if read.value != Nsamples:
+                raise IOError(f'Insufficient number of samples have been written:{read.value}/{Nsamples}')
+
+    def readAnalog(self, Nchannels, clock_settings):
+        read = PyDAQmx.int32()
+        N = clock_settings.Nsamples
+        data = np.zeros(N * Nchannels, dtype=np.float64)
+        timeout = N * Nchannels * 1 / clock_settings.frequency*2
+
+        self._task.ReadAnalogF64(N, timeout, PyDAQmx.DAQmx_Val_GroupByChannel, data, len(data),
+                                 PyDAQmx.byref(read), None)
+        if read.value == N:
+            return data
+        else:
+            raise IOError(f'Insufficient number of samples have been read:{read.value}/{N}')
+
+    def readCounter(self, Nchannels, counting_time=10.):
+
+        data_counter = np.zeros(Nchannels, dtype='uint32')
+        read = PyDAQmx.int32()
+        self._task.ReadCounterU32Ex(PyDAQmx.DAQmx_Val_Auto, 2*counting_time, PyDAQmx.DAQmx_Val_GroupByChannel,
+                                    data_counter,
+                                    Nchannels, PyDAQmx.byref(read), None)
+        self._task.StopTask()
+
+        if read.value == Nchannels:
+            return data_counter
+        else:
+            raise IOError(f'Insufficient number of samples have been read:{read}/{Nchannels}')
+
+    def getAIVoltageRange(self, device='Dev1'):
+        buff_size = 100
+        ranges = ctypes.pointer((buff_size*ctypes.c_double)())
+        ret = PyDAQmx.DAQmxGetDevAIVoltageRngs(device, ranges[0], buff_size)
+        if ret == 0:
+            return [tuple(ranges.contents[2*ind:2*(ind+1)]) for ind in range(int(buff_size/2-2))
+                    if np.abs(ranges.contents[2*ind]) > 1e-12]
+        return [(-10., 10.)]
+
+    def getAOVoltageRange(self, device='Dev1'):
+        buff_size = 100
+        ranges = ctypes.pointer((buff_size*ctypes.c_double)())
+        ret = PyDAQmx.DAQmxGetDevAOVoltageRngs(device, ranges[0], buff_size)
+        if ret == 0:
+            return [tuple(ranges.contents[2*ind:2*(ind+1)]) for ind in range(int(buff_size/2-2))
+                    if np.abs(ranges.contents[2*ind]) > 1e-12]
+        return [(-10., 10.)]
+
+    def stop(self):
         if self._task is not None:
+            self._task.StopTask()
+
+    def close(self):
+        """
+            close the current task.
+        """
+        if self._task is not None:
+            self._task.StopTask()
             self._task.ClearTask()
+            self._task = None
+
+    @classmethod
+    def DAQmxGetErrorString(cls, error_code):
+        buffer = PyDAQmx.create_string_buffer(1024)
+        PyDAQmx.DAQmxGetErrorString(error_code, buffer, len(buffer))
+        return buffer.value.decode()
+
+    def refresh_hardware(self):
+        """
+            Refresh the NIDAQ hardware from settings values.
+
+            See Also
+            --------
+            update_NIDAQ_devices, update_NIDAQ_channels
+        """
+        devices = self.update_NIDAQ_devices()
+        self.update_NIDAQ_channels(devices)
 
 if __name__ == '__main__':
-    print(NiDAQmx.get_NIDAQ_channels())
+    print(DAQmx.get_NIDAQ_channels())
     pass
