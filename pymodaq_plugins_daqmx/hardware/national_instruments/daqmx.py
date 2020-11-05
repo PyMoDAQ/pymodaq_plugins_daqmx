@@ -352,13 +352,16 @@ class DAQmx:
             if self._task is not None:
                 if isinstance(self._task, PyDAQmx.Task):
                     self._task.ClearTask()
+
                 self._task = None
                 self.c_callback = None
 
+
             self._task = PyDAQmx.Task()
 
-            for channel in channels:
 
+            ## create all channels one task for one type of channels
+            for channel in channels:
                 if channel.source == 'Analog_Input': #analog input
                     if channel.analog_type == "Voltage":
                         err_code = self._task.CreateAIVoltageChan(channel.name, "",
@@ -383,20 +386,6 @@ class DAQmx:
                                                                   DAQ_termination[channel.thermo_type].value,
                                                                   PyDAQmx.DAQmx_Val_BuiltIn, 0., "")
 
-                    if err_code is None:
-                        err_code = self._task.CfgSampClkTiming(None,
-                                                               clock_settings.frequency,
-                                                               Edge[clock_settings.edge].value,
-                                                               PyDAQmx.DAQmx_Val_FiniteSamps,
-                                                               clock_settings.Nsamples)
-
-                        if err_code is not None:
-                            status = self._task.GetErrorString(err_code)
-                            raise IOError(status)
-                    else:
-                        status = self._task.GetErrorString(err_code)
-                        raise IOError(status)
-
                 elif channel.source == 'Counter': #counter
                     err_code = self._task.CreateCICountEdgesChan(channel.name, "",
                                                                Edge[channel.edge].value, 0,
@@ -418,21 +407,40 @@ class DAQmx:
                                      channel.value_max,
                                      PyDAQmx.DAQmx_Val_Amps, None)
 
-                    if clock_settings.Nsamples > 1 and err_code is 0:
-                        if clock_settings.repetition:
-                            mode = PyDAQmx.DAQmx_Val_ContSamps
-                        else:
-                            mode = PyDAQmx.DAQmx_Val_FiniteSamps
-                        err_code = self._task.CfgSampClkTiming(None,
-                                                               clock_settings.frequency,
-                                                               Edge[clock_settings.edge].value,
-                                                               mode,
-                                                               clock_settings.Nsamples)
 
-                        if err_code is not None:
-                            status = self._task.GetErrorString(err_code)
-                            raise IOError(status)
+            ## configure the timing
+            if channel.source == 'Analog_Input':  # analog input
+                err_code = self._task.CfgSampClkTiming(None,
+                                                       clock_settings.frequency,
+                                                       Edge[clock_settings.edge].value,
+                                                       PyDAQmx.DAQmx_Val_FiniteSamps,
+                                                       clock_settings.Nsamples)
 
+                if err_code is not None:
+                    status = self._task.GetErrorString(err_code)
+                    raise IOError(status)
+
+            elif channel.source == 'Counter':  # counter
+                pass
+
+            elif channel.source == 'Analog_Output':  # Analog_Output
+                if clock_settings.Nsamples > 1 and err_code is 0:
+                    if clock_settings.repetition:
+                        mode = PyDAQmx.DAQmx_Val_ContSamps
+                    else:
+                        mode = PyDAQmx.DAQmx_Val_FiniteSamps
+                    err_code = self._task.CfgSampClkTiming(None,
+                                                           clock_settings.frequency,
+                                                           Edge[clock_settings.edge].value,
+                                                           mode,
+                                                           clock_settings.Nsamples)
+
+                    if err_code is not None:
+                        status = self._task.GetErrorString(err_code)
+                        raise IOError(status)
+
+
+            ##configure the triggering
             if not trigger_settings.enable:
                 err = self._task.DisableStartTrig()
                 if err != 0:

@@ -412,15 +412,19 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
             --------
             update_NIDAQ_channels, update_task, DAQ_NIDAQ_source, refresh_hardware
         """
+
+
+        if param.parent() is not None:
+            if param.parent().name() == 'ai_channels':
+                device = param.opts['title'].split('/')[0]
+                self.settings.child('clock_settings', 'frequency').setOpts(max=self.getAIMaxRate(device))
+
+                ranges = self.getAIVoltageRange(device)
+                param.child('voltage_settings', 'volt_min').setOpts(limits=[r[0] for r in ranges])
+                param.child('voltage_settings', 'volt_max').setOpts(limits=[r[1] for r in ranges])
+
         DAQ_NIDAQmx_base.commit_settings(self, param)
 
-        if param.parent().name() == 'ai_channels':
-            device = param.opts['title'].split('/')[0]
-            self.settings.child('clock_settings', 'frequency').setOpts(max=self.getAIMaxRate(device))
-
-            ranges = self.getAIVoltageRange(device)
-            param.child('voltage_settings', 'volt_min').setOpts(limits=[r[0] for r in ranges])
-            param.child('voltage_settings', 'volt_max').setOpts(limits=[r[1] for r in ranges])
 
     def ini_detector(self, controller=None):
         """
