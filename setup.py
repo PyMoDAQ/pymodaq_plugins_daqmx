@@ -1,4 +1,4 @@
-from plugin_info import SHORT_PLUGIN_NAME, packages_required, package_url, author_email, author
+from plugin_info import SHORT_PLUGIN_NAME, packages_required, package_url, author_email, author, description
 PLUGIN_NAME = f'pymodaq_plugins_{SHORT_PLUGIN_NAME}'
 
 
@@ -20,7 +20,7 @@ with open('README.rst') as fd:
 
 setupOpts = dict(
     name=PLUGIN_NAME,
-    description='Hardware plugins for PyMoDAQ using the NiDAQmx framework (pydaqmx wrapper)',
+    description=description,
     long_description=long_description,
     license='CECILL B',
     url=package_url,
