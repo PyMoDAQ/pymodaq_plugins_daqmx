@@ -51,6 +51,7 @@ setup(
     entry_points={'pymodaq.plugins': 'daqmx = pymodaq_plugins_daqmx'},
     install_requires=[
         'pymodaq>=2.0',
+        'pydaqmx',
         ],
     **setupOpts
 )

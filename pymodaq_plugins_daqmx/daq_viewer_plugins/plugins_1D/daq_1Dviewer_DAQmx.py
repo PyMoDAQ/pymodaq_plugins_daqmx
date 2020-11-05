@@ -1,7 +1,7 @@
 from ...hardware.national_instruments.daq_NIDAQmx import DAQ_NIDAQmx_Viewer
 
 
-class DAQ_1DViewer_NIDAQmx2(DAQ_NIDAQmx_Viewer):
+class DAQ_1DViewer_DAQmx(DAQ_NIDAQmx_Viewer):
     """
         ==================== ========================
         **Attributes**         **Type**

@@ -21,6 +21,7 @@ class DAQ_NIDAQ_source(IntEnum):
     def names(cls):
         return [name for name, member in cls.__members__.items()]
 
+
 class DAQ_analog_types(IntEnum):
     """
         Enum class of Ai types
@@ -40,6 +41,7 @@ class DAQ_analog_types(IntEnum):
     @classmethod
     def values(cls):
         return [cls[name].value for name, member in cls.__members__.items()]
+
 
 class DAQ_thermocouples(IntEnum):
     """
@@ -62,6 +64,7 @@ class DAQ_thermocouples(IntEnum):
     def names(cls):
         return [name for name, member in cls.__members__.items()]
 
+
 class DAQ_termination(IntEnum):
     """
         Enum class of thermocouples type
@@ -80,6 +83,7 @@ class DAQ_termination(IntEnum):
     def names(cls):
         return [name for name, member in cls.__members__.items()]
 
+
 class Edge(IntEnum):
     """
     """
@@ -89,6 +93,7 @@ class Edge(IntEnum):
     @classmethod
     def names(cls):
         return [name for name, member in cls.__members__.items()]
+
 
 class ClockMode(IntEnum):
     """
@@ -101,14 +106,21 @@ class ClockMode(IntEnum):
         return [name for name, member in cls.__members__.items()]
 
 
-
 class ClockSettings:
-    def __init__(self, frequency=1000, Nsamples=100, edge=Edge.names()[0], mode=PyDAQmx.DAQmx_Val_FiniteSamps):
+    def __init__(self, frequency=1000, Nsamples=100, edge=Edge.names()[0], repetition=False):
         assert edge in Edge.names()
         self.frequency = frequency
         self.Nsamples = Nsamples
         self.edge = edge
-        self.mode = mode
+        self.repetition = repetition
+
+
+class TriggerSettings:
+    def __init__(self, trig_source='', enable=False, edge=Edge.names()[0], level=0.1):
+        self.trig_source = trig_source
+        self.enable = enable
+        self.edge = edge
+        self.level = level
 
 
 class Channel:
@@ -142,11 +154,13 @@ class AIChannel(AChannel):
         assert termination in DAQ_termination.names()
         self.termination = termination
 
+
 class AIThermoChannel(AIChannel):
     def __init__(self, thermo_type=DAQ_thermocouples.names()[0], **kwargs):
         super().__init__(**kwargs)
         assert thermo_type in DAQ_thermocouples.names()
         self.thermo_type = thermo_type
+
 
 class AOChannel(AChannel):
     def __init__(self, **kwargs):
@@ -158,6 +172,39 @@ class Counter(Channel):
         assert edge in Edge.names()
         super().__init__(**kwargs)
         self.edge = edge
+
+
+def try_string_buffer(fun, *args):
+    """
+    generic function to read string from a PyDAQmx function making sure the chosen buffer is large enough
+    Parameters
+    ----------
+    fun: (PyDAQmx function pointer) e.g. PyDAQmx.DAQmxGetSysDevNames
+    kwargs
+
+    Returns
+    -------
+
+    """
+    buff_size = 1024
+    while True:
+        buff = PyDAQmx.create_string_buffer(buff_size)
+        try:
+            if not not len(args):
+                fun(args[0], buff, buff_size)
+            else:
+                fun(buff, buff_size)
+            break
+
+        except Exception as e:
+            if isinstance(e, PyDAQmx.DAQmxFunctions.DAQException):
+                if e.error == -200228:  # BufferTooSmallForStringError
+                    buff_size = 2 * buff_size
+                else:
+                    raise e
+            else:
+                raise e
+    return buff.value.decode()
 
 class DAQmx:
 
@@ -201,9 +248,10 @@ class DAQmx:
             list of devices as strings to be used in subsequent commands
         """
         try:
-            buff = PyDAQmx.create_string_buffer(128)
-            PyDAQmx.DAQmxGetSysDevNames(buff, len(buff))
-            devices = buff.value.decode().split(', ')
+            string = try_string_buffer(PyDAQmx.DAQmxGetSysDevNames)
+            devices = string.split(', ')
+            if devices == ['']:
+                devices = []
             return devices
         except:
             return []
@@ -238,17 +286,15 @@ class DAQmx:
         if not not devices:
             for device in devices:
                 for source in source_type:
-                    buff = PyDAQmx.create_string_buffer(1024)
                     if source == DAQ_NIDAQ_source['Analog_Input'].name:  # analog input
-                        PyDAQmx.DAQmxGetDevAIPhysicalChans(device, buff, len(buff))
-
+                        string = try_string_buffer(PyDAQmx.DAQmxGetDevAIPhysicalChans, device)
                     elif source == DAQ_NIDAQ_source['Counter'].name:  # counter
-                        PyDAQmx.DAQmxGetDevCIPhysicalChans(device, buff, len(buff))
+                        string = try_string_buffer(PyDAQmx.DAQmxGetDevCIPhysicalChans, device)
 
                     elif source == DAQ_NIDAQ_source['Analog_Output'].name:  # analog output
-                        PyDAQmx.DAQmxGetDevAOPhysicalChans(device, buff, len(buff))
+                        string = try_string_buffer(PyDAQmx.DAQmxGetDevAOPhysicalChans, device)
 
-                    channels = buff.value.decode()[:].split(', ')
+                    channels = string.split(', ')
                     if channels != ['']:
                         channels_tot.extend(channels)
 
@@ -286,9 +332,8 @@ class DAQmx:
 
         for device in devices:
             if cls.isDigitalTriggeringSupported(device):
-                buff = PyDAQmx.create_string_buffer(1024)
-                PyDAQmx.DAQmxGetDevTerminals(device, buff, len(buff))
-                channels = [chan[1:] for chan in buff.value.decode().split(', ') if 'PFI' in chan]
+                string = try_string_buffer(PyDAQmx.DAQmxGetDevTerminals, device)
+                channels = [chan for chan in string.split(', ') if 'PFI' in chan]
                 if channels != ['']:
                     sources.extend(channels)
             if cls.isAnalogTriggeringSupported(device):
@@ -298,7 +343,7 @@ class DAQmx:
         return sources
 
 
-    def update_task(self, channels=[], clock_settings=ClockSettings()):
+    def update_task(self, channels=[], clock_settings=ClockSettings(), trigger_settings=TriggerSettings()):
         """
 
         """
@@ -374,19 +419,38 @@ class DAQmx:
                                      PyDAQmx.DAQmx_Val_Amps, None)
 
                     if clock_settings.Nsamples > 1 and err_code is None:
+                        if clock_settings.repetition:
+                            mode = PyDAQmx.DAQmx_Val_ContSamps
+                        else:
+                            mode = PyDAQmx.DAQmx_Val_FiniteSamps
                         err_code = self._task.CfgSampClkTiming(None,
                                                                clock_settings.frequency,
                                                                Edge[clock_settings.edge].value,
-                                                               PyDAQmx.DAQmx_Val_FiniteSamps,
+                                                               mode,
                                                                clock_settings.Nsamples)
 
                         if err_code is not None:
                             status = self._task.GetErrorString(err_code)
                             raise IOError(status)
 
+            if not trigger_settings.enable:
+                err = self._task.DisableStartTrig()
+                if err != 0:
+                    raise IOError(self.DAQmxGetErrorString(err))
+            else:
+                if 'PF' in trigger_settings.trig_source:
+                    self._task.CfgDigEdgeStartTrig(trigger_settings.trig_source, Edge[trigger_settings.edge].value)
+                elif 'ai' in trigger_settings.trig_source:
+                    self._task.CfgAnlgEdgeStartTrig(trigger_settings.trig_source,
+                                                    Edge[trigger_settings.edge].value,
+                                                    PyDAQmx.c_double(trigger_settings.level))
+                else:
+                    raise IOError('Unsupported Trigger source')
 
         except Exception as e:
             print(e)
+
+
 
     def register_callback(self, callback):
         self.c_callback = PyDAQmx.DAQmxDoneEventCallbackPtr(callback)
@@ -507,9 +571,12 @@ class DAQmx:
 
     @classmethod
     def DAQmxGetErrorString(cls, error_code):
-        buffer = PyDAQmx.create_string_buffer(1024)
-        PyDAQmx.DAQmxGetErrorString(error_code, buffer, len(buffer))
-        return buffer.value.decode()
+        if error_code is None:
+            return ''
+        else:
+            buffer = PyDAQmx.create_string_buffer(1024)
+            PyDAQmx.DAQmxGetErrorString(error_code, buffer, len(buffer))
+            return buffer.value.decode()
 
     def refresh_hardware(self):
         """

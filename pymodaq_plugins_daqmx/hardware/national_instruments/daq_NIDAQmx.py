@@ -15,7 +15,7 @@ import pyqtgraph.parametertree.parameterTypes as pTypes
 import pymodaq.daq_utils.custom_parameter_tree as custom_tree
 
 from .daqmx import DAQmx, DAQ_analog_types, DAQ_thermocouples, DAQ_termination, Edge, DAQ_NIDAQ_source, \
-    ClockSettings, AIChannel, Counter, AIThermoChannel, AOChannel
+    ClockSettings, AIChannel, Counter, AIThermoChannel, AOChannel, TriggerSettings
 
 
 class ScalableGroupAI(custom_tree.GroupParameterCustom):
@@ -75,8 +75,6 @@ class ScalableGroupAI(custom_tree.GroupParameterCustom):
                  'removable': True, 'renamable': False}
 
         self.addChild(child)
-
-
 registerParameterType('groupai', ScalableGroupAI, override=True)
 
 
@@ -184,6 +182,7 @@ class DAQ_NIDAQmx_base(DAQmx):
             {'title': 'Signal type:', 'name': 'NIDAQ_type', 'type': 'list', 'values': DAQ_NIDAQ_source.names()},
              {'title': 'AO Settings:', 'name': 'ao_settings', 'type': 'group', 'children': [
                  {'title': 'Waveform:', 'name': 'waveform', 'type': 'list', 'value': 'DC', 'values': ['DC', 'Sinus', 'Ramp']},
+                 {'title': 'Repetition?:', 'name': 'repetition', 'type': 'bool', 'value': False, },
                  {'title': 'Controlled param:', 'name': 'cont_param', 'type': 'list', 'value': 'offset',
                   'values': ['offset', 'amplitude', 'frequency']},
                  {'title': 'Waveform Settings:', 'name': 'waveform_settings', 'type': 'group', 'visible': False, 'children': [
@@ -195,7 +194,8 @@ class DAQ_NIDAQmx_base(DAQmx):
             {'title': 'Clock Settings:', 'name': 'clock_settings', 'type': 'group', 'children': [
                 {'title': 'Nsamples:', 'name': 'Nsamples', 'type': 'int', 'value': 1000, 'default': 1000, 'min': 1},
                 {'title': 'Frequency:', 'name': 'frequency', 'type': 'float', 'value': 1000., 'default': 1000.,
-                 'min': 0., 'suffix': 'Hz'},]
+                 'min': 0., 'suffix': 'Hz'},
+            ]
             },
             {'title': 'AI Channels:', 'name': 'ai_channels', 'type': 'groupai',
                   'values': DAQmx.get_NIDAQ_channels(source_type='Analog_Input')},
@@ -208,8 +208,9 @@ class DAQ_NIDAQmx_base(DAQmx):
                 'values': DAQmx.get_NIDAQ_channels(source_type='Counter')},
             ]},
             {'title': 'Trigger Settings:', 'name': 'trigger_settings', 'type': 'group', 'visible': True, 'children': [
+                {'title': 'Enable?:', 'name': 'enable', 'type': 'bool', 'value': False, },
                 {'title': 'Trigger Source:', 'name': 'trigger_channel', 'type': 'list',
-                 'values': ['Software'] + DAQmx.getTriggeringSources()},
+                 'values': DAQmx.getTriggeringSources()},
                 {'title': 'Edge type:', 'name': 'edge', 'type': 'list', 'values': Edge.names(), 'visible': False},
                 {'title': 'Level:', 'name': 'level', 'type': 'float', 'value': 1., 'visible': False}
                 ]}
@@ -218,9 +219,12 @@ class DAQ_NIDAQmx_base(DAQmx):
     def __init__(self):
         super().__init__()
 
+        self.timer = None
         self.channels = None
         self.clock_settings = None
+        self.trigger_settings = None
         self.refresh_hardware()
+
 
     def commit_settings(self, param):
         """
@@ -281,8 +285,8 @@ class DAQ_NIDAQmx_base(DAQmx):
             self.update_task()
 
         elif param.name() == 'trigger_channel':
-            param.parent().child('edge').show('Soft' not in param.value())
-            param.parent().child('level').show('ai' in param.value())
+            param.parent().child('level').show('PF' not in param.opts['title'])
+
         else:
             self.update_task()
 
@@ -290,9 +294,16 @@ class DAQ_NIDAQmx_base(DAQmx):
     def update_task(self):
         self.channels = self.get_channels_from_settings()
         self.clock_settings = ClockSettings(frequency=self.settings.child('clock_settings', 'frequency').value(),
-                                       Nsamples=self.settings.child('clock_settings', 'Nsamples').value())
+                                            Nsamples=self.settings.child('clock_settings', 'Nsamples').value(),
+                                            repetition=self.settings.child('ao_settings', 'repetition').value(),)
+        self.trigger_settings = \
+            TriggerSettings(trig_source=self.settings.child('trigger_settings', 'trigger_channel').value(),
+                            enable=self.settings.child('trigger_settings', 'enable').value(),
+                            edge=self.settings.child('trigger_settings', 'edge').value(),
+                            level=self.settings.child('trigger_settings', 'level').value(),)
+
         if not not self.channels:
-            super().update_task(self.channels, self.clock_settings)
+            super().update_task(self.channels, self.clock_settings, trigger_settings=self.trigger_settings)
 
 
     def get_channels_from_settings(self):
@@ -339,7 +350,8 @@ class DAQ_NIDAQmx_base(DAQmx):
     def stop(self):
         """
         """
-        self.timer.stop()
+        if not not self.timer:
+            self.timer.stop()
         QtWidgets.QApplication.processEvents()
         DAQmx.stop(self)
 
@@ -366,6 +378,7 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
         DAQ_Viewer_base.__init__(self, parent, params_state) #defines settings attribute and various other methods
         DAQ_NIDAQmx_base.__init__(self)
 
+
         self.control_type = control_type  # could be "0D", "1D" or "Actuator"
         if self.control_type == "0D":
             self.settings.child(('NIDAQ_type')).setLimits(DAQ_NIDAQ_source.names()[0:2])  # analog input and counter
@@ -382,6 +395,8 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
         self.timer = QtCore.QTimer()
         self.timer.setSingleShot(True)
         self.timer.timeout.connect(self.counter_done)
+
+
 
 
     def commit_settings(self, param):
@@ -428,7 +443,7 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
             #actions to perform in order to set properly the settings tree options
             self.commit_settings(self.settings.child('NIDAQ_type'))
 
-
+            self.status.info = "Plugin Initialized"
             self.status.initialized = True
             self.status.controller = controller
             return self.status
@@ -532,6 +547,7 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
 
         self.settings.child('clock_settings', 'Nsamples').setValue(1)
 
+        self.settings.child('NIDAQ_type').hide()
 
 
     def check_position(self):
@@ -565,13 +581,14 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
             self.settings.child('ao_settings', 'cont_param').show(not param.value() == 'DC')
             self.settings.child('ao_settings', 'waveform_settings').show(not param.value() == 'DC')
 
-        if param.parent().name() == 'ao_channels':
-            device = param.opts['title'].split('/')[0]
-            self.settings.child('clock_settings', 'frequency').setOpts(min=self.getAOMaxRate(device))
+        if param.parent() is not None:
+            if param.parent().name() == 'ao_channels':
+                device = param.opts['title'].split('/')[0]
+                self.settings.child('clock_settings', 'frequency').setOpts(max=self.getAOMaxRate(device))
 
-            ranges = self.getAOVoltageRange(device)
-            param.child('voltage_settings', 'volt_min').setOpts(limits=[r[0] for r in ranges])
-            param.child('voltage_settings', 'volt_max').setOpts(limits=[r[1] for r in ranges])
+                ranges = self.getAOVoltageRange(device)
+                param.child('voltage_settings', 'volt_min').setOpts(limits=[r[0] for r in ranges])
+                param.child('voltage_settings', 'volt_max').setOpts(limits=[r[1] for r in ranges])
 
     def ini_stage(self, controller=None):
         """Actuator communication initialization
@@ -609,7 +626,7 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
             # actions to perform in order to set properly the settings tree options
             self.commit_settings(self.settings.child('NIDAQ_type'))
 
-            self.status.info = "Whatever info you want to log"
+            self.status.info = "Plugin Initialized"
             self.status.controller = self.controller
             self.status.initialized = True
             return self.status
@@ -656,6 +673,8 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
         values = self.calulate_waveform(position)
         self.target_position = position
 
+        self.stop()
+
         if len(values) == 1:
             self.writeAnalog(len(values), 1, values, autostart=True)
             self.current_position = self.check_position()
@@ -689,7 +708,7 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
 
         values = self.calulate_waveform(self.target_position)
 
-
+        self.stop()
 
         if len(values) == 1:
             self.writeAnalog(len(values), 1, values, autostart=True)
@@ -708,6 +727,9 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
             --------
             daq_utils.ThreadCommand
         """
+
+        self.stop()
+
         if self.c_callback is None:
             self.register_callback(self.move_done_callback)
         self.writeAnalog(1, 1, np.array([0.]))

@@ -1,11 +1,10 @@
-# PyMoDAQ Plugins
+# PyMoDAQ National Instrument DAQmx Plugin
 
-PyMoDAQ, Modular Data Acquisition with Python, is a set of **python** modules used to perform automated measurements. 
+PyMoDAQ, Modular Data Acquisition with Python, is a set of **python** modules used to perform automated
+measurements. This repository contains the NI DAQmx plugins compatible with PyMoDAQ to generate and acquire
+signals using National Instruments acquisition cards
 
-This repository contains various hardware plugins compatible with PyMoDAQ
-
-For an exhaustive list of the available plugins, see https://docs.google.com/spreadsheets/d/1wfMfvLwTitZd2R2m1O5i6wVEaX1lJBahP2HUbxVdidg
-
-GitHub repo: https://github.com/CEMES-CNRS
+PyMoDAQ repo: https://github.com/CEMES-CNRS
+Plugin repo: 
 
 Documentation: http://pymodaq.cnrs.fr/

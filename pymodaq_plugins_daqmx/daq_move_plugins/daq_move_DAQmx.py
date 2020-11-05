@@ -1,7 +1,7 @@
 from ..hardware.national_instruments.daq_NIDAQmx import DAQ_NIDAQmx_Actuator
 
 
-class DAQ_Move_NIDAQmx2(DAQ_NIDAQmx_Actuator):
+class DAQ_Move_DAQmx(DAQ_NIDAQmx_Actuator):
     """
         ==================== ========================
         **Attributes**         **Type**
