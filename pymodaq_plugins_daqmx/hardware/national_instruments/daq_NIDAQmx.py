@@ -12,7 +12,7 @@ from pymodaq.daq_move.utility_classes import comon_parameters as actuator_params
 
 from pyqtgraph.parametertree import Parameter, ParameterTree, registerParameterType
 import pyqtgraph.parametertree.parameterTypes as pTypes
-import pymodaq.daq_utils.custom_parameter_tree as custom_tree
+import pymodaq.daq_utils.parameter.pymodaq_ptypes as pymodaq_ptypes
 
 from .daqmx import DAQmx, DAQ_analog_types, DAQ_thermocouples, DAQ_termination, Edge, DAQ_NIDAQ_source, \
     ClockSettings, AIChannel, Counter, AIThermoChannel, AOChannel, TriggerSettings
