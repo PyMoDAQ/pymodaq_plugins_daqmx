@@ -424,7 +424,7 @@ class DAQmx:
                 pass
 
             elif channel.source == 'Analog_Output':  # Analog_Output
-                if clock_settings.Nsamples > 1 and err_code is 0:
+                if clock_settings.Nsamples > 1 and err_code == 0:
                     if clock_settings.repetition:
                         mode = PyDAQmx.DAQmx_Val_ContSamps
                     else:
