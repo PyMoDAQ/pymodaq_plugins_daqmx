@@ -1,12 +1,48 @@
-# PyMoDAQ National Instrument DAQmx Plugin
+pymodaq_plugins_daqmx (National Instrument DAQmx)
+#################################################
 
-PyMoDAQ, Modular Data Acquisition with Python, is a set of **python** modules used to perform automated
-measurements. This repository contains the NI DAQmx plugins compatible with PyMoDAQ to generate and acquire
-signals using National Instruments acquisition cards
+.. image:: https://img.shields.io/pypi/v/pymodaq_plugins_daqmx.svg
+   :target: https://pypi.org/project/pymodaq_plugins_daqmx/
+   :alt: Latest Version
 
-PyMoDAQ repo: https://github.com/CEMES-CNRS
-Plugin repo: https://github.com/CEMES-CNRS/pymodaq_plugins_daqmx
+.. image:: https://readthedocs.org/projects/pymodaq/badge/?version=latest
+   :target: https://pymodaq.readthedocs.io/en/stable/?badge=latest
+   :alt: Documentation Status
 
-Documentation: http://pymodaq.cnrs.fr/
+.. image:: https://github.com/CEMES-CNRS/pymodaq_plugins_daqmx/workflows/Upload%20Python%20Package/badge.svg
+    :target: https://github.com/CEMES-CNRS/pymodaq_plugins_daqmx
 
-For an exhaustive list of the available plugins, see https://github.com/CEMES-CNRS/pymodaq_plugin_manager/blob/main/pymodaq_plugin_manager/doc/PluginList.md
+Plugin devoted to the National Instrument signal acquisition and generation using the NiDAQmx library. Includes an
+actuator plugin for signal generation, a 1D viewer plugin for data acquisition as a function of time and a 0D viewer
+plugin for quick time averaging acquisition
+
+Authors
+=======
+
+* Sébastien J. Weber
+
+Contributors
+============
+
+* Amelie Jarnac
+
+Instruments
+===========
+Below is the list of instruments included in this plugin
+
+Actuators
++++++++++
+
+* **DAQmx**: Analog output DC, Sinus, Ramp...
+
+Viewer0D
+++++++++
+
+* **DAQmx**: Analog acquisition, Counting
+
+Viewer1D
+++++++++
+
+* **DAQmx**: Analog acquisition
+
+
