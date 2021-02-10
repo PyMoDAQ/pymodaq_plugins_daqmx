@@ -2,6 +2,7 @@ from setuptools import setup, find_packages
 import toml
 
 config = toml.load('./plugin_info.toml')
+SHORT_PLUGIN_NAME = config['plugin-info']['SHORT_PLUGIN_NAME']
 PLUGIN_NAME = f"pymodaq_plugins_{config['plugin-info']['SHORT_PLUGIN_NAME']}"
 
 
@@ -16,12 +17,12 @@ with open('README.rst') as fd:
 
 setupOpts = dict(
     name=PLUGIN_NAME,
-    description=description,
+    description=config['plugin-info']['description'],
     long_description=long_description,
     license='CECILL B',
-    url=package_url,
-    author=author,
-    author_email=author_email,
+    url=config['plugin-info']['package-url'],
+    author=config['plugin-info']['author'],
+    author_email=config['plugin-info']['author-email'],
     classifiers=[
         "Programming Language :: Python :: 3",
         "Development Status :: 5 - Production/Stable",
