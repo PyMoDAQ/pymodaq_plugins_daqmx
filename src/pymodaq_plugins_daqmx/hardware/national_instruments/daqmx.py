@@ -16,6 +16,8 @@ class DAQ_NIDAQ_source(IntEnum):
     Analog_Input = 0
     Counter = 1
     Analog_Output = 2
+    Digital_Output = 3
+    Digital_Input = 4
 
     @classmethod
     def names(cls):
@@ -173,6 +175,18 @@ class Counter(Channel):
         super().__init__(**kwargs)
         self.edge = edge
 
+class DigitalChannel(Channel):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+
+class DOChannel(DigitalChannel):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+class DIChannel(DigitalChannel):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
 def try_string_buffer(fun, *args):
     """
@@ -290,9 +304,12 @@ class DAQmx:
                         string = try_string_buffer(PyDAQmx.DAQmxGetDevAIPhysicalChans, device)
                     elif source == DAQ_NIDAQ_source['Counter'].name:  # counter
                         string = try_string_buffer(PyDAQmx.DAQmxGetDevCIPhysicalChans, device)
-
                     elif source == DAQ_NIDAQ_source['Analog_Output'].name:  # analog output
                         string = try_string_buffer(PyDAQmx.DAQmxGetDevAOPhysicalChans, device)
+                    elif source == DAQ_NIDAQ_source['Digital_Output'].name:  # digital output
+                        string = try_string_buffer(PyDAQmx.DAQmxGetDevDOLines, device)
+                    elif source == DAQ_NIDAQ_source['Digital_Input'].name:  # digital output
+                        string = try_string_buffer(PyDAQmx.DAQmxGetDevDILines, device)
 
                     channels = string.split(', ')
                     if channels != ['']:
@@ -391,7 +408,7 @@ class DAQmx:
                                                                Edge[channel.edge].value, 0,
                                                                PyDAQmx.DAQmx_Val_CountUp)
                     if err_code is not None:
-                        status = self._task.GetErrorString(err_code)
+                        status = self.DAQmxGetErrorString(err_code)
                         raise IOError(status)
 
                 elif channel.source == 'Analog_Output':  # Analog_Output
@@ -407,6 +424,17 @@ class DAQmx:
                                      channel.value_max,
                                      PyDAQmx.DAQmx_Val_Amps, None)
 
+                elif channel.source == 'Digital_Output': #Digital_Output
+                    err_code = self._task.CreateDOChan(channel.name, "", PyDAQmx.DAQmx_Val_ChanPerLine)
+                    if not not err_code:
+                        status = self.DAQmxGetErrorString(err_code)
+                        raise IOError(status)
+
+                elif channel.source == 'Digital_Input': #Digital_Input
+                    err_code = self._task.CreateDIChan(channel.name, "", PyDAQmx.DAQmx_Val_ChanPerLine)
+                    if err_code is not None:
+                        status = self.DAQmxGetErrorString(err_code)
+                        raise IOError(status)
 
             ## configure the timing
             if channel.source == 'Analog_Input':  # analog input
@@ -417,7 +445,7 @@ class DAQmx:
                                                        clock_settings.Nsamples)
 
                 if err_code is not None:
-                    status = self._task.GetErrorString(err_code)
+                    status = self.DAQmxGetErrorString(err_code)
                     raise IOError(status)
 
             elif channel.source == 'Counter':  # counter
@@ -436,9 +464,11 @@ class DAQmx:
                                                            clock_settings.Nsamples)
 
                     if err_code is not None:
-                        status = self._task.GetErrorString(err_code)
+                        status = self.DAQmxGetErrorString(err_code)
                         raise IOError(status)
 
+            else:
+                pass
 
             ##configure the triggering
             if not trigger_settings.enable:
@@ -545,6 +575,28 @@ class DAQmx:
             return data_counter
         else:
             raise IOError(f'Insufficient number of samples have been read:{read}/{Nchannels}')
+
+    def readDigital(self, Nchannels):
+        read = PyDAQmx.int32()
+        bytes_sample = PyDAQmx.int32()
+        data = np.zeros(Nchannels, dtype='uint8')
+        self._task.ReadDigitalLines(Nchannels, 0, PyDAQmx.DAQmx_Val_GroupByChannel,
+                                    data, Nchannels, PyDAQmx.byref(read), PyDAQmx.byref(bytes_sample), None);
+
+        if read.value == Nchannels:
+            return data
+        else:
+            raise IOError(f'Insufficient number of samples have been read:{read}/{Nchannels}')
+
+    def writeDigital(self, Nchannels, values, autostart=False):
+        if np.prod(values.shape) != Nchannels:
+            raise ValueError(f'The shape of digital outputs values is incorrect, should be {Nchannels}')
+        values.astype(np.uint8)
+        written = PyDAQmx.int32()
+        self._task.WriteDigitalLines (Nchannels, autostart, 0, PyDAQmx.DAQmx_Val_GroupByChannel,
+                                      values, PyDAQmx.byref(written), None)
+        if written.value != Nchannels:
+            raise IOError(f'Insufficient number of samples have been written:{written}/{Nchannels}')
 
     def getAIVoltageRange(self, device='Dev1'):
         buff_size = 100
