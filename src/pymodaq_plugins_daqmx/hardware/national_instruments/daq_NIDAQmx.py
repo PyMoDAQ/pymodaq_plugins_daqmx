@@ -771,23 +771,25 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
 
         position = self.check_bound(position)  # if user checked bounds, the defined bounds are applied here
         position = self.set_position_with_scaling(position)  # apply scaling if the user specified one
+        if self.settings.child('NIDAQ_type').value() == 'Analog_Output':
+            self.settings.child('ao_settings', 'waveform_settings',
+                                 self.settings.child('ao_settings', 'cont_param').value()).setValue(position)
+            values = self.calulate_waveform(position)
+            self.target_position = position
 
-        self.settings.child('ao_settings', 'waveform_settings',
-                             self.settings.child('ao_settings', 'cont_param').value()).setValue(position)
-        values = self.calulate_waveform(position)
-        self.target_position = position
+            self.stop()
 
-        self.stop()
-
-        if len(values) == 1:
-            self.writeAnalog(len(values), 1, values, autostart=True)
-            self.current_position = self.check_position()
-            self.move_done()
-        else:
-            if self.c_callback is None:
-                self.register_callback(self.move_done_callback)
-            self.writeAnalog(len(values), 1, values, autostart=False)
-            self.task.StartTask()
+            if len(values) == 1:
+                self.writeAnalog(len(values), 1, values, autostart=True)
+                self.current_position = self.check_position()
+                self.move_done()
+            else:
+                if self.c_callback is None:
+                    self.register_callback(self.move_done_callback)
+                self.writeAnalog(len(values), 1, values, autostart=False)
+                self.task.StartTask()
+        elif self.settings.child('NIDAQ_type').value() == 'Digital_Output':
+            self.writeDigital(1, np.array([position], dtype=np.uint8), autostart=True)
 
     def move_done_callback(self, taskhandle, status, callbackdata):
         self.current_position = self.check_position()
@@ -806,23 +808,25 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
 
         position = self.check_bound(self.current_position + position) - self.current_position
         self.target_position = position + self.current_position
+        if self.settings.child('NIDAQ_type').value() == 'Analog_Output':
+            self.settings.child('ao_settings', 'waveform_settings',
+                                 self.settings.child('ao_settings', 'cont_param').value()).setValue(self.target_position)
 
-        self.settings.child('ao_settings', 'waveform_settings',
-                             self.settings.child('ao_settings', 'cont_param').value()).setValue(self.target_position)
+            values = self.calulate_waveform(self.target_position)
 
-        values = self.calulate_waveform(self.target_position)
+            self.stop()
 
-        self.stop()
-
-        if len(values) == 1:
-            self.writeAnalog(len(values), 1, values, autostart=True)
-            self.current_position = self.check_position()
-            self.move_done()
-        else:
-            if self.c_callback is None:
-                self.register_callback(self.move_done_callback)
-            self.writeAnalog(len(values), 1, values, autostart=False)
-            self.task.StartTask()
+            if len(values) == 1:
+                self.writeAnalog(len(values), 1, values, autostart=True)
+                self.current_position = self.check_position()
+                self.move_done()
+            else:
+                if self.c_callback is None:
+                    self.register_callback(self.move_done_callback)
+                self.writeAnalog(len(values), 1, values, autostart=False)
+                self.task.StartTask()
+        elif self.settings.child('NIDAQ_type').value() == 'Digital_Output':
+            self.writeDigital(1, np.array([self.target_position], dtype=np.uint8), autostart=True)
 
     def move_Home(self):
         """

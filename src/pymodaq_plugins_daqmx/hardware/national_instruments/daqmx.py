@@ -593,7 +593,7 @@ class DAQmx:
             raise ValueError(f'The shape of digital outputs values is incorrect, should be {Nchannels}')
         values.astype(np.uint8)
         written = PyDAQmx.int32()
-        self._task.WriteDigitalLines (Nchannels, autostart, 0, PyDAQmx.DAQmx_Val_GroupByChannel,
+        self._task.WriteDigitalLines(Nchannels, autostart, 0, PyDAQmx.DAQmx_Val_GroupByChannel,
                                       values, PyDAQmx.byref(written), None)
         if written.value != Nchannels:
             raise IOError(f'Insufficient number of samples have been written:{written}/{Nchannels}')
@@ -637,6 +637,11 @@ class DAQmx:
             buffer = PyDAQmx.create_string_buffer(1024)
             PyDAQmx.DAQmxGetErrorString(error_code, buffer, len(buffer))
             return buffer.value.decode()
+
+    def isTaskDone(self):
+        done = PyDAQmx.bool32(False)
+        self._task.GetTaskComplete(PyDAQmx.byref(done))
+        return bool(done.value)
 
     def refresh_hardware(self):
         """
