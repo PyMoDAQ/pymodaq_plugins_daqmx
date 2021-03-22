@@ -231,7 +231,7 @@ class DAQmx:
         self.update_NIDAQ_devices()
         self.update_NIDAQ_channels()
         self.c_callback = None
-
+        self.callback_data = None
         self.is_scalar = True
         self.write_buffer = np.array([0.])
 
