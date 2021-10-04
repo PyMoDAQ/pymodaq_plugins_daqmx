@@ -247,7 +247,7 @@ class DAQ_NIDAQmx_base(DAQmx):
             {'title': 'Signal type:', 'name': 'NIDAQ_type', 'type': 'list', 'values': DAQ_NIDAQ_source.names()},
              {'title': 'AO Settings:', 'name': 'ao_settings', 'type': 'group', 'children': [
                  {'title': 'Waveform:', 'name': 'waveform', 'type': 'list', 'value': 'DC', 'values': ['DC', 'Sinus', 'Ramp']},
-                 {'title': 'Repetition?:', 'name': 'repetition', 'type': 'bool', 'value': False, },
+
                  {'title': 'Controlled param:', 'name': 'cont_param', 'type': 'list', 'value': 'offset',
                   'values': ['offset', 'amplitude', 'frequency']},
                  {'title': 'Waveform Settings:', 'name': 'waveform_settings', 'type': 'group', 'visible': False, 'children': [
@@ -260,6 +260,7 @@ class DAQ_NIDAQmx_base(DAQmx):
                 {'title': 'Nsamples:', 'name': 'Nsamples', 'type': 'int', 'value': 1000, 'default': 1000, 'min': 1},
                 {'title': 'Frequency:', 'name': 'frequency', 'type': 'float', 'value': 1000., 'default': 1000.,
                  'min': 0., 'suffix': 'Hz'},
+                {'title': 'Repetition?:', 'name': 'repetition', 'type': 'bool', 'value': False, },
             ]
             },
             {'title': 'AI Channels:', 'name': 'ai_channels', 'type': 'groupai',
@@ -388,7 +389,7 @@ class DAQ_NIDAQmx_base(DAQmx):
         self.channels = self.get_channels_from_settings()
         self.clock_settings = ClockSettings(frequency=self.settings.child('clock_settings', 'frequency').value(),
                                             Nsamples=self.settings.child('clock_settings', 'Nsamples').value(),
-                                            repetition=self.settings.child('ao_settings', 'repetition').value(),)
+                                            repetition=self.live,)
         self.trigger_settings = \
             TriggerSettings(trig_source=self.settings.child('trigger_settings', 'trigger_channel').value(),
                             enable=self.settings.child('trigger_settings', 'enable').value(),
@@ -471,14 +472,14 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
     """
 
     data_grabed_signal = pyqtSignal(list)
-
+    live_mode_available = True
     params = viewer_params + DAQ_NIDAQmx_base.params
 
     def __init__(self, parent=None, params_state=None, control_type="0D"):
         DAQ_Viewer_base.__init__(self, parent, params_state) #defines settings attribute and various other methods
         DAQ_NIDAQmx_base.__init__(self)
 
-
+        self.live = False
         self.control_type = control_type  # could be "0D", "1D" or "Actuator"
         if self.control_type == "0D":
             self.settings.child(('NIDAQ_type')).setLimits(['Analog_Input', 'Counter', 'Digital_Input'])  # analog input and counter
@@ -573,12 +574,21 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
             --------
             DAQ_NIDAQ_source
         """
+        update = False
+        if 'live' in kwargs:
+            if kwargs['live'] != self.live:
+                update = True
+            self.live = kwargs['live']
+        if update:
+            self.update_task()
+
         if self.settings.child(('NIDAQ_type')).value() == DAQ_NIDAQ_source(0).name: #analog input
             if self.c_callback is None:
                 self.register_callback(self.emit_data)
         elif self.settings.child(('NIDAQ_type')).value() == DAQ_NIDAQ_source(1).name: #counter input
             self.timer.start(self.settings.child('counter_settings', 'counting_time').value())
-        self.task.StartTask()
+        self.waitTaskDone()
+        self.start()
 
     def emit_data(self, taskhandle, status, callbackdata):
         channels_name = [ch.name for ch in self.channels]
@@ -599,8 +609,6 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
                                           x_axis=Axis(data=np.linspace(0, N / self.clock_settings.frequency, N),
                                           y_axis=Axis(label='Analog Input', units=''),
                                           label='Time', units='s'))])
-
-        self.task.StopTask()
 
         return 0  #mandatory for the PyDAQmx callback
 

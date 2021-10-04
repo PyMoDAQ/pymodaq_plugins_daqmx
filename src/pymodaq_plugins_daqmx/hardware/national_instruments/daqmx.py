@@ -2,6 +2,9 @@ import PyDAQmx
 import ctypes
 from enum import IntEnum
 import numpy as np
+from pymodaq.daq_utils.daq_utils import set_logger, get_module_name
+
+logger = set_logger(get_module_name(__file__))
 
 class DAQ_NIDAQ_source(IntEnum):
     """
@@ -543,9 +546,18 @@ class DAQmx:
 
 
 
-    def register_callback(self, callback):
-        self.c_callback = PyDAQmx.DAQmxDoneEventCallbackPtr(callback)
-        self._task.RegisterDoneEvent(0, self.c_callback, None)
+    def register_callback(self, callback, event='done', nsamples=1):
+
+        if event == 'done':
+            self.c_callback = PyDAQmx.DAQmxDoneEventCallbackPtr(callback)
+            self._task.RegisterDoneEvent(0, self.c_callback, None)
+        elif event == 'sample':
+            self.c_callback = PyDAQmx.DAQmxSignalEventCallbackPtr(callback)
+            self._task.RegisterSignalEvent(PyDAQmx.DAQmx_Val_SampleCompleteEvent, 0, self.c_callback, None)
+        elif event == 'Nsamples':
+            self.c_callback = PyDAQmx.DAQmxEveryNSamplesEventCallbackPtr(callback)
+            self._task.RegisterEveryNSamplesEvent(PyDAQmx.DAQmx_Val_Acquired_Into_Buffer, nsamples,
+                                                  0, self.c_callback, None)
 
     def get_last_write_index(self):
         if self.task is not None:
@@ -606,7 +618,7 @@ class DAQmx:
         read = PyDAQmx.int32()
         N = clock_settings.Nsamples
         data = np.zeros(N * Nchannels, dtype=np.float64)
-        timeout = N * Nchannels * 1 / clock_settings.frequency*2
+        timeout = N * Nchannels * 1 / clock_settings.frequency * 2  # set to twice the time it should take to acquire the data
 
         self._task.ReadAnalogF64(N, timeout, PyDAQmx.DAQmx_Val_GroupByChannel, data, len(data),
                                  PyDAQmx.byref(read), None)
@@ -699,6 +711,11 @@ class DAQmx:
         done = PyDAQmx.bool32(False)
         self._task.GetTaskComplete(PyDAQmx.byref(done))
         return bool(done.value)
+
+    def waitTaskDone(self, timeout=10.):
+        ret = self._task.WaitUntilTaskDone(timeout)
+        if ret != 0:
+            logger.info(self.DAQmxGetErrorString(ret))
 
     def refresh_hardware(self):
         """
