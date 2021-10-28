@@ -5,7 +5,7 @@ class DAQ_0DViewer_DAQmx(DAQ_NIDAQmx_Viewer):
     """
         ==================== ========================
         **Attributes**         **Type**
-        *data_grabed_signal*   instance of pyqtSignal
+        *data_grabed_signal*   instance of Signal
         *params*               dictionnary list
         *task*
         ==================== ========================

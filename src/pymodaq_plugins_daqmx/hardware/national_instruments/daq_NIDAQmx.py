@@ -1,5 +1,5 @@
-from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtCore import pyqtSignal, QThread
+from qtpy import QtWidgets, QtCore
+from qtpy.QtCore import Signal, QThread
 from pymodaq.daq_utils.daq_utils import ThreadCommand, DataFromPlugins, Axis, getLineInfo
 import numpy as np
 from pymodaq.daq_viewer.utility_classes import DAQ_Viewer_base
@@ -241,7 +241,7 @@ registerParameterType('groupdo', ScalableGroupDO, override=True)
 
 
 class DAQ_NIDAQmx_base(DAQmx):
-    data_grabed_signal = pyqtSignal(list)
+    data_grabed_signal = Signal(list)
 
     params =[{'title': 'Refresh hardware:', 'name': 'refresh_hardware', 'type': 'bool', 'value': False},
             {'title': 'Signal type:', 'name': 'NIDAQ_type', 'type': 'list', 'values': DAQ_NIDAQ_source.names()},
@@ -461,7 +461,7 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
     """
         ==================== ========================
         **Attributes**         **Type**
-        *data_grabed_signal*   instance of pyqtSignal
+        *data_grabed_signal*   instance of Signal
         *params*               dictionnary list
         *task*
         ==================== ========================
@@ -471,7 +471,7 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
         refresh_hardware
     """
 
-    data_grabed_signal = pyqtSignal(list)
+    data_grabed_signal = Signal(list)
     live_mode_available = True
     params = viewer_params + DAQ_NIDAQmx_base.params
 

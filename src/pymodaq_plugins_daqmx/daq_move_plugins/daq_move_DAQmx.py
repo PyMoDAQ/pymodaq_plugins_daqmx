@@ -5,7 +5,7 @@ class DAQ_Move_DAQmx(DAQ_NIDAQmx_Actuator):
     """
         ==================== ========================
         **Attributes**         **Type**
-        *data_grabed_signal*   instance of pyqtSignal
+        *data_grabed_signal*   instance of Signal
         *params*               dictionnary list
         *task*
         ==================== ========================
