@@ -32,7 +32,7 @@ class ScalableGroupAI(pymodaq_ptypes.GroupParameterCustom):
         hardware.DAQ_Move_Stage_type
     """
 
-    params = [{'title': 'AI type:', 'name': 'ai_type', 'type': 'list', 'values': DAQ_analog_types.names()},
+    params = [{'title': 'AI type:', 'name': 'ai_type', 'type': 'list', 'limits': DAQ_analog_types.names()},
               {'title': 'Voltages:', 'name': 'voltage_settings', 'type': 'group', 'children': [
                   {'title': 'Voltage Min:', 'name': 'volt_min', 'type': 'list', 'value': -10.},
                   {'title': 'Voltage Max:', 'name': 'volt_max', 'type': 'list', 'value': 10.},
@@ -42,18 +42,18 @@ class ScalableGroupAI(pymodaq_ptypes.GroupParameterCustom):
                   {'title': 'Current Max:', 'name': 'curr_max', 'type': 'float', 'value': 1, 'suffix': 'A'},
               ]},
               {'title': 'Thermocouple:', 'name': 'thermoc_settings', 'type': 'group', 'visible': False, 'children': [
-                  {'title': 'Thc. type:', 'name': 'thermoc_type', 'type': 'list', 'values': DAQ_thermocouples.names(),
+                  {'title': 'Thc. type:', 'name': 'thermoc_type', 'type': 'list', 'limits': DAQ_thermocouples.names(),
                    'value': 'K'},
                   {'title': 'Temp. Min (°C):', 'name': 'T_min', 'type': 'float', 'value': 0, 'suffix': '°C'},
                   {'title': 'Temp. Max (°C):', 'name': 'T_max', 'type': 'float', 'value': 50, 'suffix': '°C'},
               ]},
-              {'title': 'Termination:', 'name': 'termination', 'type': 'list', 'values': DAQ_termination.names()},
+              {'title': 'Termination:', 'name': 'termination', 'type': 'list', 'limits': DAQ_termination.names()},
               ]
 
     def __init__(self, **opts):
         opts['type'] = 'groupai'
         opts['addText'] = "Add"
-        opts['addList'] = opts['values']
+        opts['addList'] = opts['limits']
         pTypes.GroupParameter.__init__(self, **opts)
 
     def addNew(self, typ):
@@ -92,7 +92,7 @@ class ScalableGroupAO(pymodaq_ptypes.GroupParameterCustom):
         hardware.DAQ_Move_Stage_type
     """
 
-    params = [{'title': 'AO type:', 'name': 'ao_type', 'type': 'list', 'values': DAQ_analog_types.names()[0:2]},
+    params = [{'title': 'AO type:', 'name': 'ao_type', 'type': 'list', 'limits': DAQ_analog_types.names()[0:2]},
               {'title': 'Voltages:', 'name': 'voltage_settings', 'type': 'group', 'children': [
                   {'title': 'Voltage Min:', 'name': 'volt_min', 'type': 'list', 'value': -10., },
                   {'title': 'Voltage Max:', 'name': 'volt_max', 'type': 'list', 'value': 10., },
@@ -106,7 +106,7 @@ class ScalableGroupAO(pymodaq_ptypes.GroupParameterCustom):
     def __init__(self, **opts):
         opts['type'] = 'groupao'
         opts['addText'] = "Add"
-        opts['addList'] = opts['values']
+        opts['addList'] = opts['limits']
         pTypes.GroupParameter.__init__(self, **opts)
 
     def addNew(self, typ):
@@ -145,12 +145,12 @@ class ScalableGroupCounter(pymodaq_ptypes.GroupParameterCustom):
         hardware.DAQ_Move_Stage_type
     """
 
-    params = [{'title': 'Edge type:', 'name': 'edge', 'type': 'list', 'values': Edge.names()}, ]
+    params = [{'title': 'Edge type:', 'name': 'edge', 'type': 'list', 'limits': Edge.names()}, ]
 
     def __init__(self, **opts):
         opts['type'] = 'groupcounter'
         opts['addText'] = "Add"
-        opts['addList'] = opts['values']
+        opts['addList'] = opts['limits']
         pTypes.GroupParameter.__init__(self, **opts)
 
     def addNew(self, typ):
@@ -184,7 +184,7 @@ class ScalableGroupDI(pymodaq_ptypes.GroupParameterCustom):
     def __init__(self, **opts):
         opts['type'] = 'groupdi'
         opts['addText'] = "Add"
-        opts['addList'] = opts['values']
+        opts['addList'] = opts['limits']
         pTypes.GroupParameter.__init__(self, **opts)
 
     def addNew(self, typ):
@@ -216,7 +216,7 @@ class ScalableGroupDO(pymodaq_ptypes.GroupParameterCustom):
     def __init__(self, **opts):
         opts['type'] = 'groupdo'
         opts['addText'] = "Add"
-        opts['addList'] = opts['values']
+        opts['addList'] = opts['limits']
         pTypes.GroupParameter.__init__(self, **opts)
 
     def addNew(self, typ):
@@ -244,12 +244,12 @@ class DAQ_NIDAQmx_base(DAQmx):
     data_grabed_signal = Signal(list)
 
     params =[{'title': 'Refresh hardware:', 'name': 'refresh_hardware', 'type': 'bool', 'value': False},
-            {'title': 'Signal type:', 'name': 'NIDAQ_type', 'type': 'list', 'values': DAQ_NIDAQ_source.names()},
+            {'title': 'Signal type:', 'name': 'NIDAQ_type', 'type': 'list', 'limits': DAQ_NIDAQ_source.names()},
              {'title': 'AO Settings:', 'name': 'ao_settings', 'type': 'group', 'children': [
-                 {'title': 'Waveform:', 'name': 'waveform', 'type': 'list', 'value': 'DC', 'values': ['DC', 'Sinus', 'Ramp']},
+                 {'title': 'Waveform:', 'name': 'waveform', 'type': 'list', 'value': 'DC', 'limits': ['DC', 'Sinus', 'Ramp']},
 
                  {'title': 'Controlled param:', 'name': 'cont_param', 'type': 'list', 'value': 'offset',
-                  'values': ['offset', 'amplitude', 'frequency']},
+                  'limits': ['offset', 'amplitude', 'frequency']},
                  {'title': 'Waveform Settings:', 'name': 'waveform_settings', 'type': 'group', 'visible': False, 'children': [
                      {'title': 'Offset:', 'name': 'offset', 'type': 'float', 'value': 0., },
                      {'title': 'Amplitude:', 'name': 'amplitude', 'type': 'float', 'value': 1., },
@@ -264,24 +264,24 @@ class DAQ_NIDAQmx_base(DAQmx):
             ]
             },
             {'title': 'AI Channels:', 'name': 'ai_channels', 'type': 'groupai',
-                  'values': DAQmx.get_NIDAQ_channels(source_type='Analog_Input')},
+                  'limits': DAQmx.get_NIDAQ_channels(source_type='Analog_Input')},
             {'title': 'AO Channels:', 'name': 'ao_channels', 'type': 'groupao',
-                 'values': DAQmx.get_NIDAQ_channels(source_type='Analog_Output')},
+                 'limits': DAQmx.get_NIDAQ_channels(source_type='Analog_Output')},
             {'title': 'DO Channels:', 'name': 'do_channels', 'type': 'groupdo',
-                'values': DAQmx.get_NIDAQ_channels(source_type='Digital_Output')},
+                'limits': DAQmx.get_NIDAQ_channels(source_type='Digital_Output')},
              {'title': 'DI Channels:', 'name': 'di_channels', 'type': 'groupdi',
-              'values': DAQmx.get_NIDAQ_channels(source_type='Digital_Input')},
+              'limits': DAQmx.get_NIDAQ_channels(source_type='Digital_Input')},
             {'title': 'Counter Settings:', 'name': 'counter_settings', 'type': 'group', 'visible': True, 'children': [
                 {'title': 'Counting time (ms):', 'name': 'counting_time', 'type': 'float', 'value': 100.,
                 'default': 100., 'min': 0.},
                 {'title': 'Counting Channels:', 'name': 'counter_channels', 'type': 'groupcounter',
-                'values': DAQmx.get_NIDAQ_channels(source_type='Counter')},
+                'limits': DAQmx.get_NIDAQ_channels(source_type='Counter')},
             ]},
             {'title': 'Trigger Settings:', 'name': 'trigger_settings', 'type': 'group', 'visible': True, 'children': [
                 {'title': 'Enable?:', 'name': 'enable', 'type': 'bool', 'value': False, },
                 {'title': 'Trigger Source:', 'name': 'trigger_channel', 'type': 'list',
-                 'values': DAQmx.getTriggeringSources()},
-                {'title': 'Edge type:', 'name': 'edge', 'type': 'list', 'values': Edge.names(), 'visible': False},
+                 'limits': DAQmx.getTriggeringSources()},
+                {'title': 'Edge type:', 'name': 'edge', 'type': 'list', 'limits': Edge.names(), 'visible': False},
                 {'title': 'Level:', 'name': 'level', 'type': 'float', 'value': 1., 'visible': False}
                 ]}
             ]
@@ -645,8 +645,8 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
                    {'title': 'is Multiaxes:', 'name': 'ismultiaxes', 'type': 'bool', 'value': is_multiaxes,
                     'default': False},
                    {'title': 'Status:', 'name': 'multi_status', 'type': 'list', 'value': 'Master',
-                    'values': ['Master', 'Slave']},
-                   {'title': 'Axis:', 'name': 'axis', 'type': 'list', 'values': stage_names},
+                    'limits': ['Master', 'Slave']},
+                   {'title': 'Axis:', 'name': 'axis', 'type': 'list', 'limits': stage_names},
 
                ]}] + actuator_params
 

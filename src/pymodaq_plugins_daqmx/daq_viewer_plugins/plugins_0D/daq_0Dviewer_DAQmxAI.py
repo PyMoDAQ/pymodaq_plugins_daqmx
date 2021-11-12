@@ -13,11 +13,11 @@ class DAQ_0DViewer_DAQmxAI(DAQ_Viewer_base):
     """
     """
     params = comon_parameters+[
-        {'title': 'Display type:', 'name': 'display', 'type': 'list', 'values': ['0D', '1D']},
+        {'title': 'Display type:', 'name': 'display', 'type': 'list', 'limits': ['0D', '1D']},
         {'title': 'Frequency Acq.:', 'name': 'frequency', 'type': 'int', 'value': 1000, 'min': 1},
         {'title': 'Nsamples:', 'name': 'Nsamples', 'type': 'int', 'value': 100, 'default': 100, 'min': 1},
         {'title': 'AI:', 'name': 'ai_channel', 'type': 'list',
-         'values': DAQmx.get_NIDAQ_channels(source_type='Analog_Input'),
+         'limits': DAQmx.get_NIDAQ_channels(source_type='Analog_Input'),
          'value': DAQmx.get_NIDAQ_channels(source_type='Analog_Input')[0]},
         ]
     hardware_averaging = True
