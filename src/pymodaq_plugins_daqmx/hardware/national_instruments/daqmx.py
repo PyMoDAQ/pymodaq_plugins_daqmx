@@ -6,6 +6,7 @@ from pymodaq.daq_utils.daq_utils import set_logger, get_module_name
 
 logger = set_logger(get_module_name(__file__))
 
+
 class DAQ_NIDAQ_source(IntEnum):
     """
         Enum class of NIDAQ_source
@@ -135,6 +136,7 @@ class ChangeDetectionSettings(ClockSettingsBase):
         self.rising_channel = rising_channel
         self.falling_channel = falling_channel
 
+
 class TriggerSettings:
     def __init__(self, trig_source='', enable=False, edge=Edge.names()[0], level=0.1):
         assert edge in Edge.names()
@@ -169,6 +171,7 @@ class AChannel(Channel):
         self.value_max = value_max
         self.analog_type = analog_type
 
+
 class AIChannel(AChannel):
     def __init__(self, termination=DAQ_termination.names()[0], **kwargs):
         super().__init__(**kwargs)
@@ -194,6 +197,7 @@ class Counter(Channel):
         super().__init__(**kwargs)
         self.edge = edge
 
+
 class DigitalChannel(Channel):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -203,9 +207,11 @@ class DOChannel(DigitalChannel):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+
 class DIChannel(DigitalChannel):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
 
 def try_string_buffer(fun, *args):
     """
@@ -238,6 +244,7 @@ def try_string_buffer(fun, *args):
             else:
                 raise e
     return buff.value.decode()
+
 
 class DAQmx:
 

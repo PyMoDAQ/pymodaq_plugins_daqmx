@@ -18,7 +18,7 @@ from .daqmx import DAQmx, DAQ_analog_types, DAQ_thermocouples, DAQ_termination, 
     ClockSettings, AIChannel, Counter, AIThermoChannel, AOChannel, TriggerSettings, DOChannel, DIChannel
 
 
-class ScalableGroupAI(pymodaq_ptypes.GroupParameterCustom):
+class ScalableGroupAI(pTypes.GroupParameter):
     """
         |
 
@@ -78,7 +78,7 @@ class ScalableGroupAI(pymodaq_ptypes.GroupParameterCustom):
 registerParameterType('groupai', ScalableGroupAI, override=True)
 
 
-class ScalableGroupAO(pymodaq_ptypes.GroupParameterCustom):
+class ScalableGroupAO(pTypes.GroupParameter):
     """
         |
 
@@ -131,7 +131,7 @@ class ScalableGroupAO(pymodaq_ptypes.GroupParameterCustom):
 registerParameterType('groupao', ScalableGroupAO, override=True)
 
 
-class ScalableGroupCounter(pymodaq_ptypes.GroupParameterCustom):
+class ScalableGroupCounter(pTypes.GroupParameter):
     """
         |
 
@@ -175,7 +175,7 @@ class ScalableGroupCounter(pymodaq_ptypes.GroupParameterCustom):
 registerParameterType('groupcounter', ScalableGroupCounter, override=True)
 
 
-class ScalableGroupDI(pymodaq_ptypes.GroupParameterCustom):
+class ScalableGroupDI(pTypes.GroupParameter):
     """
     """
 
@@ -207,7 +207,8 @@ class ScalableGroupDI(pymodaq_ptypes.GroupParameterCustom):
         self.addChild(child)
 registerParameterType('groupdi', ScalableGroupDI, override=True)
 
-class ScalableGroupDO(pymodaq_ptypes.GroupParameterCustom):
+
+class ScalableGroupDO(pTypes.GroupParameter):
     """
     """
 
