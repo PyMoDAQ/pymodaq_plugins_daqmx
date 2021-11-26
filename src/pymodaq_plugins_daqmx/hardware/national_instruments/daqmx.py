@@ -670,7 +670,8 @@ class DAQmx:
         if written.value != Nchannels:
             raise IOError(f'Insufficient number of samples have been written:{written}/{Nchannels}')
 
-    def getAIVoltageRange(self, device='Dev1'):
+    @classmethod
+    def getAIVoltageRange(cls, device='Dev1'):
         buff_size = 100
         ranges = ctypes.pointer((buff_size*ctypes.c_double)())
         ret = PyDAQmx.DAQmxGetDevAIVoltageRngs(device, ranges[0], buff_size)
@@ -679,7 +680,8 @@ class DAQmx:
                     if np.abs(ranges.contents[2*ind]) > 1e-12]
         return [(-10., 10.)]
 
-    def getAOVoltageRange(self, device='Dev1'):
+    @classmethod
+    def getAOVoltageRange(cls, device='Dev1'):
         buff_size = 100
         ranges = ctypes.pointer((buff_size*ctypes.c_double)())
         ret = PyDAQmx.DAQmxGetDevAOVoltageRngs(device, ranges[0], buff_size)
