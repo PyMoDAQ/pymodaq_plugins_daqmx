@@ -9,8 +9,8 @@ pymodaq_plugins_daqmx (National Instrument DAQmx)
    :target: https://pymodaq.readthedocs.io/en/stable/?badge=latest
    :alt: Documentation Status
 
-.. image:: https://github.com/CEMES-CNRS/pymodaq_plugins_daqmx/workflows/Upload%20Python%20Package/badge.svg
-    :target: https://github.com/CEMES-CNRS/pymodaq_plugins_daqmx
+.. image:: https://github.com/PyMoDAQ/pymodaq_plugins_daqmx/workflows/Upload%20Python%20Package/badge.svg
+    :target: https://github.com/PyMoDAQ/pymodaq_plugins_daqmx
 
 Plugin devoted to the National Instrument signal acquisition and generation using the NiDAQmx library. Includes an
 actuator plugin for signal generation, a 1D viewer plugin for data acquisition as a function of time and a 0D viewer

@@ -2,7 +2,7 @@
 
 [plugin-info]
 SHORT_PLUGIN_NAME = 'daqmx'  #for instance daqmx
-package-url = 'https://github.com/CEMES-CNRS/pymodaq_plugins_daqmx' #to modify
+package-url = 'https://github.com/PyMoDAQ/pymodaq_plugins_daqmx' #to modify
 description = 'Hardware plugins for PyMoDAQ using the NiDAQmx framework (pydaqmx wrapper)'
 
 author = 'Sébastien Weber'

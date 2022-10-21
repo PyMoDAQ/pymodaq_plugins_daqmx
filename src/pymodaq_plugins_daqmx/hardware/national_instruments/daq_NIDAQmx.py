@@ -2,12 +2,12 @@ from qtpy import QtWidgets, QtCore
 from qtpy.QtCore import Signal, QThread
 from pymodaq.daq_utils.daq_utils import ThreadCommand, DataFromPlugins, Axis, getLineInfo
 import numpy as np
-from pymodaq.daq_viewer.utility_classes import DAQ_Viewer_base
-from pymodaq.daq_move.utility_classes import DAQ_Move_base
+from pymodaq.control_modules.viewer_utility_classes import DAQ_Viewer_base
+from pymodaq.control_modules.move_utility_classes import DAQ_Move_base
 from easydict import EasyDict as edict
 from abc import ABC, abstractmethod
 
-from pymodaq.daq_viewer.utility_classes import comon_parameters as viewer_params
+from pymodaq.control_modules.viewer_utility_classes import comon_parameters as viewer_params
 from pymodaq.daq_move.utility_classes import comon_parameters as actuator_params
 
 from pyqtgraph.parametertree import Parameter, ParameterTree, registerParameterType
