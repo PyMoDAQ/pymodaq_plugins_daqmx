@@ -192,10 +192,16 @@ class AOChannel(AChannel):
 
 
 class Counter(Channel):
-    def __init__(self, edge=Edge.names()[0], **kwargs):
+    def __init__(self, edge=Edge.names()[0], counter_type="Edge counter", **kwargs):
         assert edge in Edge.names()
         super().__init__(**kwargs)
         self.edge = edge
+        # counter_type options are Edge Counter, Clock Output and SemiPeriod Input
+        self.counter_type = counter_type
+        if kwargs.get("clock_frequency"):
+            self.clock_frequency = kwargs["clock_frequency"]
+        if kwargs.get("clock_frequency"):
+            self.value_max = kwargs["value_max"]
 
 
 class DigitalChannel(Channel):
@@ -432,9 +438,30 @@ class DAQmx:
                                                                   PyDAQmx.DAQmx_Val_BuiltIn, 0., "")
 
                 elif channel.source == 'Counter': #counter
-                    err_code = self._task.CreateCICountEdgesChan(channel.name, "",
-                                                               Edge[channel.edge].value, 0,
-                                                               PyDAQmx.DAQmx_Val_CountUp)
+                    if channel.counter_type == "Edge Counter":
+                        err_code = self._task.CreateCICountEdgesChan(channel.name, "",
+                                                                     Edge[channel.edge].value, 0,
+                                                                     PyDAQmx.DAQmx_Val_CountUp)
+                    elif channel.counter_type == "Clock Output":
+                        err_code = self._task.CreateCOPulseChanFreq(channel.name, "",
+                                                                    # units, Hertz in our case
+                                                                    PyDAQmx.DAQmx_Val_Hz,
+                                                                    # idle state
+                                                                    PyDAQmx.DAQmx_Val_Low,
+                                                                    # initial delay
+                                                                    0,
+                                                                    # pulse frequency
+                                                                    channel.clock_frequency,
+                                                                    # duty cycle of pulses, 0.5 such that
+                                                                    # high and low duration are both
+                                                                    # equal to count_interval
+                                                                    0.5)
+                    elif channel.counter_type == "SemiPeriod Input":
+                        err_code = self._task.CreateCISemiPeriodChan(channel.name, "", 0, # expected min
+                                                                     channel.value_max, # expected max
+                                                                     PyDAQmx.DAQmx_Val_Ticks, "")
+                        
+                    
                     if not not err_code:
                         status = self.DAQmxGetErrorString(err_code)
                         raise IOError(status)
