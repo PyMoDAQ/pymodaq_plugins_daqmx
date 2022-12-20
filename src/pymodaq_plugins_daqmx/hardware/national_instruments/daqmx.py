@@ -192,19 +192,27 @@ class AOChannel(AChannel):
 
 
 class Counter(Channel):
-    def __init__(self, edge=Edge.names()[0], counter_type="Edge counter", **kwargs):
-        if counter_type == "Edge counter":
-            assert edge in Edge.names()    
+    def __init__(self, edge=Edge.names()[0], , **kwargs):
+        assert edge in Edge.names()    
         super().__init__(**kwargs)
         self.edge = edge
-        # counter_type options are Edge Counter, Clock Output and SemiPeriod Input
-        self.counter_type = counter_type
-        if kwargs.get("clock_frequency"):
-            self.clock_frequency = kwargs["clock_frequency"]
-        if kwargs.get("clock_frequency"):
-            self.value_max = kwargs["value_max"]
+        self.counter_type == "Edge Counter"
 
+        
+class ClockCounter(Counter):
+    def __init__(self, clock_frequency=10, **kwargs):
+        super().__init__(**kwargs)
+        self.clock_frequency = clock_frequency
+        self.counter_type == "Clock Output"
 
+        
+class SemiPeriodCounter(Counter):
+    def __init__(self, value_max=5e6, **kwargs):
+        super().__init__(**kwargs)
+        self.value_max = value_max
+        self.counter_type == "SemiPeriod Input"
+
+        
 class DigitalChannel(Channel):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
