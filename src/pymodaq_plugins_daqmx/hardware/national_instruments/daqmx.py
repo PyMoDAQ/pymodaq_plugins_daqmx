@@ -452,7 +452,7 @@ class DAQmx:
                                                                      Edge[channel.edge].value, 0,
                                                                      PyDAQmx.DAQmx_Val_CountUp)
                     elif channel.counter_type == "Clock Output":
-                        err_code = self._task.CreateCOPulseChanFreq(channel.name, "",
+                        err_code = self._task.CreateCOPulseChanFreq("/"+channel.name, "",
                                                                     # units, Hertz in our case
                                                                     PyDAQmx.DAQmx_Val_Hz,
                                                                     # idle state
@@ -466,7 +466,7 @@ class DAQmx:
                                                                     # equal to count_interval
                                                                     0.5)
                     elif channel.counter_type == "SemiPeriod Input":
-                        err_code = self._task.CreateCISemiPeriodChan(channel.name, "", 0, # expected min
+                        err_code = self._task.CreateCISemiPeriodChan("/"+channel.name, "", 0, # expected min
                                                                      channel.value_max, # expected max
                                                                      PyDAQmx.DAQmx_Val_Ticks, "")
                         
