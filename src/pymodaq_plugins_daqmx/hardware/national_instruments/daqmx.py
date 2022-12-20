@@ -192,7 +192,7 @@ class AOChannel(AChannel):
 
 
 class Counter(Channel):
-    def __init__(self, edge=Edge.names()[0], , **kwargs):
+    def __init__(self, edge=Edge.names()[0], **kwargs):
         assert edge in Edge.names()    
         super().__init__(**kwargs)
         self.edge = edge
