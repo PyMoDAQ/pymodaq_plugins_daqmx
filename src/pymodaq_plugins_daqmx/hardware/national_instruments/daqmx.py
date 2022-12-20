@@ -193,7 +193,8 @@ class AOChannel(AChannel):
 
 class Counter(Channel):
     def __init__(self, edge=Edge.names()[0], counter_type="Edge counter", **kwargs):
-        assert edge in Edge.names()
+        if counter_type == "Edge counter":
+            assert edge in Edge.names()    
         super().__init__(**kwargs)
         self.edge = edge
         # counter_type options are Edge Counter, Clock Output and SemiPeriod Input
