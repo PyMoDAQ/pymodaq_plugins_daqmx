@@ -200,14 +200,14 @@ class Counter(Channel):
 
         
 class ClockCounter(Counter):
-    def __init__(self, clock_frequency=10, **kwargs):
+    def __init__(self, clock_frequency, **kwargs):
         super().__init__(**kwargs)
         self.clock_frequency = clock_frequency
         self.counter_type == "Clock Output"
 
         
 class SemiPeriodCounter(Counter):
-    def __init__(self, value_max=5e6, **kwargs):
+    def __init__(self, value_max, **kwargs):
         super().__init__(**kwargs)
         self.value_max = value_max
         self.counter_type == "SemiPeriod Input"
