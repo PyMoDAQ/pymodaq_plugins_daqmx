@@ -675,9 +675,14 @@ class DAQmx:
 
         data_counter = np.zeros(Nchannels, dtype='uint32')
         read = PyDAQmx.int32()
-        self._task.ReadCounterU32Ex(PyDAQmx.DAQmx_Val_Auto, 2*counting_time, PyDAQmx.DAQmx_Val_GroupByChannel,
-                                    data_counter,
-                                    Nchannels, PyDAQmx.byref(read), None)
+        try:
+            self._task.ReadCounterU32Ex(PyDAQmx.DAQmx_Val_Auto, 2*counting_time,
+                                        PyDAQmx.DAQmx_Val_GroupByChannel,
+                                        data_counter,
+                                        Nchannels, PyDAQmx.byref(read), None)
+        except:
+            self._task.ReadCounterU32(PyDAQmx.DAQmx_Val_Auto, 2*counting_time,
+                                        data_counter, Nchannels, PyDAQmx.byref(read), None)
         self._task.StopTask()
 
         if read.value == Nchannels:
