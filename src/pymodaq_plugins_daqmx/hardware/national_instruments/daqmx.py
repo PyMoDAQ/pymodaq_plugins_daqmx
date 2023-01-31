@@ -570,11 +570,14 @@ class DAQmx:
             # else:
             #     pass
 
-            ##configure the triggering
+            ##configure the triggering, except for counters
             if not trigger_settings.enable:
-                err = self._task.DisableStartTrig()
-                if err != 0:
-                    raise IOError(self.DAQmxGetErrorString(err))
+                if channel.source == 'Counter':
+                    pass
+                else:
+                    err = self._task.DisableStartTrig()
+                    if err != 0:
+                        raise IOError(self.DAQmxGetErrorString(err))
             else:
                 if 'PF' in trigger_settings.trig_source:
                     self._task.CfgDigEdgeStartTrig(trigger_settings.trig_source, Edge[trigger_settings.edge].value)
