@@ -5,10 +5,10 @@ from pymodaq.control_modules.viewer_utility_classes import DAQ_Viewer_base, como
 from pymodaq.utils.parameter import Parameter
 
 from pymodaq_plugins_daqmx.hardware.national_instruments.daqmx import DAQmx, \
-    Edge, ClockSettings, Counter,  TriggerSettings
+    Edge, ClockSettings, Counter, ClockCounter,  TriggerSettings
 
-# from PyDAQmx import DAQmx_Val_DoNotInvertPolarity, \
-#      DAQmx_Val_ContSamps, DAQmx_Val_FiniteSamps, DAQmx_Val_CurrReadPos, \
+from PyDAQmx import DAQmx_Val_DoNotInvertPolarity, DAQmxConnectTerms, DAQmx_Val_ContSamps
+#     , DAQmx_Val_FiniteSamps, DAQmx_Val_CurrReadPos, \
 #      DAQmx_Val_DoNotOverwriteUnreadSamps
 
 class DAQ_0DViewer_DAQmx_PLcounter(DAQ_Viewer_base):
@@ -75,6 +75,7 @@ class DAQ_0DViewer_DAQmx_PLcounter(DAQ_Viewer_base):
             
         self.data_grabed_signal_temp.emit([DataFromPlugins(name='PL',data=[np.array([0])],
                                                            dim='Data0D', labels=['PL (kcts/s)'])])
+        
         return info, initialized
     
     def close(self):
@@ -92,19 +93,20 @@ class DAQ_0DViewer_DAQmx_PLcounter(DAQ_Viewer_base):
         kwargs: dict
             others optionals arguments
         """
-        # update = True  # to decide if we do the initial set up or not
+        update = True  # to decide if we do the initial set up or not
 
-        # if 'live' in kwargs:
-        #     if kwargs['live'] == self.live and self.live:
-        #         update = False  # we are already live
-        #     self.live = kwargs['live']
+        if 'live' in kwargs:
+            if kwargs['live'] == self.live and self.live:
+                update = False  # we are already live
+            self.live = kwargs['live']
             
-        # if update:
-        self.update_tasks()
-            
+        if update:
+            self.update_tasks()
+            self.controller["clock"].start()
+
+        
         read_data = self.controller["counter"].readCounter(1, counting_time=self.counting_time)
-        print(read_data)
-        data_pl = 1e-3*read_data/self.counting_time
+        data_pl = read_data*self.counting_time
         self.data_grabed_signal.emit([DataFromPlugins(name='PL', data=[data_pl],
                                                       dim='Data0D', labels=['PL (kcts/s)'])])
 
@@ -116,24 +118,24 @@ class DAQ_0DViewer_DAQmx_PLcounter(DAQ_Viewer_base):
 
     def update_tasks(self):
         """Set up the counting tasks in the NI card."""
-        # Create channel
+        # Create channels
+        self.clock_channel = ClockCounter(self.settings.child("clock_freq").value(),
+                                          name=self.settings.child("clock_channel").value(),
+                                          source="Counter")
         self.counter_channel = Counter(name=self.settings.child("counter_channel").value(),
                                        source="Counter", edge=Edge.names()[0])
 
-        self.controller["counter"].update_task(channels=[self.counter_channel],
-                                               clock_settings=ClockSettings(
-                                                   source=self.settings.child("clock_channel").value(),
-                                                   frequency=self.settings.child("clock_freq").value(),
-                                                   edge=Edge.names()[0],
-                                                   repetition=True,
-                                                   Nsamples=1),
-                                               trigger_settings=TriggerSettings(
-                                                   trig_source=self.settings.child("photon_channel").value(),
-                                                   enable=True,
-                                                   edge=Edge.names()[0],
-                                                   level=0.5)
-                                               )
+        self.controller["clock"].update_task(channels=[self.clock_channel],
+                                             clock_settings=ClockSettings(),
+                                             trigger_settings=TriggerSettings())
+        self.controller["clock"].task.CfgImplicitTiming(DAQmx_Val_ContSamps, 1)
         
+        self.controller["counter"].update_task(channels=[self.counter_channel],
+                                               clock_settings=ClockSettings(),
+                                               trigger_settings=TriggerSettings())
+
+        self.controller["counter"].task.SetSampClkSrc("/" + self.clock_channel.name + "InternalOutput")
+
         
 if __name__ == '__main__':
     main(__file__)
