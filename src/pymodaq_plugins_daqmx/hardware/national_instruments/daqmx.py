@@ -674,18 +674,21 @@ class DAQmx:
         else:
             raise IOError(f'Insufficient number of samples have been read:{read.value}/{N}')
 
-    def readCounter(self, Nchannels, counting_time=10.):
+    def readCounter(self, Nchannels, counting_time=10., read_function="Ex"):
 
         data_counter = np.zeros(Nchannels, dtype='uint32')
         read = PyDAQmx.int32()
-        try:
+        if read_function == "Ex":
+            print("Ex")
             self._task.ReadCounterU32Ex(PyDAQmx.DAQmx_Val_Auto, 2*counting_time,
                                         PyDAQmx.DAQmx_Val_GroupByChannel,
                                         data_counter,
                                         Nchannels, PyDAQmx.byref(read), None)
-        except:
+        else:
+            print("Pas Ex")
             self._task.ReadCounterU32(PyDAQmx.DAQmx_Val_Auto, 2*counting_time,
                                         data_counter, Nchannels, PyDAQmx.byref(read), None)
+            
         self._task.StopTask()
 
         if read.value == Nchannels:

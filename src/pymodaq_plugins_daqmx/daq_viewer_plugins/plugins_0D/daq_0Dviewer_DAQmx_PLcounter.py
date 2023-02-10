@@ -101,33 +101,33 @@ class DAQ_0DViewer_DAQmx_PLcounter(DAQ_Viewer_base):
         kwargs: dict
             others optionals arguments
         """
-        update = True  # to decide if we do the initial set up or not
+        # update = True  # to decide if we do the initial set up or not
 
-        if 'live' in kwargs:
-            if kwargs['live'] == self.live and self.live:
-                update = False  # we are already live
-            self.live = kwargs['live']
+        # if 'live' in kwargs:
+        #     if kwargs['live'] == self.live and self.live:
+        #         update = False  # we are already live
+        #     self.live = kwargs['live']
             
-        if update:
-            self.update_tasks()
+        #if update:
+        self.update_tasks()
             
-        self.controller["clock"].task.stop() # to ensure that the clock is available
+        self.controller["clock"].stop() # to ensure that the clock is available
         self.controller["clock"].task.CfgImplicitTiming(DAQmx_Val_FiniteSamps, 1000)
 
-        self.controller["counter"].task.CfgImplicitTiming(DAQmx_Val_ContSamps, 2))
-        self.controller["counter"].task.DAQmxSetReadRelativeTo(DAQmx_Val_CurrReadPos)
-        self.controller["counter"].task.DAQmxSetReadOffset(0)
-        self.controller["counter"].task.DAQmxSetReadOverWrite(DAQmx_Val_DoNotOverwriteUnreadSamps)
-
         try:
-            timeout = 10
+            timeout = 2
             self.controller["clock"].start()
-            self.controller["clock"].task.WaitUntilTaskDone(timeout*2)
+            #self.controller["clock"].task.WaitUntilTaskDone(timeout*2)
         except Exception as e:
             print(e)
             self.emit_status(ThreadCommand('Update_Status',
                                                ['Cannot start the counter clock']))
             return
+        
+        self.controller["counter"].task.CfgImplicitTiming(DAQmx_Val_ContSamps, 1000)
+        self.controller["counter"].task.SetReadRelativeTo(DAQmx_Val_CurrReadPos)
+        self.controller["counter"].task.SetReadOffset(0)
+        self.controller["counter"].task.SetReadOverWrite(DAQmx_Val_DoNotOverwriteUnreadSamps)
         
         try:
             self.controller["counter"].start()
@@ -135,8 +135,11 @@ class DAQ_0DViewer_DAQmx_PLcounter(DAQ_Viewer_base):
             print(e)
             self.emit_status(ThreadCommand('Update_Status',
                                                ['Cannot start the PL counter']))
-
-        read_data = self.controller["counter"].readCounter(2, counting_time=self.counting_time)
+                
+        print("ready to read")
+        read_data = self.controller["counter"].readCounter(2, counting_time=self.counting_time,
+                                                           read_function="")
+        print(read_data)
         data_pl = 1e-3*np.sum(read_data)/self.counting_time
             
         self.data_grabed_signal.emit([DataFromPlugins(name='PL', data=[data_pl],
