@@ -580,7 +580,8 @@ class DAQmx:
                         raise IOError(self.DAQmxGetErrorString(err))
             else:
                 if 'PF' in trigger_settings.trig_source:
-                    self._task.CfgDigEdgeStartTrig(trigger_settings.trig_source, Edge[trigger_settings.edge].value)
+                    self._task.CfgDigEdgeStartTrig(trigger_settings.trig_source,
+                                                   Edge[trigger_settings.edge].value)
                 elif 'ai' in trigger_settings.trig_source:
                     self._task.CfgAnlgEdgeStartTrig(trigger_settings.trig_source,
                                                     Edge[trigger_settings.edge].value,
@@ -679,13 +680,11 @@ class DAQmx:
         data_counter = np.zeros(Nchannels, dtype='uint32')
         read = PyDAQmx.int32()
         if read_function == "Ex":
-            print("Ex")
             self._task.ReadCounterU32Ex(PyDAQmx.DAQmx_Val_Auto, 2*counting_time,
                                         PyDAQmx.DAQmx_Val_GroupByChannel,
                                         data_counter,
                                         Nchannels, PyDAQmx.byref(read), None)
         else:
-            print("Pas Ex")
             self._task.ReadCounterU32(PyDAQmx.DAQmx_Val_Auto, 2*counting_time,
                                         data_counter, Nchannels, PyDAQmx.byref(read), None)
             

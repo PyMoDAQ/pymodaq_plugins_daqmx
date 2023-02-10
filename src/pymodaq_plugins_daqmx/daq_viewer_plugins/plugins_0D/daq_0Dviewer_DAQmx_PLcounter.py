@@ -5,11 +5,11 @@ from pymodaq.control_modules.viewer_utility_classes import DAQ_Viewer_base, como
 from pymodaq.utils.parameter import Parameter
 
 from pymodaq_plugins_daqmx.hardware.national_instruments.daqmx import DAQmx, \
-    Edge, ClockSettings, ClockCounter, SemiPeriodCounter, TriggerSettings
+    Edge, ClockSettings, Counter,  TriggerSettings
 
-from PyDAQmx import DAQmx_Val_DoNotInvertPolarity, \
-     DAQmx_Val_ContSamps, DAQmx_Val_FiniteSamps, DAQmx_Val_CurrReadPos, \
-     DAQmx_Val_DoNotOverwriteUnreadSamps
+# from PyDAQmx import DAQmx_Val_DoNotInvertPolarity, \
+#      DAQmx_Val_ContSamps, DAQmx_Val_FiniteSamps, DAQmx_Val_CurrReadPos, \
+#      DAQmx_Val_DoNotOverwriteUnreadSamps
 
 class DAQ_0DViewer_DAQmx_PLcounter(DAQ_Viewer_base):
     """
@@ -102,8 +102,7 @@ class DAQ_0DViewer_DAQmx_PLcounter(DAQ_Viewer_base):
         # if update:
         self.update_tasks()
             
-        read_data = self.controller["counter"].readCounter(2, counting_time=self.counting_time,
-                                                           read_function="")
+        read_data = self.controller["counter"].readCounter(1, counting_time=self.counting_time)
         print(read_data)
         data_pl = 1e-3*read_data/self.counting_time
         self.data_grabed_signal.emit([DataFromPlugins(name='PL', data=[data_pl],
@@ -123,13 +122,13 @@ class DAQ_0DViewer_DAQmx_PLcounter(DAQ_Viewer_base):
 
         self.controller["counter"].update_task(channels=[self.counter_channel],
                                                clock_settings=ClockSettings(
-                                                   source=self.settings.child("clock_channel"),
-                                                   frequency=self.settings.child("clock_freq"),
+                                                   source=self.settings.child("clock_channel").value(),
+                                                   frequency=self.settings.child("clock_freq").value(),
                                                    edge=Edge.names()[0],
                                                    repetition=True,
                                                    Nsamples=1),
                                                trigger_settings=TriggerSettings(
-                                                   trig_source=self.settings.child("photon_channel"),
+                                                   trig_source=self.settings.child("photon_channel").value(),
                                                    enable=True,
                                                    edge=Edge.names()[0],
                                                    level=0.5)
