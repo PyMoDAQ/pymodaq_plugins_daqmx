@@ -193,11 +193,26 @@ class AOChannel(AChannel):
 
 class Counter(Channel):
     def __init__(self, edge=Edge.names()[0], **kwargs):
-        assert edge in Edge.names()
+        assert edge in Edge.names()    
         super().__init__(**kwargs)
         self.edge = edge
+        self.counter_type = "Edge Counter"
 
+        
+class ClockCounter(Counter):
+    def __init__(self, clock_frequency, **kwargs):
+        super().__init__(**kwargs)
+        self.clock_frequency = clock_frequency
+        self.counter_type = "Clock Output"
 
+        
+class SemiPeriodCounter(Counter):
+    def __init__(self, value_max, **kwargs):
+        super().__init__(**kwargs)
+        self.value_max = value_max
+        self.counter_type = "SemiPeriod Input"
+
+        
 class DigitalChannel(Channel):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -409,7 +424,7 @@ class DAQmx:
             for channel in channels:
                 if channel.source == 'Analog_Input': #analog input
                     if channel.analog_type == "Voltage":
-                        err_code = self._task.CreateAIVoltageChan(channel.name, "",
+                        err_code = self._task.CreateAIVoltageChan(channel.name, "analog voltage task",
                                      DAQ_termination[channel.termination].value,
                                      channel.value_min,
                                      channel.value_max,
@@ -432,9 +447,31 @@ class DAQmx:
                                                                   PyDAQmx.DAQmx_Val_BuiltIn, 0., "")
 
                 elif channel.source == 'Counter': #counter
-                    err_code = self._task.CreateCICountEdgesChan(channel.name, "",
-                                                               Edge[channel.edge].value, 0,
-                                                               PyDAQmx.DAQmx_Val_CountUp)
+                    if channel.counter_type == "Edge Counter":
+                        err_code = self._task.CreateCICountEdgesChan(channel.name, "",
+                                                                     Edge[channel.edge].value, 0,
+                                                                     PyDAQmx.DAQmx_Val_CountUp)
+                    elif channel.counter_type == "Clock Output":
+                        err_code = self._task.CreateCOPulseChanFreq(channel.name, "clock task",
+                                                                    # units, Hertz in our case
+                                                                    PyDAQmx.DAQmx_Val_Hz,
+                                                                    # idle state
+                                                                    PyDAQmx.DAQmx_Val_Low,
+                                                                    # initial delay
+                                                                    0,
+                                                                    # pulse frequency
+                                                                    channel.clock_frequency,
+                                                                    # duty cycle of pulses, 0.5 such that
+                                                                    # high and low duration are both
+                                                                    # equal to count_interval
+                                                                    0.5)
+                    elif channel.counter_type == "SemiPeriod Input":
+                        err_code = self._task.CreateCISemiPeriodChan(channel.name, "counter task",
+                                                                     0, # expected min
+                                                                     channel.value_max, # expected max
+                                                                     PyDAQmx.DAQmx_Val_Ticks, "")
+                        
+                    
                     if not not err_code:
                         status = self.DAQmxGetErrorString(err_code)
                         raise IOError(status)
@@ -533,14 +570,18 @@ class DAQmx:
             # else:
             #     pass
 
-            ##configure the triggering
+            ##configure the triggering, except for counters
             if not trigger_settings.enable:
-                err = self._task.DisableStartTrig()
-                if err != 0:
-                    raise IOError(self.DAQmxGetErrorString(err))
+                if channel.source == 'Counter':
+                    pass
+                else:
+                    err = self._task.DisableStartTrig()
+                    if err != 0:
+                        raise IOError(self.DAQmxGetErrorString(err))
             else:
                 if 'PF' in trigger_settings.trig_source:
-                    self._task.CfgDigEdgeStartTrig(trigger_settings.trig_source, Edge[trigger_settings.edge].value)
+                    self._task.CfgDigEdgeStartTrig(trigger_settings.trig_source,
+                                                   Edge[trigger_settings.edge].value)
                 elif 'ai' in trigger_settings.trig_source:
                     self._task.CfgAnlgEdgeStartTrig(trigger_settings.trig_source,
                                                     Edge[trigger_settings.edge].value,
@@ -634,13 +675,19 @@ class DAQmx:
         else:
             raise IOError(f'Insufficient number of samples have been read:{read.value}/{N}')
 
-    def readCounter(self, Nchannels, counting_time=10.):
+    def readCounter(self, Nchannels, counting_time=10., read_function="Ex"):
 
         data_counter = np.zeros(Nchannels, dtype='uint32')
         read = PyDAQmx.int32()
-        self._task.ReadCounterU32Ex(PyDAQmx.DAQmx_Val_Auto, 2*counting_time, PyDAQmx.DAQmx_Val_GroupByChannel,
-                                    data_counter,
-                                    Nchannels, PyDAQmx.byref(read), None)
+        if read_function == "Ex":
+            self._task.ReadCounterU32Ex(PyDAQmx.DAQmx_Val_Auto, 2*counting_time,
+                                        PyDAQmx.DAQmx_Val_GroupByChannel,
+                                        data_counter,
+                                        Nchannels, PyDAQmx.byref(read), None)
+        else:
+            self._task.ReadCounterU32(PyDAQmx.DAQmx_Val_Auto, 2*counting_time,
+                                        data_counter, Nchannels, PyDAQmx.byref(read), None)
+            
         self._task.StopTask()
 
         if read.value == Nchannels:

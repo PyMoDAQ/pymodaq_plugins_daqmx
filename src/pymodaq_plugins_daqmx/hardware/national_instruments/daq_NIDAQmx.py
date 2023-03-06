@@ -294,6 +294,7 @@ class DAQ_NIDAQmx_base(DAQmx):
         self.channels = None
         self.clock_settings = None
         self.trigger_settings = None
+        self.live = False
         self.refresh_hardware()
 
 
