@@ -103,7 +103,6 @@ class DAQ_0DViewer_DAQmx_PLcounter(DAQ_Viewer_base):
         if update:
             self.update_tasks()
             self.controller["clock"].start()
-
         
         read_data = self.controller["counter"].readCounter(1, counting_time=self.counting_time)
         data_pl = read_data*self.counting_time

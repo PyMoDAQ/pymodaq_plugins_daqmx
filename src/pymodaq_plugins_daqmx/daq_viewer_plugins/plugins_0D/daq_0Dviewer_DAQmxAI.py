@@ -13,7 +13,8 @@ logger = set_logger(get_module_name(__file__))
 
 
 class DAQ_0DViewer_DAQmxAI(DAQ_Viewer_base):
-    """
+    """Specific DAQmx plugin for getting analog input data as 0D or 1D data
+
     """
     params = comon_parameters+[
         {'title': 'Display type:', 'name': 'display', 'type': 'list', 'limits': ['0D', '1D']},
@@ -56,32 +57,14 @@ class DAQ_0DViewer_DAQmxAI(DAQ_Viewer_base):
             * controller (object) initialized controller
             *initialized: (bool): False if initialization failed otherwise True
         """
+        self.controller = self.ini_detector_init(controller, dict(ai=DAQmx()))
 
-        try:
-            self.status.update(edict(initialized=False,info="",x_axis=None,y_axis=None,controller=None))
-            if self.settings.child(('controller_status')).value() == "Slave":
-                if controller is None:
-                    raise Exception('no controller has been defined externally while this detector is a slave one')
-                else:
-                    self.controller = controller
-            else:
+        self.update_tasks()
 
-                self.controller = dict(ai=DAQmx())
-                #####################################
+        info = "Current measurement ready"
+        initialized = True
 
-            self.update_tasks()
-
-
-            self.status.info = "Current measurement ready"
-            self.status.initialized = True
-            self.status.controller = self.controller
-            return self.status
-
-        except Exception as e:
-            self.emit_status(ThreadCommand('Update_Status', [getLineInfo() + str(e), 'log']))
-            self.status.info = getLineInfo() + str(e)
-            self.status.initialized = False
-            return self.status
+        return info, initialized
 
     def update_tasks(self):
 
