@@ -1,5 +1,5 @@
 from pymodaq_plugins_daqmx.hardware.national_instruments.daq_NIDAQmx import DAQ_NIDAQmx_Viewer
-from pymodaq.daq_viewer.utility_classes import main
+from pymodaq.control_modules.viewer_utility_classes import main
 
 
 class DAQ_1DViewer_DAQmx(DAQ_NIDAQmx_Viewer):

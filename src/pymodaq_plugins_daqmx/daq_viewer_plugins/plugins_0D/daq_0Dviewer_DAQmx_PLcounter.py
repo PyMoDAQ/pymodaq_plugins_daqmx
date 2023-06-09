@@ -11,6 +11,7 @@ from PyDAQmx import DAQmx_Val_DoNotInvertPolarity, DAQmxConnectTerms, DAQmx_Val_
 #     , DAQmx_Val_FiniteSamps, DAQmx_Val_CurrReadPos, \
 #      DAQmx_Val_DoNotOverwriteUnreadSamps
 
+
 class DAQ_0DViewer_DAQmx_PLcounter(DAQ_Viewer_base):
     """
     Plugin for a 0D PL counter, based on a NI card.
@@ -46,7 +47,6 @@ class DAQ_0DViewer_DAQmx_PLcounter(DAQ_Viewer_base):
         else:
             self.stop()
             self.update_tasks()
-       
 
     def ini_detector(self, controller=None):
         """Detector communication initialization

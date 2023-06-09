@@ -1,6 +1,8 @@
 import numpy as np
 from easydict import EasyDict as edict
-from pymodaq.daq_utils.daq_utils import ThreadCommand, getLineInfo, DataFromPlugins, Axis, set_logger, get_module_name
+from pymodaq.utils.daq_utils import ThreadCommand, getLineInfo
+from pymodaq.utils.data import DataFromPlugins, Axis
+from pymodaq.utils.logger import set_logger, get_module_name
 from pymodaq.control_modules.viewer_utility_classes import DAQ_Viewer_base, comon_parameters, main
 
 from pymodaq_plugins_daqmx.hardware.national_instruments.daqmx import DAQmx, DAQ_analog_types, DAQ_thermocouples,\
@@ -8,6 +10,7 @@ from pymodaq_plugins_daqmx.hardware.national_instruments.daqmx import DAQmx, DAQ
     ClockSettings, AIChannel, Counter, AIThermoChannel, AOChannel, TriggerSettings, DOChannel, DIChannel
 
 logger = set_logger(get_module_name(__file__))
+
 
 class DAQ_0DViewer_DAQmxAI(DAQ_Viewer_base):
     """
@@ -91,8 +94,6 @@ class DAQ_0DViewer_DAQmxAI(DAQ_Viewer_base):
                                                Nsamples=self.settings.child('Nsamples').value(), repetition=self.live)
 
         self.controller['ai'].update_task(self.channels_ai, self.clock_settings_ai)
-
-
 
     def close(self):
         """
