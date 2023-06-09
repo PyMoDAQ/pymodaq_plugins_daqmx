@@ -2,7 +2,7 @@ import PyDAQmx
 import ctypes
 from enum import IntEnum
 import numpy as np
-from pymodaq.daq_utils.daq_utils import set_logger, get_module_name
+from pymodaq.utils.logger import set_logger, get_module_name
 
 logger = set_logger(get_module_name(__file__))
 
@@ -592,8 +592,6 @@ class DAQmx:
         except Exception as e:
             print(e)
 
-
-
     def register_callback(self, callback, event='done', nsamples=1):
 
         if event == 'done':
@@ -783,6 +781,7 @@ class DAQmx:
         """
         devices = self.update_NIDAQ_devices()
         self.update_NIDAQ_channels(devices)
+
 
 if __name__ == '__main__':
     print(DAQmx.get_NIDAQ_channels())
