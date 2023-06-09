@@ -262,9 +262,8 @@ def try_string_buffer(fun, *args):
 
 
 class DAQmx:
-
+    """Wrapper around the PyDAQmx package giving an easy to use object to instantiate channels and tasks"""
     def __init__(self):
-        super().__init__()
         self.devices = []
         self.channels = []
         self._device = None
@@ -402,7 +401,6 @@ class DAQmx:
                     sources.extend(channels)
         return sources
 
-
     def update_task(self, channels=[], clock_settings=ClockSettings(), trigger_settings=TriggerSettings()):
         """
 
@@ -416,9 +414,7 @@ class DAQmx:
                 self._task = None
                 self.c_callback = None
 
-
             self._task = PyDAQmx.Task()
-
 
             ## create all channels one task for one type of channels
             for channel in channels:
