@@ -29,7 +29,8 @@ class DAQ_Move_DAQmx_ScannerControl(DAQ_Move_base):
     """
     _controller_units = 'nm'  
     is_multiaxes = False  
-    axes_names = [ ] 
+    axes_names = [ ]
+    _epsilon = 10
 
     params = [ {"title": "Output channel:", "name": "analog_channel",
                 "type": "list", "limits": DAQmx.get_NIDAQ_channels(source_type="Analog_Output")},
