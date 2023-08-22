@@ -4,10 +4,10 @@ from pymodaq.control_modules.move_utility_classes import DAQ_Move_base, comon_pa
 from pymodaq.utils.daq_utils import ThreadCommand # object used to send info back to the main thread
 from pymodaq.utils.parameter import Parameter
 
+from pymodaq_plugins_daqmx.hardware.national_instruments.daqmx_objects import AO_with_clock_DAQmx
+
 from pymodaq_plugins_daqmx.hardware.national_instruments.daqmx import DAQmx, AOChannel, \
     ClockSettings, DAQ_analog_types, ClockCounter, Edge
-
-from PyDAQmx import DAQmx_Val_FiniteSamps
 
 import PyDAQmx
 
@@ -27,8 +27,8 @@ class DAQ_Move_DAQmx_MultipleScannerControl(DAQ_Move_base):
 
     """
     _controller_units = 'nm'  
-    is_multiaxes = False  
-    axes_names = [ ]
+    is_multiaxes = True
+    axes_names = ['x', 'y']
     _epsilon = 10
 
     params = [ {"title": "Output channel:", "name": "analog_channel",
@@ -44,7 +44,6 @@ class DAQ_Move_DAQmx_MultipleScannerControl(DAQ_Move_base):
         self.controller = None
         self.clock = None
         self.step_size = 100.0  # in nm! be careful with the scaling param
-        self.step_time = 10e-3
         self.number_steps = 1
         self.conv_factor = 7500.0
         self.clock_channel = None
@@ -70,7 +69,7 @@ class DAQ_Move_DAQmx_MultipleScannerControl(DAQ_Move_base):
         if len(self.voltage_list) > 1:
             try:
                 current_step_index = PyDAQmx.c_ulong()
-                self.clock.task.GetCOCount(self.clock_channel.name, PyDAQmx.byref(current_step_index))
+                self.controller.clock.task.GetCOCount(self.clock_channel.name, PyDAQmx.byref(current_step_index))
                 index = self.init_step_index - current_step_index.value
                 voltage = self.voltage_list[min(int(index/2), len(self.voltage_list)-1)]
             except:  # when the task did not start
@@ -78,7 +77,7 @@ class DAQ_Move_DAQmx_MultipleScannerControl(DAQ_Move_base):
         
         # if we do only one step, we do not care, there is no timing anyway.
         else:
-            voltage = self.controller.get_last_write()
+            voltage = self.controller.analog.get_last_write() # TODO check type here
         # convert voltage to position
         pos = voltage * self.conv_factor
         pos = self.get_position_with_scaling(pos)
@@ -86,9 +85,9 @@ class DAQ_Move_DAQmx_MultipleScannerControl(DAQ_Move_base):
 
     def close(self):
         """ Terminate the communication protocol"""
-        print("move_done received, closing task")
-        self.clock.close()
-        self.controller.close()
+        # This might be brutal if we are controlling another axis at the same time
+        self.controller["clock"].close()
+        self.controller["analog"].close()
 
     def commit_settings(self, param: Parameter):
         """Apply the consequences of a change of value in the detector settings
@@ -99,15 +98,14 @@ class DAQ_Move_DAQmx_MultipleScannerControl(DAQ_Move_base):
             A given parameter (within detector_settings) whose value has been changed by the user
         """
         if param.name() == "analog_channel":
-            self.close()
             self.update_task()
         elif param.name() == "clock_channel":
-            self.close()
+            self.controller.clock_channel_name = self.settings.child("clock_channel").value()
             self.update_task()
         elif param.name() == "step_size":
             self.step_size = param.value()
         elif param.name() == "step_time":
-            self.step_time = param.value()*1e-3
+            self.controller.clock_frequency = 1e3 / self.settings.child("step_time").value()  # time give in ms
         elif param.name() == "conv_factor":
             self.conv_factor = param.value()
 
@@ -126,12 +124,23 @@ class DAQ_Move_DAQmx_MultipleScannerControl(DAQ_Move_base):
         initialized: bool
             False if initialization failed otherwise True
         """
-        self.controller = DAQmx()
-        self.clock = DAQmx()
+        # we need a clock task and analog output task.
+        # The analog output can handle several channels, for the different axis
+        self.controller = self.ini_stage_init(old_controller=controller,
+                                              new_controller=AO_with_clock_DAQmx())
+
         self.step_size = self.settings.child("step_size").value()
-        # Step time is given in ms by the user
-        self.step_time = self.settings.child("step_time").value()*1e-3
         self.conv_factor = self.settings.child("conv_factor").value()
+
+        # Step time is given in ms by the user
+        # Clock channel and step time should only be modified on the master actuator
+        # because the clock is shared. If not master, these parameters are hidden.
+        if self.settings.child("multiaxes", "multi_status") == "Master":
+            self.controller.clock_frequency = 1e3 / self.settings.child("step_time").value()  # time give in ms
+            self.controller.clock_channel_name = self.settings.child("clock_channel").value()
+        else:
+            self.settings.child("step_time").hide()
+            self.settings.child("clock_channel").hide()
 
         # we need to close the clock once the move is done, to free
         # the counter resource
@@ -158,8 +167,7 @@ class DAQ_Move_DAQmx_MultipleScannerControl(DAQ_Move_base):
         value: (float) value of the absolute target positioning 
         """
         if value == 0.0:
-            value = 1.0
-        self.close()
+            value = 1.0  # using 0.0 creates issues
         value = self.check_bound(value)  # if user checked bounds, the defined bounds are applied here
         self.target_value = value
         value = self.set_position_with_scaling(value)  # apply scaling if the user specified one
@@ -173,7 +181,6 @@ class DAQ_Move_DAQmx_MultipleScannerControl(DAQ_Move_base):
         ----------
         value: (float) value of the relative target positioning
         """
-        self.close()
         value = self.check_bound(self.current_value + value) - self.current_value
         self.target_value = value + self.current_value
         if self.target_value == 0.0:
@@ -201,32 +208,21 @@ class DAQ_Move_DAQmx_MultipleScannerControl(DAQ_Move_base):
                                          value_min=min_voltage,
                                          value_max=max_voltage)
 
-        # If we do more than one step, we need a clock for the time sampling
+        # If we do more than one step, we need the clock for the time sampling
         # because we want a smooth and slow movement.
         if len(self.voltage_list) > 1:
-            self.clock_channel = ClockCounter(1/self.step_time,
-                                              name=self.settings.child("clock_channel").value(),
-                                              source="Counter")
-            self.clock.update_task(channels=[self.clock_channel])
-            # we need to set the rate again, I do not understand why
-            self.clock.task.SetSampClkRate(1/self.step_time) 
-            self.clock.task.CfgImplicitTiming(DAQmx_Val_FiniteSamps, self.number_steps+1)
-           
-            clock_settings_ao = ClockSettings(source="/" + self.clock_channel.name + "InternalOutput",
-                                              frequency=1/self.step_time,
-                                              edge=Edge.names()[0],
-                                              Nsamples=len(self.voltage_list)+1,
-                                              repetition=False)
+            clock_settings_ao = self.controller.set_up_clock(self.number_steps)
         else:
             # empty clock settings if we do only one step
             clock_settings_ao = ClockSettings(source=None,
-                                              frequency=1/self.step_time,
+                                              frequency=1/self.controller.clock_frequency,
                                               Nsamples=1,
                                               edge=Edge.names()[0],
                                               repetition=False)
-            
-        self.controller.update_task(channels=[self.scanner_channel],
-                                    clock_settings=clock_settings_ao)
+
+        self.controller.update_ao_channels(self.scanner_channel,
+                                           self.settings.child('multiaxes', 'axis').value(),
+                                           clock_settings_ao)
 
     def prepare_voltage_list(self):
         """Generates the list of voltages to move smoothly the scanner."""
@@ -254,15 +250,17 @@ class DAQ_Move_DAQmx_MultipleScannerControl(DAQ_Move_base):
         """ Actually moves the scanner. """
         # compute the path
         self.prepare_voltage_list()
+        # fill with zeros according to the other AO channels in the controller
+        self.controller.set_up_voltage_array(self.voltage_list,
+                                             self.settings.child('multiaxes', 'axis').value())
         # prepare the tasks
         self.update_task()
         if len(self.voltage_list) > 1:
-            #self.controller.task.SetSampTimingType(DAQmx_Val_SampClk)
-            self.clock.start()
+            self.controller.clock.start()
             self.init_step_index = 2*len(self.voltage_list)+1
             
         # Actually tells the NI card to send the list of voltages.
-        self.controller.start()
+        self.controller.write_voltages()
         self.controller.writeAnalog(self.number_steps, 1, self.voltage_list)
             
     
