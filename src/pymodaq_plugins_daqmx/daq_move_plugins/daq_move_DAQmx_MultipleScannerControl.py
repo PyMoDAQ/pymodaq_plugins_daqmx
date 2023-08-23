@@ -7,7 +7,7 @@ from pymodaq.utils.parameter import Parameter
 from pymodaq_plugins_daqmx.hardware.national_instruments.daqmx_objects import AO_with_clock_DAQmx
 
 from pymodaq_plugins_daqmx.hardware.national_instruments.daqmx import DAQmx, AOChannel, \
-    ClockSettings, DAQ_analog_types, ClockCounter, Edge
+    ClockSettings, DAQ_analog_types, Edge
 
 import PyDAQmx
 
@@ -28,7 +28,7 @@ class DAQ_Move_DAQmx_MultipleScannerControl(DAQ_Move_base):
     """
     _controller_units = 'nm'  
     is_multiaxes = True
-    axes_names = ['x', 'y']
+    axes_names = ['x', 'y', 'z']
     _epsilon = 10
 
     params = [ {"title": "Output channel:", "name": "analog_channel",
@@ -42,11 +42,9 @@ class DAQ_Move_DAQmx_MultipleScannerControl(DAQ_Move_base):
 
     def ini_attributes(self):
         self.controller = None
-        self.clock = None
         self.step_size = 100.0  # in nm! be careful with the scaling param
         self.number_steps = 1
         self.conv_factor = 7500.0
-        self.clock_channel = None
         self.scanner_channel = None
         self.voltage_list = np.array([0.0])
         self.init_step_index = 0
@@ -69,7 +67,8 @@ class DAQ_Move_DAQmx_MultipleScannerControl(DAQ_Move_base):
         if len(self.voltage_list) > 1:
             try:
                 current_step_index = PyDAQmx.c_ulong()
-                self.controller.clock.task.GetCOCount(self.clock_channel.name, PyDAQmx.byref(current_step_index))
+                self.controller.clock.task.GetCOCount(self.controller.clock_channel_name,
+                                                      PyDAQmx.byref(current_step_index))
                 index = self.init_step_index - current_step_index.value
                 voltage = self.voltage_list[min(int(index/2), len(self.voltage_list)-1)]
             except:  # when the task did not start
@@ -86,8 +85,8 @@ class DAQ_Move_DAQmx_MultipleScannerControl(DAQ_Move_base):
     def close(self):
         """ Terminate the communication protocol"""
         # This might be brutal if we are controlling another axis at the same time
-        self.controller["clock"].close()
-        self.controller["analog"].close()
+        self.controller.clock.close()
+        self.controller.analog.close()
 
     def commit_settings(self, param: Parameter):
         """Apply the consequences of a change of value in the detector settings
@@ -135,7 +134,7 @@ class DAQ_Move_DAQmx_MultipleScannerControl(DAQ_Move_base):
         # Step time is given in ms by the user
         # Clock channel and step time should only be modified on the master actuator
         # because the clock is shared. If not master, these parameters are hidden.
-        if self.settings.child("multiaxes", "multi_status") == "Master":
+        if self.settings.child("multiaxes", "multi_status").value() == "Master":
             self.controller.clock_frequency = 1e3 / self.settings.child("step_time").value()  # time give in ms
             self.controller.clock_channel_name = self.settings.child("clock_channel").value()
         else:
@@ -255,13 +254,13 @@ class DAQ_Move_DAQmx_MultipleScannerControl(DAQ_Move_base):
                                              self.settings.child('multiaxes', 'axis').value())
         # prepare the tasks
         self.update_task()
-        if len(self.voltage_list) > 1:
+        if self.number_steps > 1:
             self.controller.clock.start()
             self.init_step_index = 2*len(self.voltage_list)+1
             
         # Actually tells the NI card to send the list of voltages.
         self.controller.write_voltages()
-        self.controller.writeAnalog(self.number_steps, 1, self.voltage_list)
+
             
     
 if __name__ == '__main__':

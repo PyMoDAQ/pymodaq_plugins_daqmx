@@ -1,5 +1,4 @@
-import PyDAQmx
-import ctypes
+from collections import OrderedDict
 import numpy as np
 import pymodaq_plugins_daqmx.hardware.national_instruments.daqmx as dq
 from PyDAQmx import DAQmx_Val_FiniteSamps
@@ -8,7 +7,7 @@ from pymodaq.utils.logger import set_logger, get_module_name
 
 logger = set_logger(get_module_name(__file__))
 
-class AO_with_clock_DAQmx:
+class AO_with_clock_DAQmx():
     """Object used to coordinate the use of several DAQmx by several modules.
     Its main intended use is to control the movement of several scanners (AO chans) with
     the timing given by the same clock channel."""
@@ -18,9 +17,10 @@ class AO_with_clock_DAQmx:
         self.clock_channel_name = ''
         self.clock_channel = None
         self.clock_frequency = 100.0
-        self.AO_channels = {}
+        self.AO_channels = OrderedDict()
         self.num_ch = 0
         self.voltage_array = None
+        self.max_ch_nb = 1
 
     def set_up_clock(self, nb_steps):
         """Prepare the clock with the desired frequency
@@ -28,6 +28,8 @@ class AO_with_clock_DAQmx:
         self.clock_channel = dq.ClockCounter(self.clock_frequency,
                                              name=self.clock_channel_name,
                                              source="Counter")
+        if self.clock.task is not None:
+            self.clock.task.WaitUntilTaskDone(-1)  # in case another scanner is still moving
         self.clock.update_task(channels=[self.clock_channel])
         # we need to set the rate again, I do not understand why
         self.clock.task.SetSampClkRate(self.clock_frequency)
@@ -38,6 +40,7 @@ class AO_with_clock_DAQmx:
                                              edge=dq.Edge.names()[0],
                                              Nsamples=nb_steps + 1,
                                              repetition=False)
+        self.get_max_ch_nb()
         return clock_settings_ao
 
     def update_ao_channels(self, channel, axis, clock_settings_ao):
@@ -45,11 +48,24 @@ class AO_with_clock_DAQmx:
         corresponding DAQmx object."""
         self.AO_channels[axis] = channel
         self.num_ch = len(self.AO_channels)
+        self.get_max_ch_nb()
+        if self.num_ch > self.max_ch_nb:
+            logger.info("Too many AO channels!")
+            return
+        if self.clock.task is not None:  # we wait for slow movements
+            print("clock done", self.clock.isTaskDone())
+            self.clock.task.WaitUntilTaskDone(-1)  # in case another scanner is still moving
         self.analog.update_task(channels=[self.AO_channels[ax] for ax in self.AO_channels.keys()],
                                 clock_settings=clock_settings_ao)
 
     def set_up_voltage_array(self, voltage_list, axis):
-        pass
+        if self.num_ch == 1:
+            self.voltage_array = voltage_list
+        elif self.num_ch > 1:
+            self.voltage_array = np.zeros((len(voltage_list), self.num_ch))
+            for i, ax in enumerate(self.AO_channels.keys()):
+                if ax == axis:
+                    self.voltage_array[:, i] = voltage_list
 
     def write_voltages(self):
         """Actually writes the voltages"""
@@ -57,3 +73,8 @@ class AO_with_clock_DAQmx:
         self.analog.start()
         self.analog.writeAnalog(nb_steps, self.num_ch, self.voltage_array)
 
+    def get_max_ch_nb(self):
+        # get the max number of available AO channels of the device with the clock
+        dev = self.clock_channel_name.split('/')[0]
+        chans = self.clock.get_NIDAQ_channels(devices=[dev], source_type="Analog_Output")
+        self.max_ch_nb = len(chans)
