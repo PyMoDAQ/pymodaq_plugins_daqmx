@@ -401,7 +401,8 @@ class DAQmx:
                     sources.extend(channels)
         return sources
 
-    def update_task(self, channels=[], clock_settings=ClockSettings(), trigger_settings=TriggerSettings()):
+    def update_task(self, channels=[], clock_settings=ClockSettings(), trigger_settings=TriggerSettings(),
+                    task_name=''):
         """
 
         """
@@ -414,7 +415,7 @@ class DAQmx:
                 self._task = None
                 self.c_callback = None
 
-            self._task = PyDAQmx.Task()
+            self._task = PyDAQmx.Task(task_name)
 
             ## create all channels one task for one type of channels
             for channel in channels:

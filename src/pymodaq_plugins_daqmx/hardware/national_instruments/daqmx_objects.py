@@ -21,6 +21,7 @@ class AO_with_clock_DAQmx():
         self.num_ch = 0
         self.voltage_array = None
         self.max_ch_nb = 1
+        self.applied_voltages = OrderedDict()
 
     def set_up_clock(self, nb_steps):
         """Prepare the clock with the desired frequency
@@ -30,7 +31,7 @@ class AO_with_clock_DAQmx():
                                              source="Counter")
         if self.clock.task is not None:
             self.clock.task.WaitUntilTaskDone(-1)  # in case another scanner is still moving
-        self.clock.update_task(channels=[self.clock_channel])
+        self.clock.update_task(channels=[self.clock_channel], task_name="clock")
         # we need to set the rate again, I do not understand why
         self.clock.task.SetSampClkRate(self.clock_frequency)
         self.clock.task.CfgImplicitTiming(DAQmx_Val_FiniteSamps, nb_steps + 1)
@@ -47,6 +48,8 @@ class AO_with_clock_DAQmx():
         """Update the dict containing the AO channels, and the associated task in the
         corresponding DAQmx object."""
         self.AO_channels[axis] = channel
+        if axis not in self.applied_voltages.keys():
+            self.applied_voltages[axis] = 0.0
         self.num_ch = len(self.AO_channels)
         self.get_max_ch_nb()
         if self.num_ch > self.max_ch_nb:
@@ -56,20 +59,35 @@ class AO_with_clock_DAQmx():
             print("clock done", self.clock.isTaskDone())
             self.clock.task.WaitUntilTaskDone(-1)  # in case another scanner is still moving
         self.analog.update_task(channels=[self.AO_channels[ax] for ax in self.AO_channels.keys()],
-                                clock_settings=clock_settings_ao)
+                                clock_settings=clock_settings_ao, task_name="analog_move")
 
     def set_up_voltage_array(self, voltage_list, axis):
         if self.num_ch == 1:
             self.voltage_array = voltage_list
         elif self.num_ch > 1:
-            self.voltage_array = np.zeros((len(voltage_list), self.num_ch))
+            self.voltage_array = np.zeros((self.num_ch, len(voltage_list)))
             for i, ax in enumerate(self.AO_channels.keys()):
                 if ax == axis:
-                    self.voltage_array[:, i] = voltage_list
+                    self.voltage_array[i, :] = voltage_list
+                else:
+                    # we need to keep the other scanners were they are
+                    self.voltage_array[i, :] = self.applied_voltages[ax] * np.ones(len(voltage_list))
 
     def write_voltages(self):
         """Actually writes the voltages"""
-        nb_steps = np.size(self.voltage_array, axis=0)
+        if len(np.shape(self.voltage_array)) > 1:
+            nb_steps = np.size(self.voltage_array, axis=1)
+        else:
+            nb_steps = len(self.voltage_array)
+
+        # store last values of the lists as applied voltage
+        axes = [ax for ax in self.applied_voltages.keys()]
+        if len(axes) == 1:
+            self.applied_voltages[axes[0]] = self.voltage_array[-1]
+        elif len(axes) > 1:
+            for i in range(len(axes)):
+                self.applied_voltages[axes[i]] = self.voltage_array[i, -1]
+
         self.analog.start()
         self.analog.writeAnalog(nb_steps, self.num_ch, self.voltage_array)
 
