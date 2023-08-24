@@ -1,5 +1,6 @@
 from collections import OrderedDict
 import numpy as np
+from qtpy.QtCore import QObject, Signal
 import pymodaq_plugins_daqmx.hardware.national_instruments.daqmx as dq
 from PyDAQmx import DAQmx_Val_FiniteSamps
 
@@ -7,11 +8,15 @@ from pymodaq.utils.logger import set_logger, get_module_name
 
 logger = set_logger(get_module_name(__file__))
 
-class AO_with_clock_DAQmx():
+
+class AO_with_clock_DAQmx(QObject):
     """Object used to coordinate the use of several DAQmx by several modules.
     Its main intended use is to control the movement of several scanners (AO chans) with
     the timing given by the same clock channel."""
+    ni_card_ready_for_moving = Signal()
     def __init__(self):
+        QObject.__init__(self)
+
         self.clock = dq.DAQmx()
         self.analog = dq.DAQmx()
         self.clock_channel_name = ''
@@ -57,13 +62,11 @@ class AO_with_clock_DAQmx():
             logger.info("Too many AO channels!")
             return
         if self.clock.task is not None:  # we wait for slow movements
-            print("clock done", self.clock.isTaskDone())
             self.clock.task.WaitUntilTaskDone(-1)  # in case another scanner is still moving
         self.analog.update_task(channels=[self.AO_channels[ax] for ax in self.AO_channels.keys()],
                                 clock_settings=clock_settings_ao)
 
     def set_up_voltage_array(self, voltage_list, axis):
-        print("moving axis", axis)
         if self.num_ch == 1:
             self.voltage_array = voltage_list
         elif self.num_ch > 1:
@@ -91,7 +94,6 @@ class AO_with_clock_DAQmx():
                 self.applied_voltages[axes[i]] = self.voltage_array[i, -1]
 
         self.analog.start()
-        print('writing voltages')
         self.analog.writeAnalog(nb_steps, self.num_ch, self.voltage_array)
 
     def get_max_ch_nb(self):
@@ -104,3 +106,8 @@ class AO_with_clock_DAQmx():
         self.locked = False
         self.clock.stop()
         self.analog.stop()
+
+    def received_move_done(self):
+        self.locked = False
+        self.ni_card_ready_for_moving.emit()
+

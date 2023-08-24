@@ -78,7 +78,6 @@ class DAQ_Move_DAQmx_MultipleScannerControl(DAQ_Move_base):
         # if we do only one step, we do not care, there is no timing anyway.
         else:
             voltage = self.controller.applied_voltages[self.settings.child('multiaxes', 'axis').value()]
-            print("last written voltage", voltage)
         # convert voltage to position
         pos = voltage * self.conv_factor
         pos = self.get_position_with_scaling(pos)
@@ -143,7 +142,8 @@ class DAQ_Move_DAQmx_MultipleScannerControl(DAQ_Move_base):
             self.settings.child("step_time").hide()
             self.settings.child("clock_channel").hide()
 
-        self.move_done_signal.connect(self.finish_waiting)
+        self.move_done_signal.connect(self.controller.received_move_done)
+        self.controller.ni_card_ready_for_moving.connect(self.finish_waiting)
         
         try:
             self.update_task()
@@ -165,7 +165,6 @@ class DAQ_Move_DAQmx_MultipleScannerControl(DAQ_Move_base):
         ----------
         value: (float) value of the absolute target positioning 
         """
-        print("move abs", "wait", self.waiting_to_move, "locked", self.controller.locked)
         if value == 0.0:
             value = 1.0  # using 0.0 creates issues
         value = self.check_bound(value)  # if user checked bounds, the defined bounds are applied here
@@ -181,7 +180,6 @@ class DAQ_Move_DAQmx_MultipleScannerControl(DAQ_Move_base):
                 self.move_scanner(init=init)
                 self.emit_status(ThreadCommand('Update_Status', ['Absolute movement.']))
             else:
-                print("we have to wait")
                 self.waiting_to_move = [True, "abs"]
 
     def move_rel(self, value):
@@ -285,8 +283,6 @@ class DAQ_Move_DAQmx_MultipleScannerControl(DAQ_Move_base):
         self.controller.write_voltages()
 
     def finish_waiting(self):
-        print("move_done received")
-        self.controller.locked = False
         if self.waiting_to_move[0]:
             self.move_scanner()
             if self.waiting_to_move[1] == "abs":
