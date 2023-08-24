@@ -31,7 +31,7 @@ class AO_with_clock_DAQmx():
                                              source="Counter")
         if self.clock.task is not None:
             self.clock.task.WaitUntilTaskDone(-1)  # in case another scanner is still moving
-        self.clock.update_task(channels=[self.clock_channel], task_name="clock")
+        self.clock.update_task(channels=[self.clock_channel])
         # we need to set the rate again, I do not understand why
         self.clock.task.SetSampClkRate(self.clock_frequency)
         self.clock.task.CfgImplicitTiming(DAQmx_Val_FiniteSamps, nb_steps + 1)
@@ -59,9 +59,10 @@ class AO_with_clock_DAQmx():
             print("clock done", self.clock.isTaskDone())
             self.clock.task.WaitUntilTaskDone(-1)  # in case another scanner is still moving
         self.analog.update_task(channels=[self.AO_channels[ax] for ax in self.AO_channels.keys()],
-                                clock_settings=clock_settings_ao, task_name="analog_move")
+                                clock_settings=clock_settings_ao)
 
     def set_up_voltage_array(self, voltage_list, axis):
+        print("moving axis", axis)
         if self.num_ch == 1:
             self.voltage_array = voltage_list
         elif self.num_ch > 1:

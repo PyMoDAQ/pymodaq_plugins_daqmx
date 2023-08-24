@@ -143,7 +143,7 @@ class DAQ_Move_DAQmx_MultipleScannerControl(DAQ_Move_base):
 
         # we need to close the clock once the move is done, to free
         # the counter resource
-        self.move_done_signal.connect(self.close)
+        self.move_done_signal.connect(lambda: print("move_done received"))
         
         try:
             self.update_task()
