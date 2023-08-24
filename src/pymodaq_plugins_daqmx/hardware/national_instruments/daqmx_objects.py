@@ -22,6 +22,7 @@ class AO_with_clock_DAQmx():
         self.voltage_array = None
         self.max_ch_nb = 1
         self.applied_voltages = OrderedDict()
+        self.locked = False  # True when busy already moving something
 
     def set_up_clock(self, nb_steps):
         """Prepare the clock with the desired frequency
@@ -90,6 +91,7 @@ class AO_with_clock_DAQmx():
                 self.applied_voltages[axes[i]] = self.voltage_array[i, -1]
 
         self.analog.start()
+        print('writing voltages')
         self.analog.writeAnalog(nb_steps, self.num_ch, self.voltage_array)
 
     def get_max_ch_nb(self):
@@ -97,3 +99,8 @@ class AO_with_clock_DAQmx():
         dev = self.clock_channel_name.split('/')[0]
         chans = self.clock.get_NIDAQ_channels(devices=[dev], source_type="Analog_Output")
         self.max_ch_nb = len(chans)
+
+    def stop(self):
+        self.locked = False
+        self.clock.stop()
+        self.analog.stop()

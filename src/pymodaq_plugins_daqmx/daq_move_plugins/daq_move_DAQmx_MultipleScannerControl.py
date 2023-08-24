@@ -48,6 +48,7 @@ class DAQ_Move_DAQmx_MultipleScannerControl(DAQ_Move_base):
         self.scanner_channel = None
         self.voltage_list = np.array([0.0])
         self.init_step_index = 0
+        self.waiting_to_move = [False, "abs"]
 
     def get_actuator_value(self):
         """Get the current value from the hardware with scaling conversion.
@@ -76,7 +77,8 @@ class DAQ_Move_DAQmx_MultipleScannerControl(DAQ_Move_base):
         
         # if we do only one step, we do not care, there is no timing anyway.
         else:
-            voltage = self.controller.analog.get_last_write() # TODO check type here
+            voltage = self.controller.applied_voltages[self.settings.child('multiaxes', 'axis').value()]
+            print("last written voltage", voltage)
         # convert voltage to position
         pos = voltage * self.conv_factor
         pos = self.get_position_with_scaling(pos)
@@ -141,15 +143,13 @@ class DAQ_Move_DAQmx_MultipleScannerControl(DAQ_Move_base):
             self.settings.child("step_time").hide()
             self.settings.child("clock_channel").hide()
 
-        # we need to close the clock once the move is done, to free
-        # the counter resource
-        self.move_done_signal.connect(lambda: print("move_done received"))
+        self.move_done_signal.connect(self.finish_waiting)
         
         try:
             self.update_task()
             initialized = True
             info = "NI card based piezo scanner control."
-            self.move_abs(0.0)  # to avoid bad initial positioning because
+            self.move_abs(0.0, init=True)  # to avoid bad initial positioning because
             # we can't read the actual value from the NI card.
         except Exception as e:
             print(e)
@@ -158,20 +158,31 @@ class DAQ_Move_DAQmx_MultipleScannerControl(DAQ_Move_base):
     
         return info, initialized
 
-    def move_abs(self, value):
+    def move_abs(self, value, init=False):
         """ Move the actuator to the absolute target defined by value
 
         Parameters
         ----------
         value: (float) value of the absolute target positioning 
         """
+        print("move abs", "wait", self.waiting_to_move, "locked", self.controller.locked)
         if value == 0.0:
             value = 1.0  # using 0.0 creates issues
         value = self.check_bound(value)  # if user checked bounds, the defined bounds are applied here
         self.target_value = value
-        value = self.set_position_with_scaling(value)  # apply scaling if the user specified one
-        self.move_scanner()
-        self.emit_status(ThreadCommand('Update_Status', ['Absolute movement.']))
+        self.set_position_with_scaling(value)  # apply scaling if the user specified one
+        # check if we are already there
+        if np.abs(self.current_value - self.target_value) < self._epsilon and not init:
+            # already there
+            self.emit_status(ThreadCommand('Update_Status', ['Already there.']))
+            return
+        else:
+            if not self.controller.locked or init:
+                self.move_scanner(init=init)
+                self.emit_status(ThreadCommand('Update_Status', ['Absolute movement.']))
+            else:
+                print("we have to wait")
+                self.waiting_to_move = [True, "abs"]
 
     def move_rel(self, value):
         """ Move the actuator to the relative target actuator value defined by value
@@ -180,22 +191,32 @@ class DAQ_Move_DAQmx_MultipleScannerControl(DAQ_Move_base):
         ----------
         value: (float) value of the relative target positioning
         """
-        value = self.check_bound(self.current_value + value) - self.current_value
-        self.target_value = value + self.current_value
-        if self.target_value == 0.0:
-            self.target_value = 1.0
-        value = self.set_position_relative_with_scaling(value)
-        self.move_scanner()
-        self.emit_status(ThreadCommand('Update_Status', ['Relative movement.']))
+        if np.abs(value) < self._epsilon:
+            # already there
+            self.emit_status(ThreadCommand('Update_Status', ['Already there.']))
+            return
+        else:
+            value = self.check_bound(self.current_value + value) - self.current_value
+            self.target_value = value + self.current_value
+            if self.target_value == 0.0:
+                self.target_value = 1.0
+            self.set_position_relative_with_scaling(value)
+            if not self.controller.locked:
+                self.move_scanner()
+                self.emit_status(ThreadCommand('Update_Status', ['Relative movement.']))
+            else:
+                self.waiting_to_move = [True, "rel"]
 
     def move_home(self):
         """Do nothing"""
         self.emit_status(ThreadCommand('Update_Status', ['No home position implemented.']))
 
     def stop_motion(self):
-      """Stop the actuator and emits move_done signal"""
-      self.close()
-      self.emit_status(ThreadCommand('Update_Status', ['Motion stopped.']))
+        """Stop the actuator and emits move_done signal"""
+        self.controller.locked = False
+        self.waiting_to_move[0] = False
+        self.controller.stop()
+        self.emit_status(ThreadCommand('Update_Status', ['Motion stopped.']))
 
     def update_task(self):
         """ Set up the analog output task in the NI card, and the clock if necessary."""
@@ -245,10 +266,12 @@ class DAQ_Move_DAQmx_MultipleScannerControl(DAQ_Move_base):
             self.voltage_list = pos_list/self.conv_factor
         self.number_steps = len(self.voltage_list)
 
-    def move_scanner(self):
+    def move_scanner(self, init=False):
         """ Actually moves the scanner. """
         # compute the path
         self.prepare_voltage_list()
+        if not init:
+            self.controller.locked = True
         # fill with zeros according to the other AO channels in the controller
         self.controller.set_up_voltage_array(self.voltage_list,
                                              self.settings.child('multiaxes', 'axis').value())
@@ -261,7 +284,17 @@ class DAQ_Move_DAQmx_MultipleScannerControl(DAQ_Move_base):
         # Actually tells the NI card to send the list of voltages.
         self.controller.write_voltages()
 
-            
+    def finish_waiting(self):
+        print("move_done received")
+        self.controller.locked = False
+        if self.waiting_to_move[0]:
+            self.move_scanner()
+            if self.waiting_to_move[1] == "abs":
+                self.emit_status(ThreadCommand('Update_Status', ['Absolute movement.']))
+            elif self.waiting_to_move[1] == "rel":
+                self.emit_status(ThreadCommand('Update_Status', ['Relative movement.']))
+            self.waiting_to_move[0] = False
+
     
 if __name__ == '__main__':
     main(__file__)
