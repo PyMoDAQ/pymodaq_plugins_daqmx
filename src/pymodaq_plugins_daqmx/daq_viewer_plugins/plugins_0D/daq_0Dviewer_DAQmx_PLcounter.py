@@ -139,6 +139,7 @@ class DAQ_0DViewer_DAQmx_PLcounter(DAQ_Viewer_base):
                                                clock_settings=ClockSettings(),
                                                trigger_settings=TriggerSettings())
 
+        # connect the clock to the counter
         self.controller["counter"].task.SetSampClkSrc("/" + self.clock_channel.name + "InternalOutput")
 
         
