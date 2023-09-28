@@ -26,3 +26,5 @@ When the movement is over, the scanner plugin received a ``move_done_signal`` fr
 Reading the scanner position
 ----------------------------
 Another issue with using a NI card to pilot a piezo scanner is that **one cannot read the current voltage applied at an analog output.** In order to know the current position of the scanner, the solution used here is to **get the current index of the clock** from the NI card, and then display the corresponding position in the list that was sent to the device. 
+
+As a consequence, the position is set to 1 nm when restarting the plugin, as the current position cannot be read from the hardware. This might cause quick movements, so be careful to go back to zero before closing the plugin. 
