@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Details about the implementation of the MultipleScannerControl move &mdash; pymodaq_plugins_daqmx 0.3.0 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=c02300dd"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Creating a plugin for your specific needs" href="../creating_plugin.html" />
+    <link rel="prev" title="Details about the implementation of the OD viewer PLcounter" href="counter_details.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pymodaq_plugins_daqmx
+              <img src="../_static/splash.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../user_guide.html">User guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="counter_use.html">Using the 0D viewer PLcounter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scanner_use.html">Using the ScannerControl and MultipleScannerControl moves</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../user_guide.html#working-principle-of-the-plugins">Working principle of the plugins</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="counter_details.html">Details about the implementation of the OD viewer PLcounter</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Details about the implementation of the MultipleScannerControl move</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#introduction-of-a-new-object-to-use-as-controller">Introduction of a new object to use as controller</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#handling-of-the-timing">Handling of the timing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#reading-the-scanner-position">Reading the scanner position</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../creating_plugin.html">Creating a plugin for your specific needs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pymodaq_plugins_daqmx</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../user_guide.html">User guide</a></li>
+      <li class="breadcrumb-item active">Details about the implementation of the MultipleScannerControl move</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/user_guide/scanner_details.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="details-about-the-implementation-of-the-multiplescannercontrol-move">
+<h1>Details about the implementation of the MultipleScannerControl move<a class="headerlink" href="#details-about-the-implementation-of-the-multiplescannercontrol-move" title="Permalink to this heading"></a></h1>
+<p>Similarly to the case of the PLcounter, we need to use several channels together to make the scanner work, a clock and an analog output. In principle, we can use the same trick as for the PLcounter and define the controller as a dict containing 2 <code class="docutils literal notranslate"><span class="pre">DAQmx</span></code> objects. This is what is done in the ScannerControl plugin, but its means that you need one clock channel for each analog output channel, so if you have many scanners, it will very quickly become an issue. In addition, with a scanner, you most probably want to use the Scan extension. For each movement, the extension sends the command to move to every actuator roughly simultaneously: if your scanners share the same clock, you will get into trouble.</p>
+<section id="introduction-of-a-new-object-to-use-as-controller">
+<h2>Introduction of a new object to use as controller<a class="headerlink" href="#introduction-of-a-new-object-to-use-as-controller" title="Permalink to this heading"></a></h2>
+<p>The solution proposed with the MultipleScannerControl plugin is to add an additional object to handle the synchronisation of the different scanners. This object is the <code class="docutils literal notranslate"><span class="pre">AO_with_clock_DAQmx</span></code> which is defined in the file <code class="docutils literal notranslate"><span class="pre">daqmx_objects.py</span></code>, which is used as controller instead of the <code class="docutils literal notranslate"><span class="pre">DAQmx</span></code>.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">AO_with_clock_DAQmx</span></code> has 2 attributes, <code class="docutils literal notranslate"><span class="pre">clock</span></code> and <code class="docutils literal notranslate"><span class="pre">analog</span></code> which are <code class="docutils literal notranslate"><span class="pre">DAQmx</span></code> objects, each of them containing, as usual, a single task.</p>
+<p>The clock will thus be shared by all the scanners connected to the <code class="docutils literal notranslate"><span class="pre">AO_with_clock_DAQmx</span></code> controller. The parameters of the clock can thus only be modified in the settings of the Master scanner.</p>
+<p>The analog DAQmx object has an AnalogOutput task with several output channels, one for each scanner. The list of these channels is stored in the attribute <code class="docutils literal notranslate"><span class="pre">AOchannels</span></code> As a result, the list of positions sent by each scanner plugins to describe the movement have to be reformatted, as values have to be sent to all the channels. For exemple, to move the X scanner from 1 to 5 µm in steps of 1 µm, the plugins sends the list <code class="docutils literal notranslate"><span class="pre">[1000,</span> <span class="pre">2000,</span> <span class="pre">3000,</span> <span class="pre">4000,</span> <span class="pre">5000]</span></code>, but if a Y scanner is also connected to the <code class="docutils literal notranslate"><span class="pre">AO_with_clock_DAQmx</span></code>, it needs to be reformatted to <code class="docutils literal notranslate"><span class="pre">[[1000,</span> <span class="pre">2000,</span> <span class="pre">3000,</span> <span class="pre">4000,</span> <span class="pre">5000],</span> <span class="pre">[current_Y_position,</span> <span class="pre">current_Y_position,</span> <span class="pre">current_Y_position,</span> <span class="pre">current_Y_position,</span> <span class="pre">current_Y_position]]</span></code>. This reformatting is done by the <code class="docutils literal notranslate"><span class="pre">AO_with_clock_DAQmx</span></code> controller.</p>
+</section>
+<section id="handling-of-the-timing">
+<h2>Handling of the timing<a class="headerlink" href="#handling-of-the-timing" title="Permalink to this heading"></a></h2>
+<p>Having a single controller object allows performing the movements of each scanners one after the other, without conflicts in the use of the clock counters by the different scanners. This is achieved by locking the <code class="docutils literal notranslate"><span class="pre">AO_with_clock_DAQmx</span></code> controller during the movement of any scanner. When a move command is sent, the <code class="docutils literal notranslate"><span class="pre">locked</span></code> attribute of the controller is set to <code class="docutils literal notranslate"><span class="pre">True</span></code>.
+As long as this variable is set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, no other movement is started. If another scanner gets a command for moving, then it is set to a waiting state (the attribute <code class="docutils literal notranslate"><span class="pre">waiting_to_move</span></code> from the scanner plugin is set to <code class="docutils literal notranslate"><span class="pre">True</span></code>) until the signal <code class="docutils literal notranslate"><span class="pre">ni_card_ready_for_moving</span></code> is received from the controller indicating that the movement can resume.</p>
+<p>When the movement is over, the scanner plugin received a <code class="docutils literal notranslate"><span class="pre">move_done_signal</span></code> from PymoDAQ, which is emitted when the current position is close enough to the current position. This signal is connected to the <code class="docutils literal notranslate"><span class="pre">AO_with_clock_DAQmx</span></code> controller, which switches to the unlocked state (<code class="docutils literal notranslate"><span class="pre">locked</span></code> attribute set back to <code class="docutils literal notranslate"><span class="pre">False</span></code>) and emits the signal <code class="docutils literal notranslate"><span class="pre">ni_card_ready_for_moving</span></code>.</p>
+</section>
+<section id="reading-the-scanner-position">
+<h2>Reading the scanner position<a class="headerlink" href="#reading-the-scanner-position" title="Permalink to this heading"></a></h2>
+<p>Another issue with using a NI card to pilot a piezo scanner is that <strong>one cannot read the current voltage applied at an analog output.</strong> In order to know the current position of the scanner, the solution used here is to <strong>get the current index of the clock</strong> from the NI card, and then display the corresponding position in the list that was sent to the device.</p>
+<p>As a consequence, the position is set to 1 nm when restarting the plugin, as the current position cannot be read from the hardware. This might cause quick movements, so be careful to go back to zero before closing the plugin.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="counter_details.html" class="btn btn-neutral float-left" title="Details about the implementation of the OD viewer PLcounter" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../creating_plugin.html" class="btn btn-neutral float-right" title="Creating a plugin for your specific needs" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Sébastien Weber, Aurore Finco.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
