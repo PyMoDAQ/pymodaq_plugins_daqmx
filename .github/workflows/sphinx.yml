@@ -16,7 +16,7 @@ jobs:
           pip install sphinx sphinx_rtd_theme myst_parser
       - name: Sphinx build
         run: |
-          sphinx-build docs/source _build
+          sphinx-build docs/source ./build/html
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
