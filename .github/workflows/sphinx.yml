@@ -27,5 +27,5 @@ jobs:
         if: ${{ github.event_name == 'push'}}
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: docs/build/html
+          publish_dir: ./build/html
           force_orphan: true
