@@ -22,6 +22,8 @@ jobs:
         with:
           name: html-docs
           path: docs/build/html
+      - name: Create .nojekyll file
+        run: touch docs/build/html/.nojekyll
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         if: ${{ github.event_name == 'push'}}
