@@ -10,6 +10,7 @@ This PyMoDAQ plugin is devoted to the National Instrument signal acquisition and
 In addition, and they are also meant as examples, it provides actuator plugins which can be used to move piezo scanners using the analog output functions of NI acquisition cards, as well as a 0D viewer corresponding to a single photon counter.
 
 This documentation is written as a tutorial to guide you when setting up your NI acquisition devices with PyMoDAQ.
+test
 
 This plugin is compatible with PymoDAQ 4.
 
