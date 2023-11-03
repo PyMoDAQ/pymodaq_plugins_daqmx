@@ -13,4 +13,4 @@ Then you have to analyze the experiment that you want to perform and find the be
 
 * a dict of ``DAQmx`` objects and other hardware controllers, for example if you want to synchronise your acquisition with an actuator which will be triggered by the NI card.
 
-* Another more complicated object (that you will need to write!), like in the MultipleScannerControl example, if you need to share some resources of the NI card between different instrument plugins which control independent parameters/measurments. Beware in particular of the Scan extension which sends all the move commands at the same time.
+* Another more complicated object (that you will need to write!), like in the MultipleScannerControl example, if you need to share some resources of the NI card between different instrument plugins which control independent parameters/measurements. Beware in particular of the Scan extension which sends all the move commands at the same time.
