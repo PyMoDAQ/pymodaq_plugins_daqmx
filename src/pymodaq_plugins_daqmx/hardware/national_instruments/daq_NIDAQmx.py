@@ -1,7 +1,7 @@
 from qtpy import QtWidgets, QtCore
 from qtpy.QtCore import Signal, QThread
 from pymodaq.utils.daq_utils import ThreadCommand, getLineInfo
-from pymodaq.utils.data import DataFromPlugins, Axis
+from pymodaq.utils.data import DataFromPlugins, Axis, DataActuator, DataToExport
 import numpy as np
 from pymodaq.control_modules.viewer_utility_classes import DAQ_Viewer_base
 from pymodaq.control_modules.move_utility_classes import DAQ_Move_base
@@ -470,7 +470,6 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
         refresh_hardware
     """
 
-    data_grabed_signal = Signal(list)
     live_mode_available = True
     params = viewer_params + DAQ_NIDAQmx_base.params
 
@@ -486,8 +485,6 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
             self.settings.child('NIDAQ_type').setLimits(['Analog_Input'])
         elif self.control_type == "Actuator":
             self.settings.child('NIDAQ_type').setLimits(['Analog_Output'])
-
-
 
         self.settings.child('ao_channels').hide()
 
@@ -510,7 +507,6 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
             update_NIDAQ_channels, update_task, DAQ_NIDAQ_source, refresh_hardware
         """
 
-
         if param.parent() is not None:
             if param.parent().name() == 'ai_channels':
                 device = param.opts['title'].split('/')[0]
@@ -521,7 +517,6 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
                 param.child('voltage_settings', 'volt_max').setOpts(limits=[r[1] for r in ranges])
 
         DAQ_NIDAQmx_base.commit_settings(self, param)
-
 
     def ini_detector(self, controller=None):
         """
@@ -596,27 +591,24 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
             for ind in range(len(self.channels)):
                 data_tot.append(np.array([np.mean(data[ind*N:(ind+1)*N])]))
             self.data_grabed_signal.emit([DataFromPlugins(name='NI AI', data=data_tot, dim='Data0D',
-                                          labels=channels_name)])
+                                                          labels=channels_name)])
         else:
             for ind in range(len(self.channels)):
                 data_tot.append(data[ind*N:(ind+1)*N])
-            self.data_grabed_signal.emit([DataFromPlugins(name='NI AI', data=data_tot, dim='Data1D',
-                                          labels=channels_name,
-                                          x_axis=Axis(data=np.linspace(0, N / self.clock_settings.frequency, N),
-                                          y_axis=Axis(label='Analog Input', units=''),
-                                          label='Time', units='s'))])
-
+            self.data_grabed_signal.emit([
+                DataFromPlugins(name='NI AI', data=data_tot, dim='Data1D',
+                                labels=channels_name,
+                                axes=[Axis(data=np.linspace(0, N / self.clock_settings.frequency, N),
+                                           index=0)])])
         return 0  #mandatory for the PyDAQmx callback
-
-
 
     def counter_done(self):
         channels_name = [ch.name for ch in self.channels]
         data_counter = self.readCounter(len(self.channels),
                                         self.settings['counter_settings', 'counting_time'] * 1e-3)
         self.data_grabed_signal.emit([DataFromPlugins(name='NI Counter', data=[data_counter / 1e-3], dim='Data0D',
-                                                      labels=channels_name,
-                                      y_axis=Axis(label='Count Number', units='1/s'))])
+                                                      labels=channels_name,)])
+                                      #y_axis=Axis(label='Count Number', units='1/s'))])
         self.task.StopTask()
 
 
@@ -655,9 +647,7 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
 
         self.settings.child('clock_settings', 'Nsamples').setValue(1)
 
-
-
-    def check_position(self):
+    def get_actuator_value(self) -> DataActuator:
         """Get the current position from the hardware with scaling conversion.
 
         Returns
