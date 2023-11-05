@@ -1,29 +1,31 @@
 import numpy as np
 from pymodaq.utils.daq_utils import ThreadCommand
-from pymodaq.utils.data import DataFromPlugins
+from pymodaq.utils.data import DataWithAxes, DataToExport, DataSource
 from pymodaq.control_modules.viewer_utility_classes import DAQ_Viewer_base, comon_parameters, main
 from pymodaq.utils.parameter import Parameter
 
 from pymodaq_plugins_daqmx.hardware.national_instruments.daqmx import DAQmx, \
     Edge, ClockSettings, Counter, ClockCounter,  TriggerSettings
 
-from PyDAQmx import DAQmx_Val_DoNotInvertPolarity, DAQmxConnectTerms, DAQmx_Val_ContSamps
-#     , DAQmx_Val_FiniteSamps, DAQmx_Val_CurrReadPos, \
-#      DAQmx_Val_DoNotOverwriteUnreadSamps
+from PyDAQmx import DAQmx_Val_ContSamps
+# DAQmx_Val_DoNotInvertPolarity, DAQmxConnectTerms,
+# DAQmx_Val_FiniteSamps, DAQmx_Val_CurrReadPos, \
+# DAQmx_Val_DoNotOverwriteUnreadSamps
+
 
 class DAQ_0DViewer_DAQmx_PLcounter(DAQ_Viewer_base):
     """
     Plugin for a 0D PL counter, based on a NI card.
     """
     params = comon_parameters+[
-       {"title": "Counting channel:", "name": "counter_channel",
-          "type": "list", "limits": DAQmx.get_NIDAQ_channels(source_type="Counter")},
+        {"title": "Counting channel:", "name": "counter_channel",
+         "type": "list", "limits": DAQmx.get_NIDAQ_channels(source_type="Counter")},
         {"title": "Photon source:", "name": "photon_channel",
          "type": "list", "limits": DAQmx.getTriggeringSources()},
         {"title": "Clock frequency (Hz):", "name": "clock_freq",
-            "type": "float", "value": 100., "default": 100., "min": 1},
+         "type": "float", "value": 100., "default": 100., "min": 1},
         {'title': 'Clock channel:', 'name': 'clock_channel', 'type': 'list',
-             'limits': DAQmx.get_NIDAQ_channels(source_type='Counter')}
+         'limits': DAQmx.get_NIDAQ_channels(source_type='Counter')}
         ]
 
     def ini_attributes(self):
@@ -46,7 +48,6 @@ class DAQ_0DViewer_DAQmx_PLcounter(DAQ_Viewer_base):
         else:
             self.stop()
             self.update_tasks()
-       
 
     def ini_detector(self, controller=None):
         """Detector communication initialization
@@ -68,13 +69,16 @@ class DAQ_0DViewer_DAQmx_PLcounter(DAQ_Viewer_base):
             self.update_tasks()
             initialized = True
             info = "NI card based PL counter"
+            self.counting_time = 1 / self.settings.child("clock_freq").value()
         except Exception as e:
             print(e)
             initialized = False
             info = "Error"
             
-        self.data_grabed_signal_temp.emit([DataFromPlugins(name='PL',data=[np.array([0])],
-                                                           dim='Data0D', labels=['PL (kcts/s)'])])
+        self.dte_signal_temp.emit(DataToExport(name='PL',
+                                               data=[DataWithAxes(name='PL', data=[np.array([0])],
+                                               source=DataSource['raw'],
+                                               dim='Data0D', labels=['PL (kcts/s)'])]))
         
         return info, initialized
     
@@ -103,12 +107,13 @@ class DAQ_0DViewer_DAQmx_PLcounter(DAQ_Viewer_base):
         if update:
             self.update_tasks()
             self.controller["clock"].start()
-
         
         read_data = self.controller["counter"].readCounter(1, counting_time=self.counting_time)
-        data_pl = read_data*self.counting_time
-        self.data_grabed_signal.emit([DataFromPlugins(name='PL', data=[data_pl],
-                                                      dim='Data0D', labels=['PL (kcts/s)'])])
+        data_pl = 1e-3*read_data/self.counting_time  # convert to kcts/s
+        self.dte_signal.emit(DataToExport(name='PL',
+                                          data=[DataWithAxes(name='PL', data=[data_pl],
+                                                             source=DataSource['raw'],
+                                                             dim='Data0D', labels=['PL (kcts/s)'])]))
 
     def stop(self):
         """Stop the current grab hardware wise if necessary"""
@@ -134,6 +139,7 @@ class DAQ_0DViewer_DAQmx_PLcounter(DAQ_Viewer_base):
                                                clock_settings=ClockSettings(),
                                                trigger_settings=TriggerSettings())
 
+        # connect the clock to the counter
         self.controller["counter"].task.SetSampClkSrc("/" + self.clock_channel.name + "InternalOutput")
 
         

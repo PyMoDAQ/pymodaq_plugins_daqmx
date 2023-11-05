@@ -2,7 +2,7 @@ import PyDAQmx
 import ctypes
 from enum import IntEnum
 import numpy as np
-from pymodaq.daq_utils.daq_utils import set_logger, get_module_name
+from pymodaq.utils.logger import set_logger, get_module_name
 
 logger = set_logger(get_module_name(__file__))
 
@@ -262,9 +262,8 @@ def try_string_buffer(fun, *args):
 
 
 class DAQmx:
-
+    """Wrapper around the PyDAQmx package giving an easy to use object to instantiate channels and tasks"""
     def __init__(self):
-        super().__init__()
         self.devices = []
         self.channels = []
         self._device = None
@@ -402,11 +401,7 @@ class DAQmx:
                     sources.extend(channels)
         return sources
 
-
     def update_task(self, channels=[], clock_settings=ClockSettings(), trigger_settings=TriggerSettings()):
-        """
-
-        """
 
         try:
             if self._task is not None:
@@ -416,9 +411,7 @@ class DAQmx:
                 self._task = None
                 self.c_callback = None
 
-
             self._task = PyDAQmx.Task()
-
 
             ## create all channels one task for one type of channels
             for channel in channels:
@@ -591,8 +584,6 @@ class DAQmx:
 
         except Exception as e:
             print(e)
-
-
 
     def register_callback(self, callback, event='done', nsamples=1):
 
@@ -783,6 +774,7 @@ class DAQmx:
         """
         devices = self.update_NIDAQ_devices()
         self.update_NIDAQ_channels(devices)
+
 
 if __name__ == '__main__':
     print(DAQmx.get_NIDAQ_channels())

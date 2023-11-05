@@ -1,24 +1,23 @@
 from qtpy import QtWidgets, QtCore
 from qtpy.QtCore import Signal, QThread
-from pymodaq.daq_utils.daq_utils import ThreadCommand, DataFromPlugins, Axis, getLineInfo
+from pymodaq.utils.daq_utils import ThreadCommand, getLineInfo
+from pymodaq.utils.data import DataFromPlugins, Axis
 import numpy as np
 from pymodaq.control_modules.viewer_utility_classes import DAQ_Viewer_base
 from pymodaq.control_modules.move_utility_classes import DAQ_Move_base
 from easydict import EasyDict as edict
-from abc import ABC, abstractmethod
 
 from pymodaq.control_modules.viewer_utility_classes import comon_parameters as viewer_params
-from pymodaq.daq_move.utility_classes import comon_parameters as actuator_params
+from pymodaq.control_modules.move_utility_classes import comon_parameters_fun as actuator_params
 
-from pyqtgraph.parametertree import Parameter, ParameterTree, registerParameterType
-import pyqtgraph.parametertree.parameterTypes as pTypes
-import pymodaq.daq_utils.parameter.pymodaq_ptypes as pymodaq_ptypes
+from pymodaq.utils.parameter import Parameter
+from pymodaq.utils.parameter.pymodaq_ptypes import registerParameterType, GroupParameter
 
 from .daqmx import DAQmx, DAQ_analog_types, DAQ_thermocouples, DAQ_termination, Edge, DAQ_NIDAQ_source, \
     ClockSettings, AIChannel, Counter, AIThermoChannel, AOChannel, TriggerSettings, DOChannel, DIChannel
 
 
-class ScalableGroupAI(pTypes.GroupParameter):
+class ScalableGroupAI(GroupParameter):
     """
         |
 
@@ -54,7 +53,7 @@ class ScalableGroupAI(pTypes.GroupParameter):
         opts['type'] = 'groupai'
         opts['addText'] = "Add"
         opts['addList'] = opts['limits']
-        pTypes.GroupParameter.__init__(self, **opts)
+        GroupParameter.__init__(self, **opts)
 
     def addNew(self, typ):
         """
@@ -78,7 +77,7 @@ class ScalableGroupAI(pTypes.GroupParameter):
 registerParameterType('groupai', ScalableGroupAI, override=True)
 
 
-class ScalableGroupAO(pTypes.GroupParameter):
+class ScalableGroupAO(GroupParameter):
     """
         |
 
@@ -107,7 +106,7 @@ class ScalableGroupAO(pTypes.GroupParameter):
         opts['type'] = 'groupao'
         opts['addText'] = "Add"
         opts['addList'] = opts['limits']
-        pTypes.GroupParameter.__init__(self, **opts)
+        GroupParameter.__init__(self, **opts)
 
     def addNew(self, typ):
         """
@@ -131,7 +130,7 @@ class ScalableGroupAO(pTypes.GroupParameter):
 registerParameterType('groupao', ScalableGroupAO, override=True)
 
 
-class ScalableGroupCounter(pTypes.GroupParameter):
+class ScalableGroupCounter(GroupParameter):
     """
         |
 
@@ -151,7 +150,7 @@ class ScalableGroupCounter(pTypes.GroupParameter):
         opts['type'] = 'groupcounter'
         opts['addText'] = "Add"
         opts['addList'] = opts['limits']
-        pTypes.GroupParameter.__init__(self, **opts)
+        GroupParameter.__init__(self, **opts)
 
     def addNew(self, typ):
         """
@@ -175,7 +174,7 @@ class ScalableGroupCounter(pTypes.GroupParameter):
 registerParameterType('groupcounter', ScalableGroupCounter, override=True)
 
 
-class ScalableGroupDI(pTypes.GroupParameter):
+class ScalableGroupDI(GroupParameter):
     """
     """
 
@@ -185,7 +184,7 @@ class ScalableGroupDI(pTypes.GroupParameter):
         opts['type'] = 'groupdi'
         opts['addText'] = "Add"
         opts['addList'] = opts['limits']
-        pTypes.GroupParameter.__init__(self, **opts)
+        GroupParameter.__init__(self, **opts)
 
     def addNew(self, typ):
         """
@@ -208,7 +207,7 @@ class ScalableGroupDI(pTypes.GroupParameter):
 registerParameterType('groupdi', ScalableGroupDI, override=True)
 
 
-class ScalableGroupDO(pTypes.GroupParameter):
+class ScalableGroupDO(GroupParameter):
     """
     """
 
@@ -218,7 +217,7 @@ class ScalableGroupDO(pTypes.GroupParameter):
         opts['type'] = 'groupdo'
         opts['addText'] = "Add"
         opts['addList'] = opts['limits']
-        pTypes.GroupParameter.__init__(self, **opts)
+        GroupParameter.__init__(self, **opts)
 
     def addNew(self, typ):
         """
@@ -297,8 +296,7 @@ class DAQ_NIDAQmx_base(DAQmx):
         self.live = False
         self.refresh_hardware()
 
-
-    def commit_settings(self, param):
+    def commit_settings(self, param: Parameter):
         """
             Activate the parameters changes in the hardware.
 
@@ -318,66 +316,66 @@ class DAQ_NIDAQmx_base(DAQmx):
         if param.name() == 'NIDAQ_type':
             self.update_NIDAQ_channels(param.value())
             if param.value() == DAQ_NIDAQ_source(0).name: #analog input
-                self.settings.child(('clock_settings')).show()
-                self.settings.child(('ai_channels')).show()
-                self.settings.child(('ao_channels')).hide()
-                self.settings.child(('ao_settings')).hide()
-                self.settings.child(('counter_settings')).hide()
-                self.settings.child(('do_channels')).hide()
-                self.settings.child(('di_channels')).hide()
+                self.settings.child('clock_settings').show()
+                self.settings.child('ai_channels').show()
+                self.settings.child('ao_channels').hide()
+                self.settings.child('ao_settings').hide()
+                self.settings.child('counter_settings').hide()
+                self.settings.child('do_channels').hide()
+                self.settings.child('di_channels').hide()
 
             elif param.value() == DAQ_NIDAQ_source(1).name: #counter input
-                self.settings.child(('clock_settings')).hide()
-                self.settings.child(('ai_channels')).hide()
-                self.settings.child(('ao_channels')).hide()
-                self.settings.child(('ao_settings')).hide()
-                self.settings.child(('counter_settings')).show()
-                self.settings.child(('do_channels')).hide()
-                self.settings.child(('di_channels')).hide()
+                self.settings.child('clock_settings').hide()
+                self.settings.child('ai_channels').hide()
+                self.settings.child('ao_channels').hide()
+                self.settings.child('ao_settings').hide()
+                self.settings.child('counter_settings').show()
+                self.settings.child('do_channels').hide()
+                self.settings.child('di_channels').hide()
 
             elif param.value() == DAQ_NIDAQ_source(2).name: #analog output
-                self.settings.child(('clock_settings')).show()
-                self.settings.child(('ai_channels')).hide()
-                self.settings.child(('ao_channels')).show()
-                self.settings.child(('ao_settings')).show()
-                self.settings.child(('counter_settings')).hide()
-                self.settings.child(('do_channels')).hide()
-                self.settings.child(('di_channels')).hide()
+                self.settings.child('clock_settings').show()
+                self.settings.child('ai_channels').hide()
+                self.settings.child('ao_channels').show()
+                self.settings.child('ao_settings').show()
+                self.settings.child('counter_settings').hide()
+                self.settings.child('do_channels').hide()
+                self.settings.child('di_channels').hide()
 
             elif param.value() == DAQ_NIDAQ_source(3).name: # digital output
-                self.settings.child(('clock_settings')).show()
-                self.settings.child(('ai_channels')).hide()
-                self.settings.child(('ao_channels')).hide()
-                self.settings.child(('ao_settings')).hide()
-                self.settings.child(('counter_settings')).hide()
-                self.settings.child(('do_channels')).show()
-                self.settings.child(('di_channels')).hide()
+                self.settings.child('clock_settings').show()
+                self.settings.child('ai_channels').hide()
+                self.settings.child('ao_channels').hide()
+                self.settings.child('ao_settings').hide()
+                self.settings.child('counter_settings').hide()
+                self.settings.child('do_channels').show()
+                self.settings.child('di_channels').hide()
 
             elif param.value() == DAQ_NIDAQ_source(4).name: # Digital_Input
-                self.settings.child(('clock_settings')).show()
-                self.settings.child(('ai_channels')).hide()
-                self.settings.child(('ao_channels')).show()
-                self.settings.child(('ao_settings')).show()
-                self.settings.child(('counter_settings')).hide()
-                self.settings.child(('do_channels')).hide()
-                self.settings.child(('di_channels')).show()
+                self.settings.child('clock_settings').show()
+                self.settings.child('ai_channels').hide()
+                self.settings.child('ao_channels').show()
+                self.settings.child('ao_settings').show()
+                self.settings.child('counter_settings').hide()
+                self.settings.child('do_channels').hide()
+                self.settings.child('di_channels').show()
             self.update_task()
 
         elif param.name() == 'refresh_hardware':
             if param.value():
                 self.refresh_hardware()
                 QtWidgets.QApplication.processEvents()
-                self.settings.child(('refresh_hardware')).setValue(False)
+                self.settings.child('refresh_hardware').setValue(False)
 
         elif param.name() == 'ai_type':
-            param.parent().child(('voltage_settings')).show(param.value() == 'Voltage')
-            param.parent().child(('current_settings')).show(param.value() == 'Current')
-            param.parent().child(('thermoc_settings')).show(param.value() == 'Thermocouple')
+            param.parent().child('voltage_settings').show(param.value() == 'Voltage')
+            param.parent().child('current_settings').show(param.value() == 'Current')
+            param.parent().child('thermoc_settings').show(param.value() == 'Thermocouple')
             self.update_task()
 
         elif param.name() == 'ao_type':
-            param.parent().child(('voltage_settings')).show(param.value() == 'Voltage')
-            param.parent().child(('current_settings')).show(param.value() == 'Current')
+            param.parent().child('voltage_settings').show(param.value() == 'Voltage')
+            param.parent().child('current_settings').show(param.value() == 'Current')
             self.update_task()
 
         elif param.name() == 'trigger_channel':
@@ -386,17 +384,16 @@ class DAQ_NIDAQmx_base(DAQmx):
         else:
             self.update_task()
 
-
     def update_task(self):
         self.channels = self.get_channels_from_settings()
-        self.clock_settings = ClockSettings(frequency=self.settings.child('clock_settings', 'frequency').value(),
-                                            Nsamples=self.settings.child('clock_settings', 'Nsamples').value(),
+        self.clock_settings = ClockSettings(frequency=self.settings['clock_settings', 'frequency'],
+                                            Nsamples=self.settings['clock_settings', 'Nsamples'],
                                             repetition=self.live,)
         self.trigger_settings = \
-            TriggerSettings(trig_source=self.settings.child('trigger_settings', 'trigger_channel').value(),
-                            enable=self.settings.child('trigger_settings', 'enable').value(),
-                            edge=self.settings.child('trigger_settings', 'edge').value(),
-                            level=self.settings.child('trigger_settings', 'level').value(),)
+            TriggerSettings(trig_source=self.settings['trigger_settings', 'trigger_channel'],
+                            enable=self.settings['trigger_settings', 'enable'],
+                            edge=self.settings['trigger_settings', 'edge'],
+                            level=self.settings['trigger_settings', 'level'],)
 
         if not not self.channels:
             super().update_task(self.channels, self.clock_settings, trigger_settings=self.trigger_settings)
@@ -404,47 +401,47 @@ class DAQ_NIDAQmx_base(DAQmx):
 
     def get_channels_from_settings(self):
         channels = []
-        if self.settings.child(('NIDAQ_type')).value() == DAQ_NIDAQ_source(0).name:  # analog input
+        if self.settings['NIDAQ_type'] == DAQ_NIDAQ_source(0).name:  # analog input
             for channel in self.settings.child('ai_channels').children():
-                analog_type = channel.child('ai_type').value()
+                analog_type = channel['ai_type']
                 if analog_type == 'Voltage':
                     channels.append(AIChannel(name=channel.opts['title'],
                                               source='Analog_Input', analog_type=analog_type,
-                                              value_min=channel.child('voltage_settings', 'volt_min').value(),
-                                              value_max=channel.child('voltage_settings', 'volt_max').value(),
-                                              termination=channel.child('termination').value(),))
+                                              value_min=channel['voltage_settings', 'volt_min'],
+                                              value_max=channel['voltage_settings', 'volt_max'],
+                                              termination=channel['termination'],))
                 elif analog_type == 'Current':
                     channels.append(AIChannel(name=channel.opts['title'],
                                               source='Analog_Input', analog_type=analog_type,
-                                              value_min=channel.child('current_settings', 'curr_min').value(),
-                                              value_max=channel.child('current_settings', 'curr_max').value(),
-                                              termination=channel.child('termination').value(), ))
+                                              value_min=channel['current_settings', 'curr_min'],
+                                              value_max=channel['current_settings', 'curr_max'],
+                                              termination=channel['termination'], ))
                 elif analog_type == 'Thermocouple':
                     channels.append(AIThermoChannel(name=channel.opts['title'],
                                               source='Analog_Input', analog_type=analog_type,
-                                              value_min=channel.child('thermoc_settings', 'T_min').value(),
-                                              value_max=channel.child('thermoc_settings', 'T_max').value(),
-                                              termination=channel.child('termination').value(),
-                                              thermo_type=channel.child('thermoc_settings', 'thermoc_type').value(),))
+                                              value_min=channel['thermoc_settings', 'T_min'],
+                                              value_max=channel['thermoc_settings', 'T_max'],
+                                              termination=channel['termination'],
+                                              thermo_type=channel['thermoc_settings', 'thermoc_type'],))
 
-        elif self.settings.child(('NIDAQ_type')).value() == DAQ_NIDAQ_source(1).name:  # counter input
+        elif self.settings['NIDAQ_type'] == DAQ_NIDAQ_source(1).name:  # counter input
             for channel in self.settings.child('counter_settings', 'counter_channels').children():
                 channels.append(Counter(name=channel.opts['title'],
-                                        source='Counter', edge=channel.child('edge').value()))
+                                        source='Counter', edge=channel['edge']))
 
-        elif self.settings.child(('NIDAQ_type')).value() == DAQ_NIDAQ_source(2).name:  # analog output
+        elif self.settings['NIDAQ_type'] == DAQ_NIDAQ_source(2).name:  # analog output
             for channel in self.settings.child('ao_channels').children():
-                analog_type = channel.child('ao_type').value()
+                analog_type = channel['ao_type']
                 channels.append(AOChannel(name=channel.opts['title'],
                                           source='Analog_Output', analog_type=analog_type,
-                                          value_min=channel.child('voltage_settings', 'volt_min').value(),
-                                          value_max=channel.child('voltage_settings', 'volt_max').value(),
+                                          value_min=channel['voltage_settings', 'volt_min'],
+                                          value_max=channel['voltage_settings', 'volt_max'],
                                           ))
-        elif self.settings.child(('NIDAQ_type')).value() == DAQ_NIDAQ_source(3).name:  # Digital output
+        elif self.settings['NIDAQ_type'] == DAQ_NIDAQ_source(3).name:  # Digital output
             for channel in self.settings.child('do_channels').children():
                 channels.append(DOChannel(name=channel.opts['title'],
                                           source='Digital_Output'))
-        elif self.settings.child(('NIDAQ_type')).value() == DAQ_NIDAQ_source(4).name:  # digital input
+        elif self.settings['NIDAQ_type'] == DAQ_NIDAQ_source(4).name:  # digital input
             for channel in self.settings.child('di_channels').children():
                 channels.append(DIChannel(name=channel.opts['title'],
                                           source='Digital_Input'))
@@ -484,11 +481,11 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
         self.live = False
         self.control_type = control_type  # could be "0D", "1D" or "Actuator"
         if self.control_type == "0D":
-            self.settings.child(('NIDAQ_type')).setLimits(['Analog_Input', 'Counter', 'Digital_Input'])  # analog input and counter
+            self.settings.child('NIDAQ_type').setLimits(['Analog_Input', 'Counter', 'Digital_Input'])  # analog input and counter
         elif self.control_type == "1D":
-            self.settings.child(('NIDAQ_type')).setLimits(['Analog_Input'])
+            self.settings.child('NIDAQ_type').setLimits(['Analog_Input'])
         elif self.control_type == "Actuator":
-            self.settings.child(('NIDAQ_type')).setLimits(['Analog_Output'])
+            self.settings.child('NIDAQ_type').setLimits(['Analog_Output'])
 
 
 
@@ -498,9 +495,6 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
         self.timer = QtCore.QTimer()
         self.timer.setSingleShot(True)
         self.timer.timeout.connect(self.counter_done)
-
-
-
 
     def commit_settings(self, param):
         """
@@ -539,7 +533,7 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
         """
         self.status.update(edict(initialized=False, info="", x_axis=None, y_axis=None, controller=None))
         try:
-            if self.settings.child(('controller_status')).value() == "Slave":
+            if self.settings['controller_status'] == "Slave":
                 if controller is None:
                     raise Exception('no controller has been defined externally while this detector is a slave one')
                 else:
@@ -584,11 +578,11 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
         if update:
             self.update_task()
 
-        if self.settings.child(('NIDAQ_type')).value() == DAQ_NIDAQ_source(0).name: #analog input
+        if self.settings['NIDAQ_type'] == DAQ_NIDAQ_source(0).name: #analog input
             if self.c_callback is None:
                 self.register_callback(self.emit_data)
-        elif self.settings.child(('NIDAQ_type')).value() == DAQ_NIDAQ_source(1).name: #counter input
-            self.timer.start(self.settings.child('counter_settings', 'counting_time').value())
+        elif self.settings['NIDAQ_type'] == DAQ_NIDAQ_source(1).name: #counter input
+            self.timer.start(self.settings['counter_settings', 'counting_time'])
         self.waitTaskDone()
         self.start()
 
@@ -619,7 +613,7 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
     def counter_done(self):
         channels_name = [ch.name for ch in self.channels]
         data_counter = self.readCounter(len(self.channels),
-                                        self.settings.child('counter_settings', 'counting_time').value() * 1e-3)
+                                        self.settings['counter_settings', 'counting_time'] * 1e-3)
         self.data_grabed_signal.emit([DataFromPlugins(name='NI Counter', data=[data_counter / 1e-3], dim='Data0D',
                                                       labels=channels_name,
                                       y_axis=Axis(label='Count Number', units='1/s'))])
@@ -657,7 +651,7 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
         DAQ_NIDAQmx_base.__init__(self)
 
         self.control_type = "Actuator"  # could be "0D", "1D" or "Actuator"
-        self.settings.child(('NIDAQ_type')).setLimits(['Analog_Output', 'Digital_Output'])
+        self.settings.child('NIDAQ_type').setLimits(['Analog_Output', 'Digital_Output'])
 
         self.settings.child('clock_settings', 'Nsamples').setValue(1)
 
@@ -727,8 +721,8 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
 
             # check whether this stage is controlled by a multiaxe controller (to be defined for each plugin)
             # if multiaxes then init the controller here if Master state otherwise use external controller
-            if self.settings.child('multiaxes', 'ismultiaxes').value() and self.settings.child('multiaxes',
-                                                                              'multi_status').value() == "Slave":
+            if self.settings['multiaxes', 'ismultiaxes'] and self.settings['multiaxes',
+                                                                              'multi_status'] == "Slave":
                 if controller is None:
                     raise Exception('no controller has been defined externally while this axe is a slave one')
                 else:
@@ -752,17 +746,17 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
             return self.status
 
     def calulate_waveform(self, value):
-        waveform = self.settings.child('ao_settings', 'waveform').value()
+        waveform = self.settings['ao_settings', 'waveform']
         if waveform == 'DC':
             values = np.array([value])
         else:
-            Nsamples = self.settings.child('clock_settings', 'Nsamples').value()
-            freq = self.settings.child('clock_settings', 'frequency').value()
+            Nsamples = self.settings['clock_settings', 'Nsamples']
+            freq = self.settings['clock_settings', 'frequency']
             time = np.linspace(0, Nsamples / freq, Nsamples, endpoint=False)
 
-            freq0 = self.settings.child('ao_settings', 'waveform_settings', 'frequency').value()
-            amp = self.settings.child('ao_settings', 'waveform_settings', 'amplitude').value()
-            offset = self.settings.child('ao_settings', 'waveform_settings', 'offset').value()
+            freq0 = self.settings['ao_settings', 'waveform_settings', 'frequency']
+            amp = self.settings['ao_settings', 'waveform_settings', 'amplitude']
+            offset = self.settings['ao_settings', 'waveform_settings', 'offset']
             if waveform == 'Sinus':
                 values = offset + amp * np.sin(2*np.pi*freq0*time)
             elif waveform == 'Ramp':
@@ -781,9 +775,9 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
 
         position = self.check_bound(position)  # if user checked bounds, the defined bounds are applied here
         position = self.set_position_with_scaling(position)  # apply scaling if the user specified one
-        if self.settings.child('NIDAQ_type').value() == 'Analog_Output':
+        if self.settings['NIDAQ_type'] == 'Analog_Output':
             self.settings.child('ao_settings', 'waveform_settings',
-                                 self.settings.child('ao_settings', 'cont_param').value()).setValue(position)
+                                 self.settings['ao_settings', 'cont_param']).setValue(position)
             values = self.calulate_waveform(position)
             self.target_position = position
 
@@ -798,7 +792,7 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
                     self.register_callback(self.move_done_callback)
                 self.writeAnalog(len(values), 1, values, autostart=False)
                 self.task.StartTask()
-        elif self.settings.child('NIDAQ_type').value() == 'Digital_Output':
+        elif self.settings['NIDAQ_type'] == 'Digital_Output':
             self.writeDigital(1, np.array([position], dtype=np.uint8), autostart=True)
 
     def move_done_callback(self, taskhandle, status, callbackdata):
@@ -818,9 +812,9 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
 
         position = self.check_bound(self.current_position + position) - self.current_position
         self.target_position = position + self.current_position
-        if self.settings.child('NIDAQ_type').value() == 'Analog_Output':
+        if self.settings['NIDAQ_type'] == 'Analog_Output':
             self.settings.child('ao_settings', 'waveform_settings',
-                                 self.settings.child('ao_settings', 'cont_param').value()).setValue(self.target_position)
+                                 self.settings['ao_settings', 'cont_param']).setValue(self.target_position)
 
             values = self.calulate_waveform(self.target_position)
 
@@ -835,7 +829,7 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
                     self.register_callback(self.move_done_callback)
                 self.writeAnalog(len(values), 1, values, autostart=False)
                 self.task.StartTask()
-        elif self.settings.child('NIDAQ_type').value() == 'Digital_Output':
+        elif self.settings['NIDAQ_type'] == 'Digital_Output':
             self.writeDigital(1, np.array([self.target_position], dtype=np.uint8), autostart=True)
 
     def move_Home(self):
