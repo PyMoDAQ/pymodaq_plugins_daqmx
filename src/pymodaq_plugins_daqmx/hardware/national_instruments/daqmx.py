@@ -402,9 +402,6 @@ class DAQmx:
         return sources
 
     def update_task(self, channels=[], clock_settings=ClockSettings(), trigger_settings=TriggerSettings()):
-        """
-
-        """
 
         try:
             if self._task is not None:
