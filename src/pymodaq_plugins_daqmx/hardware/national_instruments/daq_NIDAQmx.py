@@ -493,6 +493,15 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
         self.timer.setSingleShot(True)
         self.timer.timeout.connect(self.counter_done)
 
+    def stop(self):
+        try:
+            self.controller['ai'].task.StopTask()
+        except:
+            pass
+        ##############################
+
+        return ''
+
     def commit_settings(self, param):
         """
             Activate the parameters changes in the hardware.
