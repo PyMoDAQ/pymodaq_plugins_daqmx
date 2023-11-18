@@ -103,11 +103,11 @@ class DAQ_0DViewer_DAQmx_counter(DAQ_Viewer_base):
             self.controller["clock"].start()
         
         read_data = self.controller["counter"].readCounter(1, counting_time=self.counting_time)
-        data_pl = read_data/self.counting_time  # convert to kcts/s
-        self.dte_signal.emit(DataToExport(name='PL',
-                                          data=[DataWithAxes(name='PL', data=[data_pl],
+        data = read_data/self.counting_time  # convert to cts/s
+        self.dte_signal.emit(DataToExport(name='Counts',
+                                          data=[DataWithAxes(name='Counts', data=[data],
                                                              source=DataSource['raw'],
-                                                             dim='Data0D', labels=['PL (kcts/s)'])]))
+                                                             dim='Data0D', labels=['Counts (Hz)'])]))
 
     def stop(self):
         """Stop the current grab hardware wise if necessary"""
