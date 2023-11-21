@@ -6,4 +6,3 @@ config = Config()
 
 with open(str(Path(__file__).parent.joinpath('resources/VERSION')), 'r') as fvers:
     __version__ = fvers.read().strip()
-fvers.read().strip()
