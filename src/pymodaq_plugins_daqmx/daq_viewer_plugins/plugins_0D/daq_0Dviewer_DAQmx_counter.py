@@ -19,7 +19,9 @@ class DAQ_0DViewer_DAQmx_counter(DAQ_Viewer_base):
         {"title": "Acq. Time (s):", "name": "acq_time",
          "type": "float", "value": 1., "default": 1.},
         {'title': 'Clock channel:', 'name': 'clock_channel', 'type': 'list',
-         'limits': DAQmx.get_NIDAQ_channels(source_type='Counter')}
+         'limits': DAQmx.get_NIDAQ_channels(source_type='Counter')},
+        {"title": "Clk Trig:", "name": "trig",
+         "type": "list", "limits": DAQmx.getTriggeringSources()}
         ]
 
     def ini_attributes(self):
@@ -39,9 +41,7 @@ class DAQ_0DViewer_DAQmx_counter(DAQ_Viewer_base):
         """
         if param.name() == "acq_time":
             self.counting_time = param.value()
-        else:
-            self.stop()
-            self.update_tasks()
+        self.update_tasks()
 
     def ini_detector(self, controller=None):
         """Detector communication initialization
@@ -69,17 +69,18 @@ class DAQ_0DViewer_DAQmx_counter(DAQ_Viewer_base):
             initialized = False
             info = "Error"
             
-        self.dte_signal_temp.emit(DataToExport(name='PL',
-                                               data=[DataWithAxes(name='Counts', data=[np.array([0])],
-                                               source=DataSource['raw'],
-                                               dim='Data0D', labels=['counts (Hz)'])]))
+        #self.dte_signal_temp.emit(DataToExport(name='Counts',
+        #                                       data=[DataWithAxes(name='Counts', data=[np.array([0])],
+        #                                       source=DataSource['raw'],
+        #                                       dim='Data0D', labels=['counts (Hz)'])]))
         
         return info, initialized
     
     def close(self):
         """Terminate the communication protocol"""
-        self.controller["clock"].close()
-        self.controller["counter"].close()
+        pass
+        #self.controller["clock"].close()
+        #self.controller["counter"].close()
         
     def grab_data(self, Naverage=1, **kwargs):
         """Start a grab from the detector
@@ -91,13 +92,20 @@ class DAQ_0DViewer_DAQmx_counter(DAQ_Viewer_base):
         kwargs: dict
             others optionals arguments
         """
-        update = True  # to decide if we do the initial set up or not
+        update = False  # to decide if we do the initial set up or not
+
 
         if 'live' in kwargs:
-            if kwargs['live'] == self.live and self.live:
+            if kwargs['live'] != self.live:
+                update = True
+            self.live = kwargs['live']
+            """
+        if 'live' in kwargs:
+            if kwargs['live'] == self.live:
                 update = False  # we are already live
             self.live = kwargs['live']
-            
+            """
+
         if update:
             self.update_tasks()
             self.controller["clock"].start()
@@ -119,7 +127,7 @@ class DAQ_0DViewer_DAQmx_counter(DAQ_Viewer_base):
         """Set up the counting tasks in the NI card."""
         # Create channels
         self.clock_channel = ClockCounter(1/self.settings.child("acq_time").value(),
-                                          name=self.settings.child("clock_channel").value(),
+                                          name=self.settings.child("trig").value(),
                                           source="Counter")
         self.counter_channel = Counter(name=self.settings.child("counter_channel").value(),
                                        source="Counter", edge=Edge.names()[0])
