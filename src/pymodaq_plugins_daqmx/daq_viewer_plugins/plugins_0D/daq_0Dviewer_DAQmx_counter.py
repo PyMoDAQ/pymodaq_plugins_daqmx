@@ -3,7 +3,7 @@ from pymodaq.utils.daq_utils import ThreadCommand
 from pymodaq.utils.data import DataWithAxes, DataToExport, DataSource
 from pymodaq.control_modules.viewer_utility_classes import DAQ_Viewer_base, comon_parameters, main
 from pymodaq.utils.parameter import Parameter
-
+import nidaqmx
 from pymodaq_plugins_daqmx.hardware.national_instruments.daqmx import DAQmx, \
     Edge, ClockSettings, Counter, ClockCounter,  TriggerSettings
 

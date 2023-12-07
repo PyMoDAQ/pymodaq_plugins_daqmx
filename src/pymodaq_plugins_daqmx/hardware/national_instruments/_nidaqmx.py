@@ -2,19 +2,28 @@ import nidaqmx
 from nidaqmx.constants import AcquisitionType,Edge
 import time
 import matplotlib.pyplot as plt
+import time
+import numpy as np
 
 task=nidaqmx.Task()
-task.ci_channels.add_ci_count_edges_chan("Dev1/ctr0")
+CI_channel = task.ci_channels.add_ci_count_edges_chan("Dev1/ctr0")
 
 
+print(task.ci_channels.channel_names)
+nidaqmx.CtrTime(0.2,0.1)
+
+a=0
+b=0
+data=[]
 task.start()
-data=task.read(512)
-#for i in range(512):
-#    mesure0 = task.read()
-#    data.append(task.read()-mesure0)
-task.stop()
+for i in range(512):
+    a=task.read()
+    data.append(a)
+    print(a)
 
-print(data)
+
+
+task.stop()
 task.close()
 plt.plot(data)
 plt.show()

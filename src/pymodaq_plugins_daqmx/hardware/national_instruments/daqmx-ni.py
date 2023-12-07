@@ -1,4 +1,4 @@
-import PyDAQmx
+import nidaqmx
 import ctypes
 from enum import IntEnum
 import numpy as np
@@ -37,9 +37,9 @@ class DAQ_analog_types(IntEnum):
         **Attributes**   **Type**
         =============== ==========
     """
-    Voltage = PyDAQmx.DAQmx_Val_Voltage
-    Current = PyDAQmx.DAQmx_Val_Current
-    Thermocouple = PyDAQmx.DAQmx_Val_Temp_TC
+    Voltage = nidaqmx.constants.UsageTypeAI.VOLTAGE.value
+    Current = nidaqmx.constants.UsageTypeAI.CURRENT.value
+    Thermocouple = nidaqmx.constants.UsageTypeAI.TEMPERATURE_THERMOCOUPLE.value
 
     @classmethod
     def names(cls):
@@ -58,14 +58,14 @@ class DAQ_thermocouples(IntEnum):
         **Attributes**   **Type**
         =============== ==========
     """
-    J = PyDAQmx.DAQmx_Val_J_Type_TC
-    K = PyDAQmx.DAQmx_Val_K_Type_TC
-    N = PyDAQmx.DAQmx_Val_N_Type_TC
-    R = PyDAQmx.DAQmx_Val_R_Type_TC
-    S = PyDAQmx.DAQmx_Val_S_Type_TC
-    T = PyDAQmx.DAQmx_Val_T_Type_TC
-    B = PyDAQmx.DAQmx_Val_B_Type_TC
-    E = PyDAQmx.DAQmx_Val_E_Type_TC
+    J = nidaqmx.constants.ThermocoupleType.J.value
+    K = nidaqmx.constants.ThermocoupleType.K.value
+    N = nidaqmx.constants.ThermocoupleType.N.value
+    R = nidaqmx.constants.ThermocoupleType.R.value
+    S = nidaqmx.constants.ThermocoupleType.S.value
+    T = nidaqmx.constants.ThermocoupleType.T.value
+    B = nidaqmx.constants.ThermocoupleType.B.value
+    E = nidaqmx.constants.ThermocoupleType.E.value
 
     @classmethod
     def names(cls):
@@ -80,11 +80,11 @@ class DAQ_termination(IntEnum):
         **Attributes**   **Type**
         =============== ==========
     """
-    Auto = PyDAQmx.DAQmx_Val_Cfg_Default
-    RSE = PyDAQmx.DAQmx_Val_RSE
-    NRSE = PyDAQmx.DAQmx_Val_NRSE
-    Diff = PyDAQmx.DAQmx_Val_Diff
-    Pseudodiff = PyDAQmx.DAQmx_Val_PseudoDiff
+    Auto = nidaqmx.constants.TerminalConfiguration.DEFAULT.value
+    RSE = nidaqmx.constants.TerminalConfiguration.RSE.value
+    NRSE = nidaqmx.constants.TerminalConfiguration.NRSE.value
+    Diff = nidaqmx.constants.TerminalConfiguration.DIFF.value
+    Pseudodiff = nidaqmx.constants.TerminalConfiguration.PSEUDO_DIFF.value
 
     @classmethod
     def names(cls):
@@ -94,8 +94,8 @@ class DAQ_termination(IntEnum):
 class Edge(IntEnum):
     """
     """
-    Rising = PyDAQmx.DAQmx_Val_Rising
-    Falling = PyDAQmx.DAQmx_Val_Falling
+    Rising = nidaqmx.constants.Edge.RISING.value
+    Falling = nidaqmx.constants.Edge.FALLING.value
 
     @classmethod
     def names(cls):
@@ -105,8 +105,10 @@ class Edge(IntEnum):
 class ClockMode(IntEnum):
     """
     """
-    Finite = PyDAQmx.DAQmx_Val_Rising
-    Continuous = PyDAQmx.DAQmx_Val_Falling
+    #Finite = PyDAQmx.DAQmx_Val_Rising  // These values were not correct?
+    #Continuous = PyDAQmx.DAQmx_Val_Falling
+    Finite = nidaqmx.constants.AcquisitionType.FINITE.value
+    Continuous = nidaqmx.constants.AcquisitionType.CONTINUOUS.value
 
     @classmethod
     def names(cls):
@@ -302,8 +304,8 @@ class DAQmx:
             list of devices as strings to be used in subsequent commands
         """
         try:
-            string = try_string_buffer(PyDAQmx.DAQmxGetSysDevNames)
-            devices = string.split(', ')
+            #string = try_string_buffer(PyDAQmx.DAQmxGetSysDevNames)
+            devices = nidaqmx.system.System.local().devices.device_names#string.split(', ')
             if devices == ['']:
                 devices = []
             return devices
@@ -341,19 +343,19 @@ class DAQmx:
             for device in devices:
                 for source in source_type:
                     if source == DAQ_NIDAQ_source['Analog_Input'].name:  # analog input
-                        string = try_string_buffer(PyDAQmx.DAQmxGetDevAIPhysicalChans, device)
+                        string = nidaqmx.system.System.local().devices[device].ai_physical_chans.channel_names
                     elif source == DAQ_NIDAQ_source['Counter'].name:  # counter
-                        string = try_string_buffer(PyDAQmx.DAQmxGetDevCIPhysicalChans, device)
+                        string = nidaqmx.system.System.local().devices[device].ci_physical_chans.channel_names
                     elif source == DAQ_NIDAQ_source['Analog_Output'].name:  # analog output
-                        string = try_string_buffer(PyDAQmx.DAQmxGetDevAOPhysicalChans, device)
+                        string = nidaqmx.system.System.local().devices[device].ao_physical_chans.channel_names
                     elif source == DAQ_NIDAQ_source['Digital_Output'].name:  # digital output
-                        string = try_string_buffer(PyDAQmx.DAQmxGetDevDOLines, device)
-                    elif source == DAQ_NIDAQ_source['Digital_Input'].name:  # digital output
-                        string = try_string_buffer(PyDAQmx.DAQmxGetDevDILines, device)
-                    elif source == DAQ_NIDAQ_source['Terminals'].name:  # digital output
-                        string = try_string_buffer(PyDAQmx.DAQmxGetDevTerminals, device)
+                        string = nidaqmx.system.System.local().devices[device].do_lines.channel_names
+                    elif source == DAQ_NIDAQ_source['Digital_Input'].name:  # digital iutput
+                        string = nidaqmx.system.System.local().devices[device].di_lines.channel_names
+                    elif source == DAQ_NIDAQ_source['Terminals'].name:  # terminals
+                        string = nidaqmx.system.System.local().devices[device].terminals
 
-                    channels = string.split(', ')
+                    channels = string
                     if channels != ['']:
                         channels_tot.extend(channels)
 
@@ -361,27 +363,27 @@ class DAQmx:
 
     @classmethod
     def getAOMaxRate(cls, device):
-        data = PyDAQmx.c_double()
-        PyDAQmx.DAQmxGetDevAOMaxRate(device, PyDAQmx.byref(data))
-        return data.value
+        #data = PyDAQmx.c_double()
+        #PyDAQmx.DAQmxGetDevAOMaxRate(device, PyDAQmx.byref(data))
+        return nidaqmx.system.device.Device(device).ao_max_rate
 
     @classmethod
     def getAIMaxRate(cls, device):
-        data = PyDAQmx.c_double()
-        PyDAQmx.DAQmxGetDevAIMaxSingleChanRate(device, PyDAQmx.byref(data))
-        return data.value
+        #data = PyDAQmx.c_double()
+        #PyDAQmx.DAQmxGetDevAIMaxSingleChanRate(device, PyDAQmx.byref(data))
+        return nidaqmx.system.device.Device(device).ai_max_single_chan_rate
 
     @classmethod
     def isAnalogTriggeringSupported(cls, device):
-        data = PyDAQmx.c_uint32()
-        PyDAQmx.DAQmxGetDevAnlgTrigSupported(device, PyDAQmx.byref(data))
-        return bool(data.value)
+        #data = PyDAQmx.c_uint32()
+        #PyDAQmx.DAQmxGetDevAnlgTrigSupported(device, PyDAQmx.byref(data))
+        return nidaqmx.system.device.Device(device).anlg_trig_supported
 
     @classmethod
     def isDigitalTriggeringSupported(cls, device):
-        data = PyDAQmx.c_uint32()
-        PyDAQmx.DAQmxGetDevDigTrigSupported(device, PyDAQmx.byref(data))
-        return bool(data.value)
+        #data = PyDAQmx.c_uint32()
+        #PyDAQmx.DAQmxGetDevDigTrigSupported(device, PyDAQmx.byref(data))
+        return nidaqmx.system.device.Device(device).dig_trig_supported
 
     @classmethod
     def getTriggeringSources(cls, devices=None):
@@ -391,12 +393,12 @@ class DAQmx:
 
         for device in devices:
             if cls.isDigitalTriggeringSupported(device):
-                string = try_string_buffer(PyDAQmx.DAQmxGetDevTerminals, device)
-                channels = [chan for chan in string.split(', ') if 'PFI' in chan]
+                string = nidaqmx.system.device.Device(device).terminals
+                channels = [chan for chan in string if 'PFI' in chan]
                 if channels != ['']:
                     sources.extend(channels)
             if cls.isAnalogTriggeringSupported(device):
-                channels = cls.get_NIDAQ_channels(devices=[device], source_type='Analog_Input')
+                channels = nidaqmx.system.device.Device(device).ai_physical_chans.channel_names
                 if channels != ['']:
                     sources.extend(channels)
         return sources
@@ -405,51 +407,52 @@ class DAQmx:
 
         try:
             if self._task is not None:
-                if isinstance(self._task, PyDAQmx.Task):
+                if isinstance(self._task, nidaqmx.Task):
                     self._task.ClearTask()
 
                 self._task = None
                 self.c_callback = None
 
-            self._task = PyDAQmx.Task()
+            self._task = nidaqmx.Task()
 
             ## create all channels one task for one type of channels
             for channel in channels:
                 if channel.source == 'Analog_Input': #analog input
                     if channel.analog_type == "Voltage":
-                        err_code = self._task.CreateAIVoltageChan(channel.name, "analog voltage task",
+                        err_code = self._task.ai_channels.add_ai_voltage_chan(channel.name, "",
                                      DAQ_termination[channel.termination].value,
                                      channel.value_min,
                                      channel.value_max,
-                                     PyDAQmx.DAQmx_Val_Volts, None)
+                                     nidaqmx.constants.VoltageUnits.VOLTS, None)
 
                     elif channel.analog_type == "Current":
-                        err_code = self._task.CreateAICurrentChan(channel.name, "",
+                        err_code = self._task.ai_channels.add_ai_current_chan(channel.name, "",
                                                                   DAQ_termination[channel.termination].value,
                                                                   channel.value_min,
                                                                   channel.value_max,
-                                                                  PyDAQmx.DAQmx_Val_Amps, PyDAQmx.DAQmx_Val_Internal,
+                                                                  nidaqmx.constants.CurrentUnits.AMPS,
+                                                                  nidaqmx.constants.CurrentShuntResistorLocation.INTERNAL,
                                                                   0., None)
 
                     elif channel.analog_type == "Thermocouple":
-                        err_code = self._task.CreateAIThrmcplChan(channel.name, "",
+                        err_code = self._task.ai_channels.add_ai_thrmcpl_chan(channel.name, "",
                                                                   channel.value_min,
                                                                   channel.value_max,
-                                                                  PyDAQmx.DAQmx_Val_DegC,
+                                                                  nidaqmx.constants.TemperatureUnits.DEG_C,
                                                                   DAQ_termination[channel.thermo_type].value,
-                                                                  PyDAQmx.DAQmx_Val_BuiltIn, 0., "")
+                                                                  nidaqmx.constants.CJCSource.BUILT_IN, 0., "")
 
                 elif channel.source == 'Counter': #counter
                     if channel.counter_type == "Edge Counter":
-                        err_code = self._task.CreateCICountEdgesChan(channel.name, "",
+                        err_code = self._task.ci_channels.add_ci_count_edges_chan(channel.name, "",
                                                                      Edge[channel.edge].value, 0,
-                                                                     PyDAQmx.DAQmx_Val_CountUp)
+                                                                     nidaqmx.constants.CountDirection.COUNT_UP)
                     elif channel.counter_type == "Clock Output":
-                        err_code = self._task.CreateCOPulseChanFreq(channel.name, "clock task",
+                        err_code = self._task.co_channels.add_co_pulse_chan_freq(channel.name, "clock task",
                                                                     # units, Hertz in our case
-                                                                    PyDAQmx.DAQmx_Val_Hz,
+                                                                    nidaqmx.constants.FrequencyUnits.HZ,
                                                                     # idle state
-                                                                    PyDAQmx.DAQmx_Val_Low,
+                                                                    nidaqmx.constants.Level.LOW,
                                                                     # initial delay
                                                                     0,
                                                                     # pulse frequency
@@ -459,10 +462,10 @@ class DAQmx:
                                                                     # equal to count_interval
                                                                     0.5)
                     elif channel.counter_type == "SemiPeriod Input":
-                        err_code = self._task.CreateCISemiPeriodChan(channel.name, "counter task",
+                        err_code = self._task.ci_channels.add_ci_semi_period_chan(channel.name, "counter task",
                                                                      0, # expected min
                                                                      channel.value_max, # expected max
-                                                                     PyDAQmx.DAQmx_Val_Ticks, "")
+                                                                     nidaqmx.constants.TimeUnits.TICKS, "")
                         
                     
                     if not not err_code:
@@ -720,29 +723,30 @@ class DAQmx:
 
     @classmethod
     def getAOVoltageRange(cls, device='Dev1'):
-        buff_size = 100
-        ranges = ctypes.pointer((buff_size*ctypes.c_double)())
-        ret = PyDAQmx.DAQmxGetDevAOVoltageRngs(device, ranges[0], buff_size)
-        if ret == 0:
-            return [tuple(ranges.contents[2*ind:2*(ind+1)]) for ind in range(int(buff_size/2-2))
-                    if np.abs(ranges.contents[2*ind]) > 1e-12]
-        return [(-10., 10.)]
+        #buff_size = 100
+        #ranges = ctypes.pointer((buff_size*ctypes.c_double)())
+        #ret = PyDAQmx.DAQmxGetDevAOVoltageRngs(device, ranges[0], buff_size)
+        ret = nidaqmx.system.System.local().devices[device].ao_voltage_rngs
+        #if ret == 0:
+        #    return [tuple(ranges.contents[2*ind:2*(ind+1)]) for ind in range(int(buff_size/2-2))
+        #            if np.abs(ranges.contents[2*ind]) > 1e-12]
+        return #[(-10., 10.)] Why this format is needed
 
     def stop(self):
         if self._task is not None:
-            self._task.StopTask()
+            self._task.stop()
 
     def start(self):
         if self._task is not None:
-            self._task.StartTask()
+            self._task.start()
 
     def close(self):
         """
             close the current task.
         """
         if self._task is not None:
-            self._task.StopTask()
-            self._task.ClearTask()
+            self._task.stop()
+            self._task.close()
             self._task = None
 
     @classmethod
@@ -750,17 +754,17 @@ class DAQmx:
         if error_code is None:
             return ''
         else:
-            buffer = PyDAQmx.create_string_buffer(1024)
-            PyDAQmx.DAQmxGetErrorString(error_code, buffer, len(buffer))
-            return buffer.value.decode()
-
+            #buffer = PyDAQmx.create_string_buffer(1024)
+            #PyDAQmx.DAQmxGetErrorString(error_code, buffer, len(buffer))
+            #return buffer.value.decode()
+            return nidaqmx.errors.check_for_error(error_code)
     def isTaskDone(self):
-        done = PyDAQmx.bool32(False)
-        self._task.GetTaskComplete(PyDAQmx.byref(done))
-        return bool(done.value)
-
+        #done = PyDAQmx.bool32(False)
+        #self._task.GetTaskComplete(PyDAQmx.byref(done))
+        #return bool(done.value)
+        return task.is_task_done()
     def waitTaskDone(self, timeout=10.):
-        ret = self._task.WaitUntilTaskDone(timeout)
+        ret = self._task.wait_until_done(timeout)
         if ret != 0:
             logger.info(self.DAQmxGetErrorString(ret))
 
