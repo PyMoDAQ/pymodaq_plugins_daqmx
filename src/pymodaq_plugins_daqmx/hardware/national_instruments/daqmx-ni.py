@@ -230,39 +230,6 @@ class DIChannel(DigitalChannel):
         super().__init__(**kwargs)
 
 
-def try_string_buffer(fun, *args):
-    """
-    generic function to read string from a PyDAQmx function making sure the chosen buffer is large enough
-    Parameters
-    ----------
-    fun: (PyDAQmx function pointer) e.g. PyDAQmx.DAQmxGetSysDevNames
-    kwargs
-
-    Returns
-    -------
-
-    """
-    buff_size = 1024
-    while True:
-        buff = PyDAQmx.create_string_buffer(buff_size)
-        try:
-            if not not len(args):
-                fun(args[0], buff, buff_size)
-            else:
-                fun(buff, buff_size)
-            break
-
-        except Exception as e:
-            if isinstance(e, PyDAQmx.DAQmxFunctions.DAQException):
-                if e.error == -200228:  # BufferTooSmallForStringError
-                    buff_size = 2 * buff_size
-                else:
-                    raise e
-            else:
-                raise e
-    return buff.value.decode()
-
-
 class DAQmx:
     """Wrapper around the PyDAQmx package giving an easy to use object to instantiate channels and tasks"""
     def __init__(self):
@@ -474,44 +441,46 @@ class DAQmx:
 
                 elif channel.source == 'Analog_Output':  # Analog_Output
                     if channel.analog_type == "Voltage":
-                        err_code = self._task.CreateAOVoltageChan(channel.name, "",
+                        err_code = self._task.ao_channels.add_ao_voltage_chan(channel.name, "",
                                      channel.value_min,
                                      channel.value_max,
-                                     PyDAQmx.DAQmx_Val_Volts, None)
+                                     nidaqmx.constants.VoltageUnits.VOLTS, None)
 
                     if channel.analog_type == "Current":
-                        err_code = self._task.CreateAOCurrentChan(channel.name, "",
+                        err_code = self._task.ao_channels.add_ao_current_chan(channel.name, "",
                                      channel.value_min,
                                      channel.value_max,
-                                     PyDAQmx.DAQmx_Val_Amps, None)
+                                     nidaqmx.constants.VoltageUnits.VOLTS, None)
 
                 elif channel.source == 'Digital_Output': #Digital_Output
-                    err_code = self._task.CreateDOChan(channel.name, "", PyDAQmx.DAQmx_Val_ChanPerLine)
+                    err_code = self._task.do_channels.add_do_chan(channel.name, "",
+                                                       nidaqmx.constants.LineGrouping.CHAN_PER_LINE)
                     if not not err_code:
                         status = self.DAQmxGetErrorString(err_code)
                         raise IOError(status)
 
                 elif channel.source == 'Digital_Input': #Digital_Input
-                    err_code = self._task.CreateDIChan(channel.name, "", PyDAQmx.DAQmx_Val_ChanPerLine)
+                    err_code = self._task.di_channels.add_di_chan(channel.name, "",
+                                                       nidaqmx.constants.LineGrouping.CHAN_PER_LINE)
                     if not not err_code:
                         status = self.DAQmxGetErrorString(err_code)
                         raise IOError(status)
 
             ## configure the timing
             if clock_settings.repetition:
-                mode = PyDAQmx.DAQmx_Val_ContSamps
+                mode = nidaqmx.constants.AcquisitionType.CONTINUOUS
             else:
-                mode = PyDAQmx.DAQmx_Val_FiniteSamps
+                mode = nidaqmx.constants.AcquisitionType.FINITE
             if clock_settings.Nsamples > 1 and err_code == 0:
                 if isinstance(clock_settings, ClockSettings):
                     err_code =\
-                        self._task.CfgSampClkTiming(clock_settings.source, clock_settings.frequency,
+                        self._task.timing.cfg_samp_clk_timing(clock_settings.source, clock_settings.frequency,
                                                     Edge[clock_settings.edge].value,
                                                     mode,
                                                     clock_settings.Nsamples)
                 elif isinstance(clock_settings, ChangeDetectionSettings):
                     err_code =\
-                        self._task.CfgChangeDetectionTiming(clock_settings.rising_channel,
+                        self._task.timing.cfg_change_detection_timing(clock_settings.rising_channel,
                                                             clock_settings.falling_channel,
                                                             mode,
                                                             clock_settings.Nsamples)
@@ -520,53 +489,6 @@ class DAQmx:
                     status = self.DAQmxGetErrorString(err_code)
                     raise IOError(status)
 
-            # if channel.source == 'Analog_Input':  # analog input
-            #     if isinstance(clock_settings, ClockSettings):
-            #         err_code =\
-            #             self._task.CfgSampClkTiming(clock_settings.source, clock_settings.frequency,
-            #                                         Edge[clock_settings.edge].value,
-            #                                         mode,
-            #                                         clock_settings.Nsamples)
-            #     elif isinstance(clock_settings, ChangeDetectionSettings):
-            #         err_code =\
-            #             self._task.CfgChangeDetectionTiming(clock_settings.source,
-            #                                                 clock_settings.rising_channel,
-            #                                                 clock_settings.falling_channel,
-            #                                                 mode,
-            #                                                 clock_settings.Nsamples)
-            #
-            #     if not not err_code:
-            #         status = self.DAQmxGetErrorString(err_code)
-            #         raise IOError(status)
-            #
-            # elif channel.source == 'Counter':  # counter
-            #     pass
-            #
-            # elif channel.source == 'Analog_Output':  # Analog_Output
-            #     if clock_settings.Nsamples > 1 and err_code == 0:
-            #
-            #         if isinstance(clock_settings, ClockSettings):
-            #             err_code = self._task.CfgSampClkTiming(clock_settings.source,
-            #                                                    clock_settings.frequency,
-            #                                                    Edge[clock_settings.edge].value,
-            #                                                    mode,
-            #                                                    clock_settings.Nsamples)
-            #         elif isinstance(clock_settings, ChangeDetectionSettings):
-            #             err_code = \
-            #                 self._task.CfgChangeDetectionTiming(clock_settings.source,
-            #                                                     clock_settings.rising_channel,
-            #                                                     clock_settings.falling_channel,
-            #                                                     mode,
-            #                                                     clock_settings.Nsamples)
-            #
-            #         if not not err_code:
-            #             status = self.DAQmxGetErrorString(err_code)
-            #             raise IOError(status)
-            #
-            # else:
-            #     pass
-
-            ##configure the triggering, except for counters
             if not trigger_settings.enable:
                 if channel.source == 'Counter':
                     pass
@@ -576,12 +498,12 @@ class DAQmx:
                         raise IOError(self.DAQmxGetErrorString(err))
             else:
                 if 'PF' in trigger_settings.trig_source:
-                    self._task.CfgDigEdgeStartTrig(trigger_settings.trig_source,
+                    self._task.triggers.start_trigger.disable_start_trig(trigger_settings.trig_source,
                                                    Edge[trigger_settings.edge].value)
                 elif 'ai' in trigger_settings.trig_source:
-                    self._task.CfgAnlgEdgeStartTrig(trigger_settings.trig_source,
+                    self._task.triggers.start_trigger.cfg_anlg_edge_start_trig(trigger_settings.trig_source,
                                                     Edge[trigger_settings.edge].value,
-                                                    PyDAQmx.c_double(trigger_settings.level))
+                                                    trigger_settings.level)
                 else:
                     raise IOError('Unsupported Trigger source')
 
@@ -591,15 +513,19 @@ class DAQmx:
     def register_callback(self, callback, event='done', nsamples=1):
 
         if event == 'done':
-            self.c_callback = PyDAQmx.DAQmxDoneEventCallbackPtr(callback)
-            self._task.RegisterDoneEvent(0, self.c_callback, None)
+            #self.c_callback = PyDAQmx.DAQmxDoneEventCallbackPtr(callback)
+            #self._task.register_done_event(0, self.c_callback, None)
+            self._task.register_done_event(nidaqmx.constants.Signal.SAMPLE_COMPLETE, callback)
+            #NOT SURE HERE
         elif event == 'sample':
-            self.c_callback = PyDAQmx.DAQmxSignalEventCallbackPtr(callback)
-            self._task.RegisterSignalEvent(PyDAQmx.DAQmx_Val_SampleCompleteEvent, 0, self.c_callback, None)
+            #self.c_callback = PyDAQmx.DAQmxSignalEventCallbackPtr(callback)
+            #self._task.register_signal_event(PyDAQmx.DAQmx_Val_SampleCompleteEvent, 0, self.c_callback, None)
+            self._task.register_every_n_samples_acquired_into_buffer_event(1,
+                                                                           callback)
         elif event == 'Nsamples':
-            self.c_callback = PyDAQmx.DAQmxEveryNSamplesEventCallbackPtr(callback)
-            self._task.RegisterEveryNSamplesEvent(PyDAQmx.DAQmx_Val_Acquired_Into_Buffer, nsamples,
-                                                  0, self.c_callback, None)
+            #self.c_callback = PyDAQmx.DAQmxEveryNSamplesEventCallbackPtr(callback)
+            self._task.register_every_n_samples_acquired_into_buffer_event(nsamples,
+                                                                           callback)
 
     def get_last_write_index(self):
         if self.task is not None:
@@ -713,9 +639,10 @@ class DAQmx:
 
     @classmethod
     def getAIVoltageRange(cls, device='Dev1'):
-        buff_size = 100
-        ranges = ctypes.pointer((buff_size*ctypes.c_double)())
-        ret = PyDAQmx.DAQmxGetDevAIVoltageRngs(device, ranges[0], buff_size)
+        #buff_size = 100
+        #ranges = ctypes.pointer((buff_size*ctypes.c_double)())
+        #ret = PyDAQmx.DAQmxGetDevAIVoltageRngs(device, ranges[0], buff_size)
+        ret = nidaqmx.system.System.local().devices[device].ai_voltage_rngs
         if ret == 0:
             return [tuple(ranges.contents[2*ind:2*(ind+1)]) for ind in range(int(buff_size/2-2))
                     if np.abs(ranges.contents[2*ind]) > 1e-12]
@@ -730,7 +657,7 @@ class DAQmx:
         #if ret == 0:
         #    return [tuple(ranges.contents[2*ind:2*(ind+1)]) for ind in range(int(buff_size/2-2))
         #            if np.abs(ranges.contents[2*ind]) > 1e-12]
-        return #[(-10., 10.)] Why this format is needed
+        return [tuple(ret)] #[(-10., 10.)] Why this format is needed
 
     def stop(self):
         if self._task is not None:
