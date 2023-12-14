@@ -105,8 +105,9 @@ class Edge(IntEnum):
 class ClockMode(IntEnum):
     """
     """
-    Finite = PyDAQmx.DAQmx_Val_Rising
-    Continuous = PyDAQmx.DAQmx_Val_Falling
+    Finite = PyDAQmx.DAQmx_Val_FiniteSamps
+    Continuous = PyDAQmx.DAQmx_Val_ContSamps
+
 
     @classmethod
     def names(cls):
