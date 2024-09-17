@@ -209,7 +209,7 @@ class ClockCounter(Counter):
 
 
 class DAQmx:
-    """Wrapper around the PyDAQmx package giving an easy to use object to instantiate channels and tasks"""
+    """Wrapper around the NIDAQmx package giving an easy to use object to instantiate channels and tasks"""
     def __init__(self):
         self.devices = []
         self.channels = []
