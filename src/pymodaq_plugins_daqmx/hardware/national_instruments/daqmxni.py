@@ -189,8 +189,13 @@ class AIChannel(AChannel):
 class AIThermoChannel(AIChannel):
     def __init__(self, thermo_type=DAQ_thermocouples.names()[0], **kwargs):
         super().__init__(**kwargs)
-        assert thermo_type in DAQ_thermocouples.names()
+        # assert thermo_type in DAQ_thermocouples.names()
         self.thermo_type = thermo_type
+
+
+class AOChannel(AChannel):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
 
 class Counter(Channel):
@@ -206,6 +211,21 @@ class ClockCounter(Counter):
         super().__init__(**kwargs)
         self.clock_frequency = clock_frequency
         self.counter_type = "Clock Output"
+
+
+class DigitalChannel(Channel):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+
+class DOChannel(DigitalChannel):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+
+class DIChannel(DigitalChannel):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
 
 class DAQmx:
@@ -509,6 +529,18 @@ class DAQmx:
         elif event == 'Nsamples':
             self._task.register_every_n_samples_acquired_into_buffer_event(nsamples,
                                                                            callback)
+    def readAnalog(self, Nchannels, clock_settings):
+        read = nidaqmx.int32()
+        N = clock_settings.Nsamples
+        data = np.zeros(N * Nchannels, dtype=np.float64)
+        timeout = N * Nchannels * 1 / clock_settings.frequency * 2  # set to twice the time it should take to acquire the data
+
+        self._task.ReadAnalogF64(N, timeout, nidaqmx.DAQmx_Val_GroupByChannel, data, len(data),
+                                 nidaqmx.byref(read), None)
+        if read.value == N:
+            return data
+        else:
+            raise IOError(f'Insufficient number of samples have been read:{read.value}/{N}')
 
     def readCounter(self):
         #    return 25
