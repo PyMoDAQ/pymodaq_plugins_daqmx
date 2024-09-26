@@ -1,6 +1,5 @@
 import time
-
-
+import traceback
 from enum import IntEnum
 import numpy as np
 from pymodaq.utils.logger import set_logger, get_module_name
@@ -35,6 +34,10 @@ class DAQ_NIDAQ_source(IntEnum):
     def names(cls):
         return [name for name, member in cls.__members__.items()]
 
+    @classmethod
+    def members(cls):
+        return [member for name, member in cls.__members__.items()]
+
 
 class DAQ_analog_types(IntEnum):
     """
@@ -51,6 +54,10 @@ class DAQ_analog_types(IntEnum):
     @classmethod
     def names(cls):
         return [name for name, member in cls.__members__.items()]
+
+    @classmethod
+    def members(cls):
+        return [member for name, member in cls.__members__.items()]
 
     @classmethod
     def values(cls):
@@ -78,10 +85,14 @@ class DAQ_thermocouples(IntEnum):
     def names(cls):
         return [name for name, member in cls.__members__.items()]
 
+    @classmethod
+    def members(cls):
+        return [member for name, member in cls.__members__.items()]
+
 
 class DAQ_termination(IntEnum):
     """
-        Enum class of thermocouples type
+        Enum class of termination type
 
         =============== ==========
         **Attributes**   **Type**
@@ -97,6 +108,10 @@ class DAQ_termination(IntEnum):
     def names(cls):
         return [name for name, member in cls.__members__.items()]
 
+    @classmethod
+    def members(cls):
+        return [member for name, member in cls.__members__.items()]
+
 
 class Edge(IntEnum):
     """
@@ -107,6 +122,10 @@ class Edge(IntEnum):
     @classmethod
     def names(cls):
         return [name for name, member in cls.__members__.items()]
+
+    @classmethod
+    def members(cls):
+        return [member for name, member in cls.__members__.items()]
 
 
 class ClockMode(IntEnum):
@@ -119,6 +138,10 @@ class ClockMode(IntEnum):
     def names(cls):
         return [name for name, member in cls.__members__.items()]
 
+    @classmethod
+    def members(cls):
+        return [member for name, member in cls.__members__.items()]
+
 
 class ClockSettingsBase:
     def __init__(self, Nsamples=1000, repetition=False):
@@ -128,10 +151,10 @@ class ClockSettingsBase:
 
 
 class ClockSettings(ClockSettingsBase):
-    def __init__(self, source=None, frequency=1000, Nsamples=1000, edge=Edge.names()[0], repetition=False):
+    def __init__(self, source=None, frequency=1000, Nsamples=1000, edge=Edge.members()[0], repetition=False):
         super().__init__(Nsamples, repetition)
         self.source = source
-        assert edge in Edge.names()
+        assert edge in Edge.members()
         self.frequency = frequency
         self.edge = edge
 
@@ -145,8 +168,8 @@ class ChangeDetectionSettings(ClockSettingsBase):
 
 
 class TriggerSettings:
-    def __init__(self, trig_source='', enable=False, edge=Edge.names()[0], level=0.1):
-        assert edge in Edge.names()
+    def __init__(self, trig_source='', enable=False, edge=Edge.members()[0], level=0.1):
+        assert edge in Edge.members()
         self.trig_source = trig_source
         self.enable = enable
         self.edge = edge
@@ -180,16 +203,22 @@ class AChannel(Channel):
 
 
 class AIChannel(AChannel):
-    def __init__(self, termination=DAQ_termination.names()[0], **kwargs):
+    def __init__(self, termination=DAQ_termination.members(), **kwargs):
         super().__init__(**kwargs)
-        assert termination in DAQ_termination.names()
+        logger.info("AI chan ter{}".format(termination))
+        logger.info("AI chan ter{}".format(DAQ_termination.members()))
+        logger.info("AI chan ter{}".format(DAQ_termination.Diff))
+        # assert termination in DAQ_termination.members()
         self.termination = termination
 
 
 class AIThermoChannel(AIChannel):
-    def __init__(self, thermo_type=DAQ_thermocouples.names()[0], **kwargs):
+    def __init__(self, thermo_type=DAQ_thermocouples.members(), **kwargs):
         super().__init__(**kwargs)
-        # assert thermo_type in DAQ_thermocouples.names()
+        logger.info("AIthermo chan th{}".format(thermo_type))
+        logger.info("AIthermo th{}".format(DAQ_thermocouples.members()))
+        logger.info("AIthermo th{}".format(DAQ_thermocouples.K))
+        assert thermo_type in DAQ_thermocouples.members()
         self.thermo_type = thermo_type
 
 
@@ -199,8 +228,8 @@ class AOChannel(AChannel):
 
 
 class Counter(Channel):
-    def __init__(self, edge=Edge.names()[0], **kwargs):
-        assert edge in Edge.names()    
+    def __init__(self, edge=Edge.members()[0], **kwargs):
+        assert edge in Edge.members()
         super().__init__(**kwargs)
         self.edge = edge
         self.counter_type = "Edge Counter"
@@ -371,17 +400,26 @@ class DAQmx:
 
             self._task = nidaqmx.Task()
             err_code = None
+            # logger.info("first {}".format(self._task.timing))
+            # logger.info("first stamp {}".format(nidaqmx.task.Timing.first_samp_timestamp_val))
 
             # create all channels one task for one type of channels
             for channel in channels:
+                logger.info("channel {}".format(channel))
+                logger.info("channel name {}".format(channel.name))
+                logger.info("channel source {}".format(channel.source))
+                logger.info("channel term{}".format(channel.termination))
                 if channel.source == 'Analog_Input':  # analog input
                     try:
+                        logger.info("DAQ te{}".format(DAQ_termination.Diff))
                         if channel.analog_type == "Voltage":
-                            self._task.ai_channels.add_ai_voltage_chan(channel.name, "",
-                                                                       DAQ_termination[channel.termination],
-                                                                       channel.value_min,
-                                                                       channel.value_max,
-                                                                       VoltageUnits.VOLTS, None)
+                            self._task.ai_channels.add_ai_voltage_chan(physical_channel=channel.name,
+                                                                       name_to_assign_to_channel="",
+                                                                       terminal_config=channel.termination,
+                                                                       min_val=channel.value_min,
+                                                                       max_val=channel.value_max,
+                                                                       units=VoltageUnits.VOLTS,
+                                                                       custom_scale_name=None)
 
                         elif channel.analog_type == "Current":
                             self._task.ai_channels.add_ai_current_chan(channel.name, "",
@@ -393,12 +431,16 @@ class DAQmx:
                                                                        0., None)
 
                         elif channel.analog_type == "Thermocouple":
-                            self._task.ai_channels.add_ai_thrmcpl_chan(channel.name, "",
-                                                                       channel.value_min,
-                                                                       channel.value_max,
-                                                                       TemperatureUnits.DEG_C,
-                                                                       DAQ_termination[channel.thermo_type],
-                                                                       CJCSource.BUILT_IN, 0., "")
+                            logger.info("DAQ th{}".format(DAQ_thermocouples.K))
+                            self._task.ai_channels.add_ai_thrmcpl_chan(physical_channel=channel.name,
+                                                                       name_to_assign_to_channel="",
+                                                                       min_val=channel.value_min,
+                                                                       max_val=channel.value_max,
+                                                                       units=TemperatureUnits.DEG_C,
+                                                                       thermocouple_type=channel.thermo_type,
+                                                                       cjc_source=CJCSource.BUILT_IN,
+                                                                       cjc_val=0.,
+                                                                       cjc_channel="")
                     except DaqError as e:
                         err_code = e.error_code
                     if not not err_code:
@@ -477,16 +519,20 @@ class DAQmx:
                 mode = AcquisitionType.CONTINUOUS
             else:
                 mode = AcquisitionType.FINITE
-            if clock_settings.Nsamples > 1 and err_code == 0:
+            if clock_settings.Nsamples > 1 and isinstance(err_code, type(None)):
                 try:
                     if isinstance(clock_settings, ClockSettings):
-                        self._task.timing.cfg_samp_clk_timing(clock_settings.source, clock_settings.frequency,
-                                                              Edge[clock_settings.edge].value,
-                                                              mode,
-                                                              clock_settings.Nsamples)
-
+                        logger.info('------ mode {}'.format(mode))
+                        logger.info('------ Nsamples {}'.format(clock_settings.Nsamples))
+                        self._task.timing.cfg_samp_clk_timing(rate=clock_settings.frequency,
+                                                              source=clock_settings.source,
+                                                              active_edge=clock_settings.edge,
+                                                              sample_mode=mode,
+                                                              samps_per_chan=clock_settings.Nsamples)
                     elif isinstance(clock_settings, ChangeDetectionSettings):
+                        logger.info("here")
                         self._task.timing.cfg_change_detection_timing(clock_settings.rising_channel,
+
                                                                       clock_settings.falling_channel,
                                                                       mode,
                                                                       clock_settings.Nsamples)
@@ -501,9 +547,10 @@ class DAQmx:
                     if channel.source == 'Counter':
                         pass  # Maybe here adding the configuration fastCTr0 with Ctr1 etc...?
                     else:
-                        err = self._task.triggers.start_trigger.disable_start_trig()
-                        if err != 0:
-                            raise IOError(self.DAQmxGetErrorString(err))
+                        pass
+                        # err = self._task.triggers.start_trigger.disable_start_trig()
+                        # if err != 0:
+                        #     raise IOError(self.DAQmxGetErrorString(err))
                 else:
                     if 'PF' in trigger_settings.trig_source:
                         self._task.triggers.start_trigger.disable_start_trig()
@@ -516,7 +563,8 @@ class DAQmx:
                         raise IOError('Unsupported Trigger source')
 
         except Exception as e:
-            print(e)
+            logger.error("Exception catched: {}".format(e))
+            logger.error(traceback.format_exc())
 
     def register_callback(self, callback, event='done', nsamples=1):
 
@@ -614,7 +662,7 @@ if __name__ == '__main__':
     controller = DAQmx()
     ch_counter = Counter(name='Dev1/ctr0',
                          source='Counter',
-                         edge=Edge.names()[0])
+                         edge=Edge.members()[0])
     controller.update_task([ch_counter])
     controller.start()
     print(controller.readCounter())
