@@ -322,9 +322,9 @@ class DAQ_NIDAQmx_base(DAQmx):
             --------
             update_NIDAQ_channels, update_task, DAQ_NIDAQ_source, refresh_hardware
         """
-        # if param.name() == 'NIDAQ_devices':
-        #     self.update_NIDAQ_channels()
-        #     self.update_task()
+        if param.name() == 'NIDAQ_devices':
+            self.controller.update_NIDAQ_channels()
+            self.update_task()
 
         if param.name() == 'NIDAQ_type':
             self.controller.update_NIDAQ_channels(param.value())
@@ -376,7 +376,7 @@ class DAQ_NIDAQmx_base(DAQmx):
 
         elif param.name() == 'refresh_hardware':
             if param.value():
-                self.refresh_hardware()
+                self.controller.refresh_hardware()
                 QtWidgets.QApplication.processEvents()
                 self.settings.child('refresh_hardware').setValue(False)
 
@@ -409,8 +409,8 @@ class DAQ_NIDAQmx_base(DAQmx):
                             edge=Edge[self.settings['trigger_settings', 'edge']],
                             level=self.settings['trigger_settings', 'level'], )
         if not not self.channels:
-            super().update_task(self.channels, self.clock_settings, trigger_settings=self.trigger_settings)
-
+            logger.info("not not self channel")
+            self.controller.update_task(self.channels, self.clock_settings, trigger_settings=self.trigger_settings)
 
     def get_channels_from_settings(self):
         channels = []
@@ -467,8 +467,7 @@ class DAQ_NIDAQmx_base(DAQmx):
         if not not self.timer:
             self.timer.stop()
         QtWidgets.QApplication.processEvents()
-        DAQmx.stop(self)
-
+        self.controller.stop()
 
 class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
     """
@@ -488,13 +487,14 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
     params = viewer_params + DAQ_NIDAQmx_base.params
 
     def __init__(self, parent=None, params_state=None, control_type="0D"):
-        DAQ_Viewer_base.__init__(self, parent, params_state) #defines settings attribute and various other methods
+        DAQ_Viewer_base.__init__(self, parent, params_state)  # defines settings attribute and various other methods
         DAQ_NIDAQmx_base.__init__(self)
 
         self.live = False
         self.control_type = control_type  # could be "0D", "1D" or "Actuator"
         if self.control_type == "0D":
-            self.settings.child('NIDAQ_type').setLimits(['Analog_Input', 'Counter', 'Digital_Input'])  # analog input and counter
+            self.settings.child('NIDAQ_type').setLimits(
+                ['Analog_Input', 'Counter', 'Digital_Input'])  # analog input and counter
         elif self.control_type == "1D":
             self.settings.child('NIDAQ_type').setLimits(['Analog_Input'])
         elif self.control_type == "Actuator":
@@ -508,12 +508,10 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
         self.timer.timeout.connect(self.counter_done)
 
     def stop(self):
-        try:
-            self.controller['ai'].task.StopTask()
-        except:
-            pass
-        ##############################
-
+        """Stop the current grab hardware wise if necessary"""
+        self.controller.stop()
+        self.live = False
+        self.emit_status(ThreadCommand('Update_Status', ['Acquisition stopped.']))
         return ''
 
     def commit_settings(self, param):
@@ -535,7 +533,7 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
                 device = param.opts['title'].split('/')[0]
                 self.settings.child('clock_settings', 'frequency').setOpts(max=self.getAIMaxRate(device))
 
-                ranges = self.getAIVoltageRange(device)
+                ranges = self.controller.getAIVoltageRange(device)
                 param.child('voltage_settings', 'volt_min').setOpts(limits=[r[0] for r in ranges])
                 param.child('voltage_settings', 'volt_max').setOpts(limits=[r[1] for r in ranges])
 
@@ -551,15 +549,10 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
         """
         self.status.update(edict(initialized=False, info="", x_axis=None, y_axis=None, controller=None))
         try:
-            if self.settings['controller_status'] == "Slave":
-                if controller is None:
-                    raise Exception('no controller has been defined externally while this detector is a slave one')
-                else:
-                    self.controller = 'A Nidaqmx task'
-            else:
-                self.update_task()
+            self.controller = self.ini_detector_init(controller, DAQmx())
+            self.update_task()
 
-            #actions to perform in order to set properly the settings tree options
+            # actions to perform in order to set properly the settings tree options
             self.commit_settings(self.settings.child('NIDAQ_type'))
 
             self.status.info = "Plugin Initialized"
@@ -589,6 +582,7 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
             DAQ_NIDAQ_source
         """
         update = False
+
         if 'live' in kwargs:
             if kwargs['live'] != self.live:
                 update = True
@@ -596,13 +590,8 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
         if update:
             self.update_task()
 
-        if self.settings['NIDAQ_type'] == DAQ_NIDAQ_source(0).name: #analog input
-            if self.c_callback is None:
-                self.register_callback(self.emit_data)
-        elif self.settings['NIDAQ_type'] == DAQ_NIDAQ_source(1).name: #counter input
-            self.timer.start(self.settings['counter_settings', 'counting_time'])
-        self.waitTaskDone()
-        self.start()
+        if self.controller.task is None:
+            self.update_task()
 
     def emit_data(self, taskhandle, status, callbackdata):
         channels_name = [ch.name for ch in self.channels]
@@ -630,10 +619,9 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
         data_counter = self.readCounter(len(self.channels),
                                         self.settings['counter_settings', 'counting_time'] * 1e-3)
         self.data_grabed_signal.emit([DataFromPlugins(name='NI Counter', data=[data_counter / 1e-3], dim='Data0D',
-                                                      labels=channels_name,)])
-                                      #y_axis=Axis(label='Count Number', units='1/s'))])
+                                                      labels=channels_name, )])
+        # y_axis=Axis(label='Count Number', units='1/s'))])
         self.task.StopTask()
-
 
 class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
     """
