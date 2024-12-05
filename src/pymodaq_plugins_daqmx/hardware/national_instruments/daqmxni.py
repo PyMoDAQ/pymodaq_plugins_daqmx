@@ -571,19 +571,6 @@ class DAQmx:
         elif event == 'Nsamples':
             self._task.register_every_n_samples_acquired_into_buffer_event(nsamples, callback)
 
-    def readAnalog(self, Nchannels, clock_settings):
-        read = nidaqmx.int32()
-        N = clock_settings.Nsamples
-        data = np.zeros(N * Nchannels, dtype=np.float64)
-        timeout = N * Nchannels * 1 / clock_settings.frequency * 2  # set to twice the time it should take to acquire the data
-
-        self._task.ReadAnalogF64(N, timeout, nidaqmx.DAQmx_Val_GroupByChannel, data, len(data),
-                                 nidaqmx.byref(read), None)
-        if read.value == N:
-            return data
-        else:
-            raise IOError(f'Insufficient number of samples have been read:{read.value}/{N}')
-
     def readCounter(self):
         #    return 25
 
