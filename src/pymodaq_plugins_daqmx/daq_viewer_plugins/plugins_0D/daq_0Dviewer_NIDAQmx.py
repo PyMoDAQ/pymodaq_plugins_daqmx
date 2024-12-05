@@ -51,74 +51,107 @@ class DAQ_0DViewer_NIDAQmx(DAQ_NIDAQmx_Viewer):
 
 if __name__ == '__main__':
     """Main section used during development tests"""
-    main_file = True
+    main_file = False
     if main_file:
         main(__file__)
     else:
         try:
             print("In main")
-            import nidaqmx
+            import nidaqmx as ni
+            from pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni import CurrentUnits, TemperatureUnits,\
+                VoltageUnits, CJCSource
 
-            logger.info("DAQ Sources names{}".format(DAQ_NIDAQ_source.names()))
-            logger.info("DAQ Sources members{}".format(DAQ_NIDAQ_source.members()))
-            logger.info("DAQ Sources names0{}".format(DAQ_NIDAQ_source.names()[0]))
-            logger.info("DAQ Sources members0{}".format(DAQ_NIDAQ_source.members()[0]))
-            channels = [AIThermoChannel(name="cDAQ1Mod1/ai0",
-                                        source='Analog_Input',
-                                        analog_type='Thermocouple',
-                                        value_min=-80.0e-3,
-                                        value_max=80.0e-3,
-                                        termination='Diff',
-                                        thermo_type=DAQ_thermocouples.K),
-                       ]
-            # Create Task
-            print("DAQ_thermocouples.names ", DAQ_thermocouples.names())
-            print("DAQ_thermocouples.K ", nidaqmx.constants.ThermocoupleType.K)
-            print("DAQ_thermocouples.K type", type(nidaqmx.constants.ThermocoupleType.K))
-            print("DAQ_thermocouples.K ", DAQ_thermocouples.K)
-            print("DAQ_thermocouples.K type ", type(DAQ_thermocouples.K))
-            print("channel.thermo_type ", channels[0].thermo_type)
-            task = nidaqmx.Task()
-            for channel in channels:
-                task.ai_channels.add_ai_thrmcpl_chan(physical_channel=channel.name,
-                                                     # name_to_assign_to_channel="Channel 01",
-                                                     min_val=channel.value_min,
-                                                     max_val=channel.value_max,
-                                                     units=TemperatureUnits.DEG_C,
-                                                     thermocouple_type=channel.thermo_type,
-                                                     # cjc_source=CJCSource.BUILT_IN,
-                                                     # cjc_val="",
-                                                     # cjc_channel="",
-                                                     )
-            NIDAQ_Devices = nidaqmx.system.System.local().devices
-
-            print("NIDAQ devices ", NIDAQ_Devices)
-            print("NIDAQ devices names ", NIDAQ_Devices.device_names)
-
-            Chassis = NIDAQ_Devices[0]
-            Module01 = NIDAQ_Devices[1]
-            Module02 = NIDAQ_Devices[2]
-            print("Chassis={}, Module01={}, Module02={}" .format(Chassis, Module01, Module02))
-
-            # Test resources
+            # EXPLORE DEVICES
+            devices = ni.system.System.local().devices
+            print("devices {}".format(devices))
+            print("devices names {}".format(devices.device_names))
+            print("devices types {}".format([dev.product_type for dev in devices]))
+            cdaq = devices[0]
+            mod1 = cdaq.chassis_module_devices[0]  # Equivalent devices[1]
+            mod2 = devices[2]
+            mod3 = devices[3]
             try:
-                Chassis.self_test_device()
-                Module01.self_test_device()
-                Module02.self_test_device()
+                usb1 = devices[4]
+            except Exception as e:
+                pass
+            print("cDAQ modules: {}".format(mod.compact_daq_chassis_device.product_type for mod in [mod1, mod2, mod3]))
+
+            # TEST RESOURCES
+            try:
+                for device in devices:
+                    device.self_test_device()
             except Exception as e:
                 print("Resources test failed: {}" .format(e))
 
-            print("Chassis: name={}, Num={}".format(Chassis.name, Chassis.product_type))
-            print("Module01: name={}, Num={}".format(Module01.name, Module01.product_type))
-            print("Module02: name={}, Num={}".format(Module02.name, Module02.product_type))
+            # CREATE CHANNELS
+            channels_th = [AIThermoChannel(name="cDAQ1Mod1/ai0",
+                                           source='Analog_Input',
+                                           analog_type='Thermocouple',
+                                           value_min=-100,
+                                           value_max=1000,
+                                           thermo_type=DAQ_thermocouples.K),
+                           ]
+            channels_voltage = [AIChannel(name="cDAQ1Mod3/ai0",
+                                          source='Analog_Input',
+                                          analog_type='voltage',
+                                          value_min=-80.0e-3,
+                                          value_max=80.0e-3,
+                                          termination=DAQ_termination.Auto,
+                                          ),
+                                AIChannel(name="cDAQ1Mod3/ai1",
+                                          source='Analog_Input',
+                                          analog_type='voltage',
+                                          value_min=-80.0e-3,
+                                          value_max=80.0e-3,
+                                          termination=DAQ_termination.Auto,
+                                          ),
+                                ]
+            # CREATE TASK
+            task_9211 = nidaqmx.Task()
+            task_9205 = nidaqmx.Task()
 
-            print("channel 01 name : ", channels[0].name)
-            data = task.read()
-            print("data = ", data)
-            print("type(data) = ", type(data))
-            print("type(data[0]) = ", type(data[0]))
+            def callback_9211(task_handle, every_n_samples_event_type, number_of_samples, callback_data):
+                data9211 = task_9211.read(5)
+                print(data9211)
 
-            task.close()
+            def callback_9205(task_handle, every_n_samples_event_type, number_of_samples, callback_data):
+                data9205 = task_9205.read(5)
+                print(data9205)
+
+            for channel in channels_th:
+                task_9211.ai_channels.add_ai_thrmcpl_chan(channel.name,
+                                                          "",
+                                                          channel.value_min,
+                                                          channel.value_max,
+                                                          TemperatureUnits.DEG_C,
+                                                          channel.thermo_type,
+                                                          CJCSource.BUILT_IN,
+                                                          0.,
+                                                          "")
+            for channel in channels_voltage:
+                task_9205.ai_channels.add_ai_voltage_chan(channel.name,
+                                                          "",
+                                                          channel.termination,
+                                                          channel.value_min,
+                                                          channel.value_max,
+                                                          VoltageUnits.VOLTS,
+                                                          "")
+            task_9211.timing.cfg_samp_clk_timing(5.0, None, nidaqmx.constants.Edge.RISING,
+                                                 nidaqmx.constants.AcquisitionType.CONTINUOUS, 5)
+            task_9211.register_every_n_samples_acquired_into_buffer_event(10, callback_9211)
+
+            task_9205.timing.cfg_samp_clk_timing(10, None, nidaqmx.constants.Edge.RISING,
+                                                 nidaqmx.constants.AcquisitionType.CONTINUOUS, 10)
+            task_9205.register_every_n_samples_acquired_into_buffer_event(2, callback_9205)
+
+            task_9211.start()
+            task_9205.start()
+
+            print("Acquisition in progress... Press enter to stop")
+            input()
+
+            task_9211.close()
+            task_9205.close()
 
         except Exception as e:
             print("Exception ({}): {}".format(type(e), str(e)))
