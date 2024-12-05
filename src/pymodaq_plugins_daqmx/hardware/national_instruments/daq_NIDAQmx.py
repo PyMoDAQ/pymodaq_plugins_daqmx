@@ -401,13 +401,13 @@ class DAQ_NIDAQmx_base(DAQmx):
         self.channels = self.get_channels_from_settings()
         self.clock_settings = ClockSettings(frequency=self.settings['clock_settings', 'frequency'],
                                             Nsamples=self.settings['clock_settings', 'Nsamples'],
-                                            repetition=self.live,)
+                                            edge=Edge.Rising,
+                                            repetition=self.live, )
         self.trigger_settings = \
             TriggerSettings(trig_source=self.settings['trigger_settings', 'trigger_channel'],
                             enable=self.settings['trigger_settings', 'enable'],
-                            edge=self.settings['trigger_settings', 'edge'],
-                            level=self.settings['trigger_settings', 'level'],)
-
+                            edge=Edge[self.settings['trigger_settings', 'edge']],
+                            level=self.settings['trigger_settings', 'level'], )
         if not not self.channels:
             super().update_task(self.channels, self.clock_settings, trigger_settings=self.trigger_settings)
 
@@ -422,20 +422,21 @@ class DAQ_NIDAQmx_base(DAQmx):
                                               source='Analog_Input', analog_type=analog_type,
                                               value_min=channel['voltage_settings', 'volt_min'],
                                               value_max=channel['voltage_settings', 'volt_max'],
-                                              termination=channel['termination'],))
+                                              termination=DAQ_termination[channel['termination']], ))
                 elif analog_type == 'Current':
                     channels.append(AIChannel(name=channel.opts['title'],
                                               source='Analog_Input', analog_type=analog_type,
                                               value_min=channel['current_settings', 'curr_min'],
                                               value_max=channel['current_settings', 'curr_max'],
-                                              termination=channel['termination'], ))
+                                              termination=DAQ_termination[channel['termination']], ))
                 elif analog_type == 'Thermocouple':
                     channels.append(AIThermoChannel(name=channel.opts['title'],
-                                              source='Analog_Input', analog_type=analog_type,
-                                              value_min=channel['thermoc_settings', 'T_min'],
-                                              value_max=channel['thermoc_settings', 'T_max'],
-                                              termination=channel['termination'],
-                                              thermo_type=channel['thermoc_settings', 'thermoc_type'],))
+                                                    source='Analog_Input', analog_type=analog_type,
+                                                    value_min=channel['thermoc_settings', 'T_min'],
+                                                    value_max=channel['thermoc_settings', 'T_max'],
+                                                    termination=channel['termination'],
+                                                    thermo_type=DAQ_thermocouples[
+                                                        channel['thermoc_settings', 'thermoc_type']], ))
 
         elif self.settings['NIDAQ_type'] == DAQ_NIDAQ_source(1).name:  # counter input
             for channel in self.settings.child('counter_settings', 'counter_channels').children():
