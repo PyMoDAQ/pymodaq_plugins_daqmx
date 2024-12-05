@@ -593,26 +593,27 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
         if self.controller.task is None:
             self.update_task()
 
-    def emit_data(self, taskhandle, status, callbackdata):
-        channels_name = [ch.name for ch in self.channels]
+        self.controller.register_callback(self.emit_data, "Nsamples", self.clock_settings.Nsamples)
+        self.controller.start()
 
-        data_tot = []
-        data = self.readAnalog(len(self.channels), self.clock_settings)
-        N = self.clock_settings.Nsamples
+    def emit_data(self, task_handle, every_n_samples_event_type, number_of_samples, callback_data):
+        channels_names = [ch.name for ch in self.channels]
+        # channels_ai_names = [ch.name for ch in self.channels if ch.source == 'Analog_Input']
+        data_from_task = self.controller.task.read(self.settings['nsamplestoread'], timeout=20.0)
         if self.control_type == "0D":
-            for ind in range(len(self.channels)):
-                data_tot.append(np.array([np.mean(data[ind*N:(ind+1)*N])]))
-            self.data_grabed_signal.emit([DataFromPlugins(name='NI AI', data=data_tot, dim='Data0D',
-                                                          labels=channels_name)])
-        else:
-            for ind in range(len(self.channels)):
-                data_tot.append(data[ind*N:(ind+1)*N])
-            self.data_grabed_signal.emit([
-                DataFromPlugins(name='NI AI', data=data_tot, dim='Data1D',
-                                labels=channels_name,
-                                axes=[Axis(data=np.linspace(0, N / self.clock_settings.frequency, N),
-                                           index=0)])])
-        return 0  #mandatory for the PyDAQmx callback
+            if not len(self.controller.task.channels.channel_names) != 1:
+                data_dfp = [np.array(data_from_task)]
+            else:
+                data_dfp = list(map(np.array, data_from_task))
+            dte = DataToExport(name='NIDAQmx',
+                               data=[DataFromPlugins(name='NI Analog Input',
+                                                     data=data_dfp,
+                                                     dim=f'Data{self.settings.child("display").value()}',
+                                                     labels=channels_names
+                                                     ),
+                                     ])
+        self.dte_signal.emit(dte)
+        return 0  # mandatory for the NIDAQmx callback
 
     def counter_done(self):
         channels_name = [ch.name for ch in self.channels]
