@@ -18,14 +18,8 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_base):
 
     params = comon_parameters+[
         {'title': 'Display type:', 'name': 'display', 'type': 'list', 'limits': ['0D', '1D']},
-        {'title': 'Module ref. :', 'name': 'module', 'type': 'list', 'limits': DAQmx.get_NIDAQ_devices(),
-         'value': DAQmx.get_NIDAQ_devices()[0]
-         },
-        {'title': 'Devices', 'name': 'devices', 'type': 'text', 'value': ''},
-        {'title': 'Channels', 'name': 'channels', 'type': 'text', 'value': ''},
-        {'title': 'Analog channel :', 'name': 'ai_channel', 'type': 'list',
-         'limits': DAQmx.get_NIDAQ_channels(source_type='Analog_Input'),
-         'value': DAQmx.get_NIDAQ_channels(source_type='Analog_Input')[0]
+        {'title': 'Module ref. :', 'name': 'module', 'type': 'list', 'limits': DAQmx.get_NIDAQ_devices()[1],
+         'value': DAQmx.get_NIDAQ_devices()[1][0]
          },
         {'title': 'Analog Source :', 'name': 'ai_srce', 'type': 'list',
          'limits': DAQ_NIDAQ_source.names(),
