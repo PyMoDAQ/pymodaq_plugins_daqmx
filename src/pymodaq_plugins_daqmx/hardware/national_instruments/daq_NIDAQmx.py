@@ -1,20 +1,11 @@
-from qtpy import QtWidgets, QtCore
-from qtpy.QtCore import Signal, QThread
-from pymodaq.utils.daq_utils import ThreadCommand, getLineInfo
-from pymodaq.utils.data import DataFromPlugins, Axis, DataActuator, DataToExport
-import numpy as np
-from pymodaq.control_modules.viewer_utility_classes import DAQ_Viewer_base
-from pymodaq.control_modules.move_utility_classes import DAQ_Move_base
-from easydict import EasyDict as edict
-
-from pymodaq.control_modules.viewer_utility_classes import comon_parameters as viewer_params
-from pymodaq.control_modules.move_utility_classes import comon_parameters_fun as actuator_params
-
+from qtpy import QtWidgets
+from qtpy.QtCore import Signal
+from pymodaq.utils.logger import set_logger, get_module_name
 from pymodaq.utils.parameter import Parameter
 from pymodaq.utils.parameter.pymodaq_ptypes import registerParameterType, GroupParameter
-
-from .daqmx import DAQmx, DAQ_analog_types, DAQ_thermocouples, DAQ_termination, Edge, DAQ_NIDAQ_source, \
+from .daqmxni import DAQmx, DAQ_analog_types, DAQ_thermocouples, DAQ_termination, Edge, DAQ_NIDAQ_source, \
     ClockSettings, AIChannel, Counter, AIThermoChannel, AOChannel, TriggerSettings, DOChannel, DIChannel
+logger = set_logger(get_module_name(__file__))
 
 
 class ScalableGroupAI(GroupParameter):

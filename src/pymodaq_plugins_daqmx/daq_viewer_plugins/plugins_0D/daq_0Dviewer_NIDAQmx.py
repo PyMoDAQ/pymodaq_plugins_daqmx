@@ -1,13 +1,14 @@
-import numpy as np
-from pymodaq.utils.daq_utils import ThreadCommand
-from pymodaq.utils.data import DataWithAxes, DataToExport, DataSource, DataFromPlugins
-from pymodaq.control_modules.viewer_utility_classes import DAQ_Viewer_base, comon_parameters, main
-from pymodaq.utils.parameter import Parameter
-from pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni import *
+from pymodaq.control_modules.viewer_utility_classes import main
+from pymodaq.control_modules.viewer_utility_classes import comon_parameters as viewer_params
+from pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni import AIChannel, AIThermoChannel, DAQmx, nidaqmx,\
+    DAQ_termination, DAQ_thermocouples
+from pymodaq_plugins_daqmx.hardware.national_instruments.daq_NIDAQmx import DAQ_NIDAQmx_base
+from pymodaq_plugins_daqmx.hardware.national_instruments.daq_NIDAQmx_Viewer import DAQ_NIDAQmx_Viewer
 from pymodaq.utils.logger import set_logger, get_module_name
 logger = set_logger(get_module_name(__file__))
 
-class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_base):
+
+class DAQ_0DViewer_NIDAQmx(DAQ_NIDAQmx_Viewer):
     """
     Plugin for a 0D data visualization & acquisition with various NI modules plugged in a NI cDAQ.
     """
