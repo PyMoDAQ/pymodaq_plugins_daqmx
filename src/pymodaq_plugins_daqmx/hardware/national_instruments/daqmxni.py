@@ -407,34 +407,35 @@ class DAQmx:
                     try:
                         logger.info("DAQ te{}".format(DAQ_termination.Diff))
                         if channel.analog_type == "Voltage":
-                            self._task.ai_channels.add_ai_voltage_chan(physical_channel=channel.name,
-                                                                       name_to_assign_to_channel="",
-                                                                       terminal_config=channel.termination,
-                                                                       min_val=channel.value_min,
-                                                                       max_val=channel.value_max,
-                                                                       units=VoltageUnits.VOLTS,
-                                                                       custom_scale_name=None)
+                            self._task.ai_channels.add_ai_voltage_chan(channel.name,
+                                                                       "",
+                                                                       channel.termination,
+                                                                       channel.value_min,
+                                                                       channel.value_max,
+                                                                       VoltageUnits.VOLTS,
+                                                                       "")
 
                         elif channel.analog_type == "Current":
-                            self._task.ai_channels.add_ai_current_chan(channel.name, "",
-                                                                       DAQ_termination[channel.termination],
+                            self._task.ai_channels.add_ai_current_chan(channel.name,
+                                                                       "",
+                                                                       channel.termination,
                                                                        channel.value_min,
                                                                        channel.value_max,
                                                                        CurrentUnits.AMPS,
                                                                        CurrentShuntResistorLocation.INTERNAL,
-                                                                       0., None)
+                                                                       0.,
+                                                                       "")
 
                         elif channel.analog_type == "Thermocouple":
-                            logger.info("DAQ th{}".format(DAQ_thermocouples.K))
-                            self._task.ai_channels.add_ai_thrmcpl_chan(physical_channel=channel.name,
-                                                                       name_to_assign_to_channel="",
-                                                                       min_val=channel.value_min,
-                                                                       max_val=channel.value_max,
-                                                                       units=TemperatureUnits.DEG_C,
-                                                                       thermocouple_type=channel.thermo_type,
-                                                                       cjc_source=CJCSource.BUILT_IN,
-                                                                       cjc_val=0.,
-                                                                       cjc_channel="")
+                            self._task.ai_channels.add_ai_thrmcpl_chan(channel.name,
+                                                                       "",
+                                                                       channel.value_min,
+                                                                       channel.value_max,
+                                                                       TemperatureUnits.DEG_C,
+                                                                       channel.thermo_type,
+                                                                       CJCSource.BUILT_IN,
+                                                                       0.,
+                                                                       "")
                     except DaqError as e:
                         err_code = e.error_code
                     if not not err_code:
@@ -563,14 +564,13 @@ class DAQmx:
     def register_callback(self, callback, event='done', nsamples=1):
 
         if event == 'done':
-            self._task.register_done_event(Signal.SAMPLE_COMPLETE, callback)
+            self._task.register_done_event(callback)
             # NOT SURE HERE
         elif event == 'sample':
-            self._task.register_every_n_samples_acquired_into_buffer_event(1,
-                                                                           callback)
+            self._task.register_every_n_samples_acquired_into_buffer_event(1, callback)
         elif event == 'Nsamples':
-            self._task.register_every_n_samples_acquired_into_buffer_event(nsamples,
-                                                                           callback)
+            self._task.register_every_n_samples_acquired_into_buffer_event(nsamples, callback)
+
     def readAnalog(self, Nchannels, clock_settings):
         read = nidaqmx.int32()
         N = clock_settings.Nsamples
