@@ -395,19 +395,13 @@ class DAQmx:
                 self.c_callback = None
 
             self._task = nidaqmx.Task()
+            logger.info("TASK: {}".format(self._task))
             err_code = None
-            # logger.info("first {}".format(self._task.timing))
-            # logger.info("first stamp {}".format(nidaqmx.task.Timing.first_samp_timestamp_val))
 
             # create all channels one task for one type of channels
             for channel in channels:
-                logger.info("channel {}".format(channel))
-                logger.info("channel name {}".format(channel.name))
-                logger.info("channel source {}".format(channel.source))
-                logger.info("channel term{}".format(channel.termination))
                 if channel.source == 'Analog_Input':  # analog input
                     try:
-                        logger.info("DAQ te{}".format(DAQ_termination.Diff))
                         if channel.analog_type == "Voltage":
                             self._task.ai_channels.add_ai_voltage_chan(channel.name,
                                                                        "",
@@ -519,17 +513,13 @@ class DAQmx:
             if clock_settings.Nsamples > 1 and isinstance(err_code, type(None)):
                 try:
                     if isinstance(clock_settings, ClockSettings):
-                        logger.info('------ mode {}'.format(mode))
-                        logger.info('------ Nsamples {}'.format(clock_settings.Nsamples))
-                        self._task.timing.cfg_samp_clk_timing(rate=clock_settings.frequency,
-                                                              source=clock_settings.source,
-                                                              active_edge=clock_settings.edge,
-                                                              sample_mode=mode,
-                                                              samps_per_chan=clock_settings.Nsamples)
+                        self._task.timing.cfg_samp_clk_timing(clock_settings.frequency,
+                                                              clock_settings.source,
+                                                              clock_settings.edge,
+                                                              mode,
+                                                              clock_settings.Nsamples)
                     elif isinstance(clock_settings, ChangeDetectionSettings):
-                        logger.info("here")
                         self._task.timing.cfg_change_detection_timing(clock_settings.rising_channel,
-
                                                                       clock_settings.falling_channel,
                                                                       mode,
                                                                       clock_settings.Nsamples)
@@ -537,6 +527,7 @@ class DAQmx:
                     err_code = e.error_code
                 if not not err_code:
                     status = self.DAQmxGetErrorString(err_code)
+                    logger.error(traceback.format_exc())
                     raise IOError(status)
 
             for channel in channels:
@@ -558,9 +549,9 @@ class DAQmx:
                             trigger_settings.level)
                     else:
                         raise IOError('Unsupported Trigger source')
-
+            logger.info("Task's channels{}".format(self._task.ai_channels.channel_names))
         except Exception as e:
-            logger.error("Exception catched: {}".format(e))
+            logger.error("Exception caught: {}".format(e))
             logger.error(traceback.format_exc())
 
     def register_callback(self, callback, event='done', nsamples=1):
