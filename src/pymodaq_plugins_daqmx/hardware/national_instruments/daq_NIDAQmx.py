@@ -74,6 +74,8 @@ class ScalableGroupAI(GroupParameter):
                  'removable': True, 'renamable': False}
 
         self.addChild(child)
+
+
 registerParameterType('groupai', ScalableGroupAI, override=True)
 
 
@@ -127,6 +129,8 @@ class ScalableGroupAO(GroupParameter):
                  'removable': True, 'renamable': False}
 
         self.addChild(child)
+
+
 registerParameterType('groupao', ScalableGroupAO, override=True)
 
 
@@ -171,6 +175,8 @@ class ScalableGroupCounter(GroupParameter):
                  'removable': True, 'renamable': False}
 
         self.addChild(child)
+
+
 registerParameterType('groupcounter', ScalableGroupCounter, override=True)
 
 
@@ -204,6 +210,8 @@ class ScalableGroupDI(GroupParameter):
         child = {'title': typ, 'name': 'di{:02.0f}'.format(newindex), 'type': 'group', 'children': self.params,
                  'removable': True, 'renamable': False}
         self.addChild(child)
+
+
 registerParameterType('groupdi', ScalableGroupDI, override=True)
 
 
@@ -237,54 +245,59 @@ class ScalableGroupDO(GroupParameter):
         child = {'title': typ, 'name': 'counter{:02.0f}'.format(newindex), 'type': 'group', 'children': self.params,
                  'removable': True, 'renamable': False}
         self.addChild(child)
+
+
 registerParameterType('groupdo', ScalableGroupDO, override=True)
 
 
 class DAQ_NIDAQmx_base(DAQmx):
     data_grabed_signal = Signal(list)
 
-    params =[{'title': 'Refresh hardware:', 'name': 'refresh_hardware', 'type': 'bool', 'value': False},
-            {'title': 'Signal type:', 'name': 'NIDAQ_type', 'type': 'list', 'limits': DAQ_NIDAQ_source.names()},
-             {'title': 'AO Settings:', 'name': 'ao_settings', 'type': 'group', 'children': [
-                 {'title': 'Waveform:', 'name': 'waveform', 'type': 'list', 'value': 'DC', 'limits': ['DC', 'Sinus', 'Ramp']},
-
-                 {'title': 'Controlled param:', 'name': 'cont_param', 'type': 'list', 'value': 'offset',
-                  'limits': ['offset', 'amplitude', 'frequency']},
-                 {'title': 'Waveform Settings:', 'name': 'waveform_settings', 'type': 'group', 'visible': False, 'children': [
-                     {'title': 'Offset:', 'name': 'offset', 'type': 'float', 'value': 0., },
-                     {'title': 'Amplitude:', 'name': 'amplitude', 'type': 'float', 'value': 1., },
-                     {'title': 'Frequency:', 'name': 'frequency', 'type': 'float', 'value': 10., },
-                    ]},
-             ]},
-            {'title': 'Clock Settings:', 'name': 'clock_settings', 'type': 'group', 'children': [
-                {'title': 'Nsamples:', 'name': 'Nsamples', 'type': 'int', 'value': 1000, 'default': 1000, 'min': 1},
-                {'title': 'Frequency:', 'name': 'frequency', 'type': 'float', 'value': 1000., 'default': 1000.,
-                 'min': 0., 'suffix': 'Hz'},
-                {'title': 'Repetition?:', 'name': 'repetition', 'type': 'bool', 'value': False, },
-            ]
-            },
-            {'title': 'AI Channels:', 'name': 'ai_channels', 'type': 'groupai',
-                  'limits': DAQmx.get_NIDAQ_channels(source_type='Analog_Input')},
-            {'title': 'AO Channels:', 'name': 'ao_channels', 'type': 'groupao',
-                 'limits': DAQmx.get_NIDAQ_channels(source_type='Analog_Output')},
-            {'title': 'DO Channels:', 'name': 'do_channels', 'type': 'groupdo',
-                'limits': DAQmx.get_NIDAQ_channels(source_type='Digital_Output')},
-             {'title': 'DI Channels:', 'name': 'di_channels', 'type': 'groupdi',
-              'limits': DAQmx.get_NIDAQ_channels(source_type='Digital_Input')},
-            {'title': 'Counter Settings:', 'name': 'counter_settings', 'type': 'group', 'visible': True, 'children': [
-                {'title': 'Counting time (ms):', 'name': 'counting_time', 'type': 'float', 'value': 100.,
-                'default': 100., 'min': 0.},
-                {'title': 'Counting Channels:', 'name': 'counter_channels', 'type': 'groupcounter',
-                'limits': DAQmx.get_NIDAQ_channels(source_type='Counter')},
-            ]},
-            {'title': 'Trigger Settings:', 'name': 'trigger_settings', 'type': 'group', 'visible': True, 'children': [
-                {'title': 'Enable?:', 'name': 'enable', 'type': 'bool', 'value': False, },
-                {'title': 'Trigger Source:', 'name': 'trigger_channel', 'type': 'list',
-                 'limits': DAQmx.getTriggeringSources()},
-                {'title': 'Edge type:', 'name': 'edge', 'type': 'list', 'limits': Edge.names(), 'visible': False},
-                {'title': 'Level:', 'name': 'level', 'type': 'float', 'value': 1., 'visible': False}
-                ]}
-            ]
+    params = [{'title': 'Refresh hardware:', 'name': 'refresh_hardware', 'type': 'bool', 'value': False},
+              {'title': 'Signal type:', 'name': 'NIDAQ_type', 'type': 'list', 'limits': DAQ_NIDAQ_source.names()},
+              {'title': 'NSamples To Read', 'name': 'nsamplestoread', 'type': 'int', 'value': 1000, 'default': 1000,
+               'min': 1},
+              {'title': 'AO Settings:', 'name': 'ao_settings', 'type': 'group', 'children': [
+                  {'title': 'Waveform:', 'name': 'waveform', 'type': 'list', 'value': 'DC',
+                   'limits': ['DC', 'Sinus', 'Ramp']},
+                  {'title': 'Controlled param:', 'name': 'cont_param', 'type': 'list', 'value': 'offset',
+                   'limits': ['offset', 'amplitude', 'frequency']},
+                  {'title': 'Waveform Settings:', 'name': 'waveform_settings', 'type': 'group', 'visible': False,
+                   'children': [
+                       {'title': 'Offset:', 'name': 'offset', 'type': 'float', 'value': 0., },
+                       {'title': 'Amplitude:', 'name': 'amplitude', 'type': 'float', 'value': 1., },
+                       {'title': 'Frequency:', 'name': 'frequency', 'type': 'float', 'value': 10., },
+                   ]},
+              ]},
+              {'title': 'Clock Settings:', 'name': 'clock_settings', 'type': 'group', 'children': [
+                  {'title': 'Nsamples:', 'name': 'Nsamples', 'type': 'int', 'value': 1000, 'default': 1000, 'min': 1},
+                  {'title': 'Frequency:', 'name': 'frequency', 'type': 'float', 'value': 1000., 'default': 1000.,
+                   'min': 0., 'suffix': 'Hz'},
+                  {'title': 'Repetition?:', 'name': 'repetition', 'type': 'bool', 'value': False, },
+              ]
+               },
+              {'title': 'AI Channels:', 'name': 'ai_channels', 'type': 'groupai',
+               'limits': DAQmx.get_NIDAQ_channels(source_type='Analog_Input')},
+              {'title': 'AO Channels:', 'name': 'ao_channels', 'type': 'groupao',
+               'limits': DAQmx.get_NIDAQ_channels(source_type='Analog_Output')},
+              {'title': 'DO Channels:', 'name': 'do_channels', 'type': 'groupdo',
+               'limits': DAQmx.get_NIDAQ_channels(source_type='Digital_Output')},
+              {'title': 'DI Channels:', 'name': 'di_channels', 'type': 'groupdi',
+               'limits': DAQmx.get_NIDAQ_channels(source_type='Digital_Input')},
+              {'title': 'Counter Settings:', 'name': 'counter_settings', 'type': 'group', 'visible': True, 'children': [
+                  {'title': 'Counting time (ms):', 'name': 'counting_time', 'type': 'float', 'value': 100.,
+                   'default': 100., 'min': 0.},
+                  {'title': 'Counting Channels:', 'name': 'counter_channels', 'type': 'groupcounter',
+                   'limits': DAQmx.get_NIDAQ_channels(source_type='Counter')},
+              ]},
+              {'title': 'Trigger Settings:', 'name': 'trigger_settings', 'type': 'group', 'visible': True, 'children': [
+                  {'title': 'Enable?:', 'name': 'enable', 'type': 'bool', 'value': False, },
+                  {'title': 'Trigger Source:', 'name': 'trigger_channel', 'type': 'list',
+                   'limits': DAQmx.getTriggeringSources()},
+                  {'title': 'Edge type:', 'name': 'edge', 'type': 'list', 'limits': Edge.names(), 'visible': False},
+                  {'title': 'Level:', 'name': 'level', 'type': 'float', 'value': 1., 'visible': False}
+              ]}
+              ]
 
     def __init__(self):
         super().__init__()
@@ -314,8 +327,8 @@ class DAQ_NIDAQmx_base(DAQmx):
         #     self.update_task()
 
         if param.name() == 'NIDAQ_type':
-            self.update_NIDAQ_channels(param.value())
-            if param.value() == DAQ_NIDAQ_source(0).name: #analog input
+            self.controller.update_NIDAQ_channels(param.value())
+            if param.value() == DAQ_NIDAQ_source(0).name:  # analog input
                 self.settings.child('clock_settings').show()
                 self.settings.child('ai_channels').show()
                 self.settings.child('ao_channels').hide()
@@ -324,7 +337,7 @@ class DAQ_NIDAQmx_base(DAQmx):
                 self.settings.child('do_channels').hide()
                 self.settings.child('di_channels').hide()
 
-            elif param.value() == DAQ_NIDAQ_source(1).name: #counter input
+            elif param.value() == DAQ_NIDAQ_source(1).name:  # counter input
                 self.settings.child('clock_settings').hide()
                 self.settings.child('ai_channels').hide()
                 self.settings.child('ao_channels').hide()
@@ -333,7 +346,7 @@ class DAQ_NIDAQmx_base(DAQmx):
                 self.settings.child('do_channels').hide()
                 self.settings.child('di_channels').hide()
 
-            elif param.value() == DAQ_NIDAQ_source(2).name: #analog output
+            elif param.value() == DAQ_NIDAQ_source(2).name:  # analog output
                 self.settings.child('clock_settings').show()
                 self.settings.child('ai_channels').hide()
                 self.settings.child('ao_channels').show()
@@ -342,7 +355,7 @@ class DAQ_NIDAQmx_base(DAQmx):
                 self.settings.child('do_channels').hide()
                 self.settings.child('di_channels').hide()
 
-            elif param.value() == DAQ_NIDAQ_source(3).name: # digital output
+            elif param.value() == DAQ_NIDAQ_source(3).name:  # digital output
                 self.settings.child('clock_settings').show()
                 self.settings.child('ai_channels').hide()
                 self.settings.child('ao_channels').hide()
@@ -351,7 +364,7 @@ class DAQ_NIDAQmx_base(DAQmx):
                 self.settings.child('do_channels').show()
                 self.settings.child('di_channels').hide()
 
-            elif param.value() == DAQ_NIDAQ_source(4).name: # Digital_Input
+            elif param.value() == DAQ_NIDAQ_source(4).name:  # Digital_Input
                 self.settings.child('clock_settings').show()
                 self.settings.child('ai_channels').hide()
                 self.settings.child('ao_channels').show()
@@ -634,18 +647,17 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
     is_multiaxes = False  # set to True if this plugin is controlled for a multiaxis controller (with a unique communication link)
     stage_names = []  # "list of strings of the multiaxes
 
-    params = DAQ_NIDAQmx_base.params +[
-              # elements to be added here as dicts in order to control your custom stage
-              ############
-              {'title': 'MultiAxes:', 'name': 'multiaxes', 'type': 'group', 'visible': is_multiaxes,
-               'children': [
-                   {'title': 'is Multiaxes:', 'name': 'ismultiaxes', 'type': 'bool', 'value': is_multiaxes,
-                    'default': False},
-                   {'title': 'Status:', 'name': 'multi_status', 'type': 'list', 'value': 'Master',
-                    'limits': ['Master', 'Slave']},
-                   {'title': 'Axis:', 'name': 'axis', 'type': 'list', 'limits': stage_names},
-
-               ]}] + actuator_params
+    params = DAQ_NIDAQmx_base.params + [
+        # elements to be added here as dicts in order to control your custom stage
+        ############
+        {'title': 'MultiAxes:', 'name': 'multiaxes', 'type': 'group', 'visible': is_multiaxes,
+         'children': [
+             {'title': 'is Multiaxes:', 'name': 'ismultiaxes', 'type': 'bool', 'value': is_multiaxes,
+              'default': False},
+             {'title': 'Status:', 'name': 'multi_status', 'type': 'list', 'value': 'Master',
+              'limits': ['Master', 'Slave']},
+             {'title': 'Axis:', 'name': 'axis', 'type': 'list', 'limits': stage_names},
+         ]}] + actuator_params
 
     def __init__(self, parent=None, params_state=None, control_type="Actuator"):
         DAQ_Move_base.__init__(self, parent, params_state)  # defines settings attribute and various other methods
@@ -670,7 +682,6 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
         pos = self.get_position_with_scaling(pos)
         self.emit_status(ThreadCommand('check_position', [pos]))
         return pos
-
 
     def commit_settings(self, param):
         """
@@ -721,7 +732,7 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
             # check whether this stage is controlled by a multiaxe controller (to be defined for each plugin)
             # if multiaxes then init the controller here if Master state otherwise use external controller
             if self.settings['multiaxes', 'ismultiaxes'] and self.settings['multiaxes',
-                                                                              'multi_status'] == "Slave":
+                                                                           'multi_status'] == "Slave":
                 if controller is None:
                     raise Exception('no controller has been defined externally while this axe is a slave one')
                 else:
@@ -757,12 +768,11 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
             amp = self.settings['ao_settings', 'waveform_settings', 'amplitude']
             offset = self.settings['ao_settings', 'waveform_settings', 'offset']
             if waveform == 'Sinus':
-                values = offset + amp * np.sin(2*np.pi*freq0*time)
+                values = offset + amp * np.sin(2 * np.pi * freq0 * time)
             elif waveform == 'Ramp':
                 values = offset + amp * np.linspace(0, 1, Nsamples)
 
         return values
-
 
     def move_Abs(self, position):
         """ Move the actuator to the absolute target defined by position
@@ -776,7 +786,7 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
         position = self.set_position_with_scaling(position)  # apply scaling if the user specified one
         if self.settings['NIDAQ_type'] == 'Analog_Output':
             self.settings.child('ao_settings', 'waveform_settings',
-                                 self.settings['ao_settings', 'cont_param']).setValue(position)
+                                self.settings['ao_settings', 'cont_param']).setValue(position)
             values = self.calulate_waveform(position)
             self.target_position = position
 
@@ -813,7 +823,7 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
         self.target_position = position + self.current_position
         if self.settings['NIDAQ_type'] == 'Analog_Output':
             self.settings.child('ao_settings', 'waveform_settings',
-                                 self.settings['ao_settings', 'cont_param']).setValue(self.target_position)
+                                self.settings['ao_settings', 'cont_param']).setValue(self.target_position)
 
             values = self.calulate_waveform(self.target_position)
 
@@ -860,4 +870,3 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
         self.emit_status(ThreadCommand('Update_Status', ['Some info you want to log']))
         self.move_done()  # to let the interface know the actuator stopped
         ##############################
-
