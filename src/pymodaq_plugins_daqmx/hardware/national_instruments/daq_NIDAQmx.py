@@ -307,7 +307,6 @@ class DAQ_NIDAQmx_base(DAQmx):
         self.clock_settings = None
         self.trigger_settings = None
         self.live = False
-        self.refresh_hardware()
 
     def commit_settings(self, param: Parameter):
         """
@@ -490,6 +489,7 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
         DAQ_Viewer_base.__init__(self, parent, params_state)  # defines settings attribute and various other methods
         DAQ_NIDAQmx_base.__init__(self)
 
+        self.Naverage = None
         self.live = False
         self.control_type = control_type  # could be "0D", "1D" or "Actuator"
         if self.control_type == "0D":
@@ -500,9 +500,10 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
         elif self.control_type == "Actuator":
             self.settings.child('NIDAQ_type').setLimits(['Analog_Output'])
 
+        self.settings.child('ao_settings').hide()
         self.settings.child('ao_channels').hide()
 
-        #timer used for the counter
+        # timer used for the counter
         self.timer = QtCore.QTimer()
         self.timer.setSingleShot(True)
         self.timer.timeout.connect(self.counter_done)
@@ -547,7 +548,6 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
             --------
             daq_utils.ThreadCommand
         """
-        self.status.update(edict(initialized=False, info="", x_axis=None, y_axis=None, controller=None))
         try:
             self.controller = self.ini_detector_init(controller, DAQmx())
             self.update_task()
@@ -555,16 +555,16 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
             # actions to perform in order to set properly the settings tree options
             self.commit_settings(self.settings.child('NIDAQ_type'))
 
-            self.status.info = "Plugin Initialized"
-            self.status.initialized = True
-            self.status.controller = controller
-            return self.status
+            info = "Plugin Initialized"
+            initialized = True
+            return info, initialized
 
         except Exception as e:
+            logger.info(traceback.format_exc())
             self.emit_status(ThreadCommand('Update_Status', [str(e), 'log']))
-            self.status.info = str(e)
-            self.status.initialized = False
-            return self.status
+            info = str(e)
+            initialized = False
+            return info, initialized
 
     def grab_data(self, Naverage=1, **kwargs):
         """
@@ -587,6 +587,10 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
             if kwargs['live'] != self.live:
                 update = True
             self.live = kwargs['live']
+
+        if Naverage != self.Naverage:
+            self.Naverage = Naverage
+            update = True
         if update:
             self.update_task()
 
