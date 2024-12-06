@@ -8,6 +8,7 @@ import nidaqmx
 from nidaqmx.constants import *
 from nidaqmx.system.device import Device
 from nidaqmx.errors import DaqError, DAQmxErrors
+from pymodaq_plugins_daqmx import config
 
 
 logger = set_logger(get_module_name(__file__))
