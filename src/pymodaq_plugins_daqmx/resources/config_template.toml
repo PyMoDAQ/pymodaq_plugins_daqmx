@@ -1,2 +1,28 @@
 title = 'Configuration file of the DAQmx plugin'
 
+[NIDAQ_Devices]
+
+[NIDAQ_Devices.DEVICE01]
+title = "Configuration entry for a NIDAQmx device"
+name = ""
+product = ""
+
+[NIDAQ_Devices.DEVICE01.MODULE01]
+title = "A module plugged in the NIDAQmx device"
+name = ""
+product = ""
+
+[NIDAQ_Devices.DEVICE01.MODULE02]
+title = "A module plugged in a NIDAQmx device"
+name = ""
+product = ""
+
+[NIDAQ_Devices.DEVICE01.MODULE03]
+title = "A module plugged in a NIDAQmx device"
+name = ""
+product = ""
+
+[NIDAQ_Devices.DEVICE01.MODULE01.ai.ai0]
+current_fields_example = "source, analog_type, value_min, value_max, termination"
+voltage_fields_example = "source, analog_type, value_min, value_max, termination"
+thrmcpl_fields_example = "source, analog_type, value_min, value_max, thermo_type"
