@@ -6,6 +6,8 @@ from pymodaq.utils.parameter import Parameter
 import nidaqmx
 
 from pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni import DAQmx, Edge, Counter
+
+
 class DAQ_0DViewer_DAQmx_counter(DAQ_Viewer_base):
     """
     Plugin for a 0D PL counter, based on a NI card.
