@@ -351,6 +351,91 @@ class DAQmx:
 
         return channels_tot
 
+    def configuration_sequence(self, viewer, current_device):
+        """Configure each  / modules / channels as giver by the user in the configuration file
+
+        Read the .toml file to get the desired hardware configuration,
+        and send the nidaqmx a sequence which set up each channel.
+        """
+        logger.info("********** CONFIGURATION SEQUENCE INITIALIZED **********")
+        devices_info = [dev.name + ': ' + dev.product_type for dev in self.devices]
+        logger.info("Detected devices: {}".format(devices_info))
+        try:
+            viewer.config_devices = [config["NIDAQ_Devices", dev].get('name') for dev in viewer.config["NIDAQ_Devices"]
+                                   if "Mod" not in config["NIDAQ_Devices", dev].get('name')]
+            logger.info(viewer.config_devices)
+            for dev in config["NIDAQ_Devices"]:
+                if not isinstance(config["NIDAQ_Devices", dev], dict):
+                    continue
+                try:
+                    device_name = config["NIDAQ_Devices", dev].get('name')
+                    if not device_name == current_device.name:
+                        continue
+                    device_product = config["NIDAQ_Devices", dev].get('product')
+                    device = nidaqmx.system.device.Device(device_name)
+                    assert device in self.devices and device.product_type == device_product, device.name
+                except AssertionError as err:
+                    logger.error("Device {} not detected: {}".format(device_name, err))
+                    continue
+                for mod in config["NIDAQ_Devices", dev]:
+                    if not isinstance(config["NIDAQ_Devices", dev, mod], dict):
+                        continue
+                    try:
+                        module_name = config["NIDAQ_Devices", dev, mod].get('name')
+                        module_product = config["NIDAQ_Devices", dev, mod].get('product')
+                        module = nidaqmx.system.device.Device(module_name)
+                        assert module in self.devices and module.product_type == module_product, module.name
+                        viewer.config_modules.append(config["NIDAQ_Devices", dev, mod].get('name'))
+                    except AssertionError as err:
+                        logger.error("Module {} not detected: {}".format(module_name, err))
+                        continue
+                    for source in config["NIDAQ_Devices", dev, mod]:
+                        if not isinstance(config["NIDAQ_Devices", dev, mod, source], dict):
+                            continue
+                        if source == "ai":
+                            ai = config["NIDAQ_Devices", dev, mod, source]
+                            for ch in ai.keys():
+                                name = module_name + "/" + str(ch)
+                                term = ai[ch].get("termination")
+                                if ai[ch].get("analog_type") == "Voltage":
+                                    viewer.config_channels.append(AIChannel
+                                                                (name=name,
+                                                                 source=ai[ch].get("source"),
+                                                                 analog_type=ai[ch].get("analog_type"),
+                                                                 value_min=float(ai[ch].get("value_min")),
+                                                                 value_max=float(ai[ch].get("value_max")),
+                                                                 termination=DAQ_termination.__getitem__(term),
+                                                                 ))
+                                elif ai[ch].get("analog_type") == "Current":
+                                    viewer.config_channels.append(AIChannel
+                                                                (name=name,
+                                                                 source=ai[ch].get("source"),
+                                                                 analog_type=ai[ch].get("analog_type"),
+                                                                 value_min=float(ai[ch].get("value_min")),
+                                                                 value_max=float(ai[ch].get("value_max")),
+                                                                 termination=DAQ_termination.__getitem__(term),
+                                                                 ))
+                                elif ai[ch].get("analog_type") == "Thermocouple":
+                                    th = ai[ch].get("thermo_type")
+                                    viewer.config_channels.append(AIThermoChannel
+                                                                (name=name,
+                                                                 source=ai[ch].get("source"),
+                                                                 analog_type=ai[ch].get("analog_type"),
+                                                                 value_min=float(ai[ch].get("value_min")),
+                                                                 value_max=float(ai[ch].get("value_max")),
+                                                                 thermo_type=DAQ_thermocouples.__getitem__(th),
+                                                                 ))
+            logger.info("Devices from config: {}".format(viewer.config_devices))
+            logger.info("Current device: {}".format(current_device))
+            logger.info("Current device modules from config: {}".format(viewer.config_modules))
+            logger.info("Current device channels from config: {}".format([ch.name for ch in viewer.config_channels]))
+        except AssertionError as err:
+            logger.error("Configuration entries <{}> does not match the hardware ".format(err))
+        except Exception as err:
+            logger.info("Configuration sequence error, verify if your config matches the hardware: {}".format(err))
+            pass
+        logger.info("       ********** CONFIGURATION SEQUENCE SUCCESSFULLY ENDED **********")
+
     @classmethod
     def getAOMaxRate(cls, device):
         return Device(device).ao_max_rate

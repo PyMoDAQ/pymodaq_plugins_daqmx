@@ -3,7 +3,7 @@ import numpy as np
 import traceback
 from qtpy import QtCore
 from .daqmxni import DAQmx
-from pymodaq_plugins_daqmx.hardware.national_instruments.daq_NIDAQmx import DAQ_NIDAQmx_base
+from pymodaq_plugins_daqmx.hardware.national_instruments.daq_NIDAQmx import DAQ_NIDAQmx_base, DAQ_termination
 from pymodaq.control_modules.viewer_utility_classes import DAQ_Viewer_base, comon_parameters as viewer_params
 from pymodaq.utils.daq_utils import ThreadCommand
 from pymodaq.utils.data import DataFromPlugins, DataToExport
@@ -32,6 +32,7 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
         DAQ_Viewer_base.__init__(self, parent, params_state)  # defines settings attribute and various other methods
         DAQ_NIDAQmx_base.__init__(self)
 
+        self.current_device = None
         self.Naverage = None
         self.live = False
         self.control_type = control_type  # could be "0D", "1D" or "Actuator"
@@ -99,12 +100,49 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
             daq_utils.ThreadCommand
         """
         try:
+            self.current_device = nidaqmx.system.Device(self.settings["devices"])
             self.controller = self.ini_detector_init(controller, DAQmx())
-            self.update_task()
+            self.controller.configuration_sequence(self, self.current_device)
 
             # actions to perform in order to set properly the settings tree options
             self.commit_settings(self.settings.child('NIDAQ_type'))
-
+            for ch in self.config_channels:
+                if self.settings.child("dev_to_use").value() in ch.name:
+                    self.settings.child('ai_channels').addNew(ch.name)
+                    param = [a for a in self.settings.child('ai_channels').childs if a.opts['title'] == ch.name][0]
+                    self.settings.child("ai_channels", param.opts['name'], "ai_type").setValue(ch.analog_type)
+                    param.child("voltage_settings").show(ch.analog_type == "Voltage")
+                    param.child("current_settings").show(ch.analog_type == "Current")
+                    param.child("thermoc_settings").show(ch.analog_type == "Thermocouple")
+                    if ch.analog_type == "Voltage":
+                        self.settings.child("ai_channels", param.opts['name'], "voltage_settings", "volt_min").setValue(
+                            ch.value_min)
+                        self.settings.child("ai_channels", param.opts['name'], "voltage_settings", "volt_max").setValue(
+                            ch.value_max)
+                        self.settings.child("ai_channels", param.opts['name'], "termination").setValue(
+                            ch.termination.name)
+                    elif ch.analog_type == "Current":
+                        self.settings.child("ai_channels", param.opts['name'], "current_settings", "curr_min").setValue(
+                            ch.value_min)
+                        self.settings.child("ai_channels", param.opts['name'], "current_settings", "curr_max").setValue(
+                            ch.value_max)
+                        self.settings.child("ai_channels", param.opts['name'], "termination").setValue(
+                            ch.termination.name)
+                    elif ch.analog_type == "Thermocouple":
+                        self.settings.child("ai_channels",
+                                            param.opts['name'],
+                                            "thermoc_settings",
+                                            "thermoc_type").setValue(ch.thermo_type.name)
+                        self.settings.child("ai_channels",
+                                            param.opts['name'],
+                                            "thermoc_settings",
+                                            "T_min").setValue(ch.value_min)
+                        self.settings.child("ai_channels",
+                                            param.opts['name'],
+                                            "thermoc_settings",
+                                            "T_max").setValue(ch.value_max)
+                        self.settings.child("ai_channels", param.opts['name'], "termination").setValue(
+                            DAQ_termination.Auto)
             info = "Plugin Initialized"
             initialized = True
             return info, initialized

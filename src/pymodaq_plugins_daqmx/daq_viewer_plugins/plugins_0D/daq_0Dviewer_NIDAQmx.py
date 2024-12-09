@@ -1,5 +1,6 @@
 from pymodaq.control_modules.viewer_utility_classes import main
 from pymodaq.control_modules.viewer_utility_classes import comon_parameters as viewer_params
+from pymodaq_plugins_daqmx import config
 from pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni import AIChannel, AIThermoChannel, DAQmx, nidaqmx,\
     DAQ_termination, DAQ_thermocouples
 from pymodaq_plugins_daqmx.hardware.national_instruments.daq_NIDAQmx import DAQ_NIDAQmx_base
@@ -13,9 +14,13 @@ class DAQ_0DViewer_NIDAQmx(DAQ_NIDAQmx_Viewer):
     Plugin for a 0D data visualization & acquisition with various NI modules plugged in a NI cDAQ.
     """
 
-    channels_ai: str
-    clock_settings_ai: str
-    dict_device_input: dict
+    config_channels: list
+    channels_ai: list
+    config: config
+    controller: DAQmx
+    config_devices: list
+    config_modules: list
+    current_device: nidaqmx.system.Device
     live: bool
     data_tot: list
     Naverage: int
@@ -33,12 +38,12 @@ class DAQ_0DViewer_NIDAQmx(DAQ_NIDAQmx_Viewer):
 
     def ini_attributes(self):
         super().ini_attributes()
-        self.controller: DAQmx = None
-        self.channels_ai = None
-        self.clock_settings_ai = None
-        self.dict_device_input = None
-        self.live = False  # True during a continuous grab
-        self.data_tot = None
+        self.channels_ai = []
+        self.config = config
+        self.config_channels = []
+        self.config_devices = []
+        self.config_modules = []
+        self.live = False
         self.Naverage = 1
         self.ind_average = 0
 
