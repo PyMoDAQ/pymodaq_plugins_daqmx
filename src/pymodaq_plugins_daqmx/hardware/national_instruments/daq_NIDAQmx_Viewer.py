@@ -54,11 +54,10 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
 
     def stop(self):
         """Stop the current grab hardware wise if necessary"""
-        self.controller.stop()
-        self.live = False
         try:
-            self.controller.task.StopTask()
-            logger.info("StopTask() done")
+            self.controller.stop()
+            self.live = False
+            logger.info("Acquisition stopped.")
         except Exception:
             pass
         self.emit_status(ThreadCommand('Update_Status', ['Acquisition stopped.']))
@@ -81,7 +80,7 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
         if param.parent() is not None:
             if param.parent().name() == 'ai_channels':
                 device = param.opts['title'].split('/')[0]
-                self.settings.child('clock_settings', 'frequency').setOpts(max=self.getAIMaxRate(device))
+                self.settings.child('clock_settings', 'frequency').setOpts(max=self.controller.getAIMaxRate(device))
 
                 ranges = self.controller.getAIVoltageRange(device)
                 param.child('voltage_settings', 'volt_min').setOpts(limits=[r[0] for r in ranges])

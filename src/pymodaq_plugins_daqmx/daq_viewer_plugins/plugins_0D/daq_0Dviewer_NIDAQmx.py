@@ -22,14 +22,15 @@ class DAQ_0DViewer_NIDAQmx(DAQ_NIDAQmx_Viewer):
     config_modules: list
     current_device: nidaqmx.system.Device
     live: bool
-    data_tot: list
     Naverage: int
-    ind_average: int
 
+    param_devices = DAQmx.get_NIDAQ_devices().device_names
     params = viewer_params + [
         {'title': 'Display type:', 'name': 'display', 'type': 'list', 'limits': ['0D', '1D']},
-        {'title': 'Module ref. :', 'name': 'module', 'type': 'list', 'limits': DAQmx.get_NIDAQ_devices()[1],
-         'value': DAQmx.get_NIDAQ_devices()[1][0]
+        {'title': 'Devices :', 'name': 'devices', 'type': 'list', 'limits': param_devices,
+         'value': param_devices[0]
+         },
+        {'title': 'Device To Use:', 'name': 'dev_to_use', 'type': 'list', 'limits': param_devices,
          },
         ] + DAQ_NIDAQmx_base.params
 
@@ -45,7 +46,6 @@ class DAQ_0DViewer_NIDAQmx(DAQ_NIDAQmx_Viewer):
         self.config_modules = []
         self.live = False
         self.Naverage = 1
-        self.ind_average = 0
 
     def close(self):
         self.live = False

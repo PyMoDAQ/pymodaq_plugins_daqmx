@@ -255,7 +255,6 @@ class DAQmx:
     """Wrapper around the NIDAQmx package giving an easy-to-use object to instantiate channels and tasks"""
     def __init__(self):
         self.devices = []
-        self.devices_names = []
         self.channels = []
         self._device = None
         self._task = None
@@ -276,13 +275,12 @@ class DAQmx:
 
     @device.setter
     def device(self, device):
-        if device not in self.devices_names:
+        if device not in self.devices.device_names:
             raise IOError(f'your device: {device} is not known or connected')
         self._device = device
 
     def update_NIDAQ_devices(self):
-        self.devices = self.get_NIDAQ_devices()[0]
-        self.devices_names = self.get_NIDAQ_devices()[1]
+        self.devices = self.get_NIDAQ_devices()
 
     @classmethod
     def get_NIDAQ_devices(cls):
@@ -297,12 +295,12 @@ class DAQmx:
             devices = nidaqmx.system.System.local().devices
             if devices == ['']:
                 devices = []
-            return devices, devices.device_names
+            return devices
         except DaqError as e:
             return e.error_code
 
     def update_NIDAQ_channels(self, source_type=None):
-        self.channels = self.get_NIDAQ_channels(self.devices_names, source_type=source_type)
+        self.channels = self.get_NIDAQ_channels(self.devices.device_names, source_type=source_type)
 
     @classmethod
     def get_NIDAQ_channels(cls, devices=None, source_type=None):
@@ -321,7 +319,7 @@ class DAQmx:
 
         """
         if devices is None:
-            devices = cls.get_NIDAQ_devices()[1]
+            devices = cls.get_NIDAQ_devices().device_names
 
         if source_type is None:
             source_type = DAQ_NIDAQ_source.names()
@@ -455,7 +453,7 @@ class DAQmx:
     def getTriggeringSources(cls, devices=None):
         sources = []
         if devices is None:
-            devices = cls.get_NIDAQ_devices()[1]
+            devices = cls.get_NIDAQ_devices().device_names
 
         for device in devices:
             if cls.isDigitalTriggeringSupported(device):
