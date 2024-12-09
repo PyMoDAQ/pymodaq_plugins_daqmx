@@ -26,6 +26,7 @@ Contributors
 
 * Amelie Jarnac
 * Aurore Finco
+* Sébastien Guerrero  (sebastien.guerrero@insa-lyon.fr)
 
 Instruments
 ===========
@@ -40,6 +41,6 @@ Viewer0D
 ++++++++
 
 * **DAQmx_PLcounter**: Single photon counting
-
+* **NIDAQmx: Analog Input (current-voltage-temperature), working with cDAQ & DAQ-USB
 
 
