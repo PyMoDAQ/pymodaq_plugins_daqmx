@@ -389,6 +389,7 @@ class DAQ_NIDAQmx_base(DAQmx):
 
     def update_task(self):
         self.channels = self.get_channels_from_settings()
+        logger.info("update_task - channels: {}".format(self.channels))
         self.clock_settings = ClockSettings(frequency=self.settings['clock_settings', 'frequency'],
                                             Nsamples=self.settings['clock_settings', 'Nsamples'],
                                             edge=Edge.Rising,
@@ -399,13 +400,13 @@ class DAQ_NIDAQmx_base(DAQmx):
                             edge=Edge[self.settings['trigger_settings', 'edge']],
                             level=self.settings['trigger_settings', 'level'], )
         if not not self.channels:
-            logger.info("not not self channel")
             self.controller.update_task(self.channels, self.clock_settings, trigger_settings=self.trigger_settings)
 
     def get_channels_from_settings(self):
         channels = []
         if self.settings['NIDAQ_type'] == DAQ_NIDAQ_source(0).name:  # analog input
             for channel in self.settings.child('ai_channels').children():
+                logger.info("get_channels_from_settings - channel {}".format(channel))
                 analog_type = channel['ai_type']
                 if analog_type == 'Voltage':
                     channels.append(AIChannel(name=channel.opts['title'],

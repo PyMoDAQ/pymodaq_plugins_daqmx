@@ -1,4 +1,4 @@
-import datetime
+import nidaqmx
 import numpy as np
 import traceback
 from qtpy import QtCore
@@ -16,7 +16,7 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
         ==================== ========================
         **Attributes**         **Type**
         *data_grabed_signal*   instance of Signal
-        *params*               dictionnary list
+        *params*               dictionary list
         *task*
         ==================== ========================
 
@@ -61,8 +61,6 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
             logger.info("StopTask() done")
         except Exception:
             pass
-        ##############################
-
         self.emit_status(ThreadCommand('Update_Status', ['Acquisition stopped.']))
         return ''
 
@@ -145,6 +143,7 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
                             DAQ_termination.Auto)
             info = "Plugin Initialized"
             initialized = True
+            logger.info("Detector 0D initialized")
             return info, initialized
 
         except Exception as e:

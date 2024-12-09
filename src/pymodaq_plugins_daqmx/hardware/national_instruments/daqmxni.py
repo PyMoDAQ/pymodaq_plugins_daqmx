@@ -3,7 +3,6 @@ import traceback
 from enum import IntEnum
 import numpy as np
 from pymodaq.utils.logger import set_logger, get_module_name
-# from threading import Timer
 import nidaqmx
 from nidaqmx.constants import *
 from nidaqmx.system.device import Device
@@ -253,7 +252,7 @@ class DIChannel(DigitalChannel):
 
 
 class DAQmx:
-    """Wrapper around the NIDAQmx package giving an easy to use object to instantiate channels and tasks"""
+    """Wrapper around the NIDAQmx package giving an easy-to-use object to instantiate channels and tasks"""
     def __init__(self):
         self.devices = []
         self.devices_names = []
