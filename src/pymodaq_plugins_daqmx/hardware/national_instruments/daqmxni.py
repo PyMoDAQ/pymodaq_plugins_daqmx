@@ -3,9 +3,14 @@ import traceback
 from enum import IntEnum
 import numpy as np
 from pymodaq.utils.logger import set_logger, get_module_name
-import nidaqmx
-from nidaqmx.constants import *
+
+from nidaqmx.constants import UsageTypeAI, ThermocoupleType, TerminalConfiguration, Edge, AcquisitionType, \
+                                VoltageUnits, CurrentUnits, CurrentShuntResistorLocation, TemperatureUnits, \
+                                CJCSource, CountDirection, Level, FrequencyUnits, TimeUnits, LineGrouping
+from nidaqmx.system import System
+
 from nidaqmx.system.device import Device
+from nidaqmx import Task
 from nidaqmx.errors import DaqError, DAQmxErrors
 from pymodaq_plugins_daqmx import config
 
@@ -13,7 +18,29 @@ from pymodaq_plugins_daqmx import config
 logger = set_logger(get_module_name(__file__))
 
 
-class DAQ_NIDAQ_source(IntEnum):
+class IntEnumExtend(IntEnum):
+    """
+        This class expose 3 privates and undocumented methods of Enum
+    """
+    @classmethod
+    def names(cls):
+        return cls._member_names_
+        # [item.name for item in cls.__members__.items()]
+        # [name for name, member in cls.__members__.items()]
+
+    @classmethod
+    def members(cls):
+        return list(cls._member_map_.values())
+        # [member for name, member in cls.__members__.items()]
+        # [item.member for item in cls.__members__.items()]
+
+    @classmethod
+    def values(cls):
+        return [cls[name].value for name in cls._member_names_]
+        # [cls[name].value for name, member in cls.__members__.items()]
+
+
+class DAQ_NIDAQ_source(IntEnumExtend):
     """
         Enum class of NIDAQ_source
 
@@ -30,117 +57,16 @@ class DAQ_NIDAQ_source(IntEnum):
     Digital_Output = 4
     Terminals = 5
 
-    @classmethod
-    def names(cls):
-        return [name for name, member in cls.__members__.items()]
 
-    @classmethod
-    def members(cls):
-        return [member for name, member in cls.__members__.items()]
-
-
-class DAQ_analog_types(IntEnum):
-    """
-        Enum class of Ai types
-
-        =============== ==========
-        **Attributes**   **Type**
-        =============== ==========
-    """
-    Voltage = UsageTypeAI.VOLTAGE.value
-    Current = UsageTypeAI.CURRENT.value
-    Thermocouple = UsageTypeAI.TEMPERATURE_THERMOCOUPLE.value
-
-    @classmethod
-    def names(cls):
-        return [name for name, member in cls.__members__.items()]
-
-    @classmethod
-    def members(cls):
-        return [member for name, member in cls.__members__.items()]
-
-    @classmethod
-    def values(cls):
-        return [cls[name].value for name, member in cls.__members__.items()]
-
-
-class DAQ_thermocouples(IntEnum):
-    """
-        Enum class of thermocouples type
-
-        =============== ==========
-        **Attributes**   **Type**
-        =============== ==========
-    """
-    J = ThermocoupleType.J.value
-    K = ThermocoupleType.K.value
-    N = ThermocoupleType.N.value
-    R = ThermocoupleType.R.value
-    S = ThermocoupleType.S.value
-    T = ThermocoupleType.T.value
-    B = ThermocoupleType.B.value
-    E = ThermocoupleType.E.value
-
-    @classmethod
-    def names(cls):
-        return [name for name, member in cls.__members__.items()]
-
-    @classmethod
-    def members(cls):
-        return [member for name, member in cls.__members__.items()]
-
-
-class DAQ_termination(IntEnum):
-    """
-        Enum class of termination type
-
-        =============== ==========
-        **Attributes**   **Type**
-        =============== ==========
-    """
-    Auto = TerminalConfiguration.DEFAULT.value
-    RSE = TerminalConfiguration.RSE.value
-    NRSE = TerminalConfiguration.NRSE.value
-    Diff = TerminalConfiguration.DIFF.value
-    Pseudodiff = TerminalConfiguration.PSEUDO_DIFF.value
-
-    @classmethod
-    def names(cls):
-        return [name for name, member in cls.__members__.items()]
-
-    @classmethod
-    def members(cls):
-        return [member for name, member in cls.__members__.items()]
-
-
-class Edge(IntEnum):
-    """
-    """
-    Rising = Edge.RISING.value
-    Falling = Edge.FALLING.value
-
-    @classmethod
-    def names(cls):
-        return [name for name, member in cls.__members__.items()]
-
-    @classmethod
-    def members(cls):
-        return [member for name, member in cls.__members__.items()]
-
-
-class ClockMode(IntEnum):
-    """
-    """
-    Finite = AcquisitionType.FINITE.value
-    Continuous = AcquisitionType.CONTINUOUS.value
-
-    @classmethod
-    def names(cls):
-        return [name for name, member in cls.__members__.items()]
-
-    @classmethod
-    def members(cls):
-        return [member for name, member in cls.__members__.items()]
+# class DAQ_analog_types(UsageTypeAI):
+#     """
+#         Enum class of Ai types
+#
+#         =============== ==========
+#         **Attributes**   **Type**
+#         =============== ==========
+#     """
+#     Thermocouple = UsageTypeAI.TEMPERATURE_THERMOCOUPLE.value
 
 
 class ClockSettingsBase:
@@ -151,7 +77,7 @@ class ClockSettingsBase:
 
 
 class ClockSettings(ClockSettingsBase):
-    def __init__(self, source=None, frequency=1000, Nsamples=1000, edge=Edge.Rising, repetition=False):
+    def __init__(self, source=None, frequency=1000, Nsamples=1000, edge=Edge.RISING, repetition=False):
         super().__init__(Nsamples, repetition)
         self.source = source
         assert edge in Edge.members()
@@ -168,7 +94,7 @@ class ChangeDetectionSettings(ClockSettingsBase):
 
 
 class TriggerSettings:
-    def __init__(self, trig_source='', enable=False, edge=Edge.Rising, level=0.1):
+    def __init__(self, trig_source='', enable=False, edge=Edge.RISING, level=0.1):
         assert edge in Edge.members()
         self.trig_source = trig_source
         self.enable = enable
@@ -189,7 +115,7 @@ class Channel:
 
 
 class AChannel(Channel):
-    def __init__(self, analog_type=DAQ_analog_types.Voltage, value_min=-10., value_max=+10., **kwargs):
+    def __init__(self, analog_type=UsageTypeAI.VOLTAGE, value_min=-10., value_max=+10., **kwargs):
         """
         Parameters
         ----------
@@ -203,16 +129,16 @@ class AChannel(Channel):
 
 
 class AIChannel(AChannel):
-    def __init__(self, termination=DAQ_termination.Auto, **kwargs):
+    def __init__(self, termination=TerminalConfiguration.DEFAULT, **kwargs):
         super().__init__(**kwargs)
-        assert termination in DAQ_termination.members()
+        assert termination in TerminalConfiguration._member_map_.values()
         self.termination = termination
 
 
 class AIThermoChannel(AIChannel):
-    def __init__(self, thermo_type=DAQ_thermocouples.K, **kwargs):
+    def __init__(self, thermo_type=ThermocoupleType.K, **kwargs):
         super().__init__(**kwargs)
-        assert thermo_type in DAQ_thermocouples.members()
+        assert thermo_type in ThermocoupleType._member_map_.values()
         self.thermo_type = thermo_type
 
 
@@ -222,8 +148,8 @@ class AOChannel(AChannel):
 
 
 class Counter(Channel):
-    def __init__(self, edge=Edge.Rising, **kwargs):
-        assert edge in Edge.members()
+    def __init__(self, edge=Edge.RISING, **kwargs):
+        assert edge in Edge._member_map_.values()
         super().__init__(**kwargs)
         self.edge = edge
         self.counter_type = "Edge Counter"
@@ -292,7 +218,7 @@ class DAQmx:
             list of devices as strings to be used in subsequent commands
         """
         try:
-            devices = nidaqmx.system.System.local().devices
+            devices = System.local().devices
             if devices == ['']:
                 devices = []
             return devices
@@ -330,17 +256,17 @@ class DAQmx:
         if not not devices:
             for device in devices:
                 for source in source_type:
-                    if source == DAQ_NIDAQ_source['Analog_Input'].name:  # analog input
+                    if source == DAQ_NIDAQ_source.Analog_Input.name:  # analog input
                         channels = Device(device).ai_physical_chans.channel_names
-                    elif source == DAQ_NIDAQ_source['Analog_Output'].name:  # analog output
+                    elif source == DAQ_NIDAQ_source.Analog_Output.name:  # analog output
                         channels = Device(device).ao_physical_chans.channel_names
-                    elif source == DAQ_NIDAQ_source['Counter'].name:  # counter
+                    elif source == DAQ_NIDAQ_source.Counter.name:  # counter
                         channels = Device(device).ci_physical_chans.channel_names
-                    elif source == DAQ_NIDAQ_source['Digital_Output'].name:  # digital output
+                    elif source == DAQ_NIDAQ_source.Digital_Output.name:  # digital output
                         channels = Device(device).do_lines.channel_names
-                    elif source == DAQ_NIDAQ_source['Digital_Input'].name:  # digital iutput
+                    elif source == DAQ_NIDAQ_source.Digital_Input.name:  # digital iutput
                         channels = Device(device).di_lines.channel_names
-                    elif source == DAQ_NIDAQ_source['Terminals'].name:  # terminals
+                    elif source == DAQ_NIDAQ_source.Terminals.name:  # terminals
                         channels = Device(device).terminals
 
                     if channels != ['']:
@@ -471,13 +397,13 @@ class DAQmx:
 
         try:
             if self._task is not None:
-                if isinstance(self._task, nidaqmx.Task):
+                if isinstance(self._task, Task):
                     self._task.close()
 
                 self._task = None
                 self.c_callback = None
 
-            self._task = nidaqmx.Task()
+            self._task = Task()
             logger.info("TASK: {}".format(self._task))
             err_code = None
 
@@ -662,12 +588,12 @@ class DAQmx:
 
     @classmethod
     def getAIVoltageRange(cls, device='Dev1'):
-        ret = nidaqmx.system.System.local().devices[device].ai_voltage_rngs
+        ret = System.local().devices[device].ai_voltage_rngs  # todo self.devices[device].ai_voltage_rngs
         return [tuple(ret[6:8])]
 
     @classmethod
     def getAOVoltageRange(cls, device='Dev1'):
-        ret = nidaqmx.system.System.local().devices[device].ao_voltage_rngs
+        ret = System.local().devices[device].ao_voltage_rngs  # todo self.devices[device].ao_voltage_rngs
         return [tuple(ret)]  # [(-10., 10.)] Why this format is needed??
 
     def stop(self):
@@ -710,8 +636,8 @@ class DAQmx:
             --------
             update_NIDAQ_devices, update_NIDAQ_channels
         """
-        devices = self.update_NIDAQ_devices()
-        self.update_NIDAQ_channels(devices)
+        self.update_NIDAQ_devices()
+        self.update_NIDAQ_channels()
 
 
 if __name__ == '__main__':

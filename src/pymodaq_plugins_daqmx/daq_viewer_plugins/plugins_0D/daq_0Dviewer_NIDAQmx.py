@@ -1,8 +1,10 @@
 from pymodaq.control_modules.viewer_utility_classes import main
 from pymodaq.control_modules.viewer_utility_classes import comon_parameters as viewer_params
 from pymodaq_plugins_daqmx import config
-from pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni import AIChannel, AIThermoChannel, DAQmx, nidaqmx,\
-    DAQ_termination, DAQ_thermocouples
+from pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni import AIChannel, AIThermoChannel, DAQmx, \
+                                                            Task, niconstants
+from pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni import UsageTypeAI, ThermocoupleType, \
+                                                            TerminalConfiguration
 from pymodaq_plugins_daqmx.hardware.national_instruments.daq_NIDAQmx import DAQ_NIDAQmx_base
 from pymodaq_plugins_daqmx.hardware.national_instruments.daq_NIDAQmx_Viewer import DAQ_NIDAQmx_Viewer
 from pymodaq.utils.logger import set_logger, get_module_name
@@ -62,12 +64,10 @@ if __name__ == '__main__':
     else:
         try:
             print("In main")
-            import nidaqmx as ni
-            from pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni import CurrentUnits, TemperatureUnits,\
-                VoltageUnits, CJCSource
+            import nidaqmx.system.System
 
             # EXPLORE DEVICES
-            devices = ni.system.System.local().devices
+            devices = nidaqmx.system.System.local().devices
             print("devices {}".format(devices))
             print("devices names {}".format(devices.device_names))
             print("devices types {}".format([dev.product_type for dev in devices]))
@@ -94,26 +94,26 @@ if __name__ == '__main__':
                                            analog_type='Thermocouple',
                                            value_min=-100,
                                            value_max=1000,
-                                           thermo_type=DAQ_thermocouples.K),
+                                           thermo_type=ThermocoupleType.K),
                            ]
             channels_voltage = [AIChannel(name="cDAQ1Mod3/ai0",
                                           source='Analog_Input',
                                           analog_type='voltage',
                                           value_min=-80.0e-3,
                                           value_max=80.0e-3,
-                                          termination=DAQ_termination.Auto,
+                                          termination=TerminalConfiguration.DEFAULT,
                                           ),
                                 AIChannel(name="cDAQ1Mod3/ai1",
                                           source='Analog_Input',
                                           analog_type='voltage',
                                           value_min=-80.0e-3,
                                           value_max=80.0e-3,
-                                          termination=DAQ_termination.Auto,
+                                          termination=TerminalConfiguration.DEFAULT,
                                           ),
                                 ]
             # CREATE TASK
-            task_9211 = nidaqmx.Task()
-            task_9205 = nidaqmx.Task()
+            task_9211 = Task()
+            task_9205 = Task()
 
             def callback_9211(task_handle, every_n_samples_event_type, number_of_samples, callback_data):
                 data9211 = task_9211.read(5)
@@ -128,9 +128,9 @@ if __name__ == '__main__':
                                                           "",
                                                           channel.value_min,
                                                           channel.value_max,
-                                                          TemperatureUnits.DEG_C,
+                                                          niconstants.TemperatureUnits.DEG_C,
                                                           channel.thermo_type,
-                                                          CJCSource.BUILT_IN,
+                                                          niconstants.CJCSource.BUILT_IN,
                                                           0.,
                                                           "")
             for channel in channels_voltage:
@@ -139,14 +139,14 @@ if __name__ == '__main__':
                                                           channel.termination,
                                                           channel.value_min,
                                                           channel.value_max,
-                                                          VoltageUnits.VOLTS,
+                                                          niconstants.VoltageUnits.VOLTS,
                                                           "")
-            task_9211.timing.cfg_samp_clk_timing(5.0, None, nidaqmx.constants.Edge.RISING,
-                                                 nidaqmx.constants.AcquisitionType.CONTINUOUS, 5)
+            task_9211.timing.cfg_samp_clk_timing(5.0, None, niconstants.Edge.RISING,
+                                                 niconstants.AcquisitionType.CONTINUOUS, 5)
             task_9211.register_every_n_samples_acquired_into_buffer_event(10, callback_9211)
 
-            task_9205.timing.cfg_samp_clk_timing(10, None, nidaqmx.constants.Edge.RISING,
-                                                 nidaqmx.constants.AcquisitionType.CONTINUOUS, 10)
+            task_9205.timing.cfg_samp_clk_timing(10, None, niconstants.Edge.RISING,
+                                                 niconstants.AcquisitionType.CONTINUOUS, 10)
             task_9205.register_every_n_samples_acquired_into_buffer_event(2, callback_9205)
 
             task_9211.start()
