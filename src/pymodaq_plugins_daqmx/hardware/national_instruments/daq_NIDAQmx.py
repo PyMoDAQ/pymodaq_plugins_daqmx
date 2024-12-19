@@ -878,5 +878,5 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
         self.stop()
         self.emit_status(ThreadCommand('Update_Status', ['Some info you want to log']))
         self.move_done()  # to let the interface know the actuator stopped
-        ##############################
->>>>>>> eda1396 (removed CustomEnum to use the ones from nidaq.constants)
+
+

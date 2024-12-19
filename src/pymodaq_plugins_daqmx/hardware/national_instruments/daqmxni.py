@@ -10,7 +10,7 @@ from nidaqmx.constants import AcquisitionType, VoltageUnits, CurrentUnits, Curre
 from . import UsageTypeAI, Edge, TerminalConfiguration, ThermocoupleType
 
 from nidaqmx.system import System as niSystem
-from nidaqmx.system.device import Device
+from nidaqmx.system.device import Device as niDevice
 from nidaqmx import Task as niTask
 from nidaqmx.errors import DaqError, DAQmxErrors
 from pymodaq_plugins_daqmx import config
@@ -247,17 +247,17 @@ class DAQmx:
             for device in devices:
                 for source in source_type:
                     if source == DAQ_NIDAQ_source.Analog_Input.name:  # analog input
-                        channels = Device(device).ai_physical_chans.channel_names
+                        channels = niDevice(device).ai_physical_chans.channel_names
                     elif source == DAQ_NIDAQ_source.Analog_Output.name:  # analog output
-                        channels = Device(device).ao_physical_chans.channel_names
+                        channels = niDevice(device).ao_physical_chans.channel_names
                     elif source == DAQ_NIDAQ_source.Counter.name:  # counter
-                        channels = Device(device).ci_physical_chans.channel_names
+                        channels = niDevice(device).ci_physical_chans.channel_names
                     elif source == DAQ_NIDAQ_source.Digital_Output.name:  # digital output
-                        channels = Device(device).do_lines.channel_names
+                        channels = niDevice(device).do_lines.channel_names
                     elif source == DAQ_NIDAQ_source.Digital_Input.name:  # digital iutput
-                        channels = Device(device).di_lines.channel_names
+                        channels = niDevice(device).di_lines.channel_names
                     elif source == DAQ_NIDAQ_source.Terminals.name:  # terminals
-                        channels = Device(device).terminals
+                        channels = niDevice(device).terminals
 
                     if channels != ['']:
                         channels_tot.extend(channels)
@@ -285,7 +285,7 @@ class DAQmx:
                     if not device_name == current_device.name:
                         continue
                     device_product = config["NIDAQ_Devices", dev].get('product')
-                    device = Device(device_name)
+                    device = niDevice(device_name)
                     assert device in self.devices and device.product_type == device_product, device.name
                 except AssertionError as err:
                     logger.error("Device {} not detected: {}".format(device_name, err))
@@ -296,7 +296,7 @@ class DAQmx:
                     try:
                         module_name = config["NIDAQ_Devices", dev, mod].get('name')
                         module_product = config["NIDAQ_Devices", dev, mod].get('product')
-                        module = Device(module_name)
+                        module = niDevice(module_name)
                         assert module in self.devices and module.product_type == module_product, module.name
                         viewer.config_modules.append(config["NIDAQ_Devices", dev, mod].get('name'))
                     except AssertionError as err:
@@ -336,7 +336,7 @@ class DAQmx:
                                                                  analog_type=ai[ch].get("analog_type"),
                                                                  value_min=float(ai[ch].get("value_min")),
                                                                  value_max=float(ai[ch].get("value_max")),
-                                                                 thermo_type=DAQ_thermocouples.__getitem__(th),
+                                                                 thermo_type=ThermocoupleType.__getitem__(th),
                                                                  ))
             logger.info("Devices from config: {}".format(viewer.config_devices))
             logger.info("Current device: {}".format(current_device))
@@ -351,19 +351,19 @@ class DAQmx:
 
     @classmethod
     def getAOMaxRate(cls, device):
-        return Device(device).ao_max_rate
+        return niDevice(device).ao_max_rate
 
     @classmethod
     def getAIMaxRate(cls, device):
-        return Device(device).ai_max_single_chan_rate
+        return niDevice(device).ai_max_single_chan_rate
 
     @classmethod
     def isAnalogTriggeringSupported(cls, device):
-        return Device(device).anlg_trig_supported
+        return niDevice(device).anlg_trig_supported
 
     @classmethod
     def isDigitalTriggeringSupported(cls, device):
-        return Device(device).dig_trig_supported
+        return niDevice(device).dig_trig_supported
 
     @classmethod
     def getTriggeringSources(cls, devices=None):
@@ -373,12 +373,12 @@ class DAQmx:
 
         for device in devices:
             if cls.isDigitalTriggeringSupported(device):
-                string = Device(device).terminals
+                string = niDevice(device).terminals
                 channels = [chan for chan in string if 'PFI' in chan]
                 if channels != ['']:
                     sources.extend(channels)
             if cls.isAnalogTriggeringSupported(device):
-                channels = Device(device).ai_physical_chans.channel_names
+                channels = niDevice(device).ai_physical_chans.channel_names
                 if channels != ['']:
                     sources.extend(channels)
         return sources
