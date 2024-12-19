@@ -282,18 +282,18 @@ class DAQ_NIDAQmx_base:
               ]
                },
               {'title': 'AI Channels:', 'name': 'ai_channels', 'type': 'groupai',
-               'limits': DAQmx.get_NIDAQ_channels(source_type='Analog_Input')},
+               'limits': DAQmx.get_NIDAQ_channels(source_type=DAQ_NIDAQ_source.Analog_Input.name)},
               {'title': 'AO Channels:', 'name': 'ao_channels', 'type': 'groupao',
-               'limits': DAQmx.get_NIDAQ_channels(source_type='Analog_Output')},
+               'limits': DAQmx.get_NIDAQ_channels(source_type=DAQ_NIDAQ_source.Analog_Output.name)},
               {'title': 'DO Channels:', 'name': 'do_channels', 'type': 'groupdo',
-               'limits': DAQmx.get_NIDAQ_channels(source_type='Digital_Output')},
+               'limits': DAQmx.get_NIDAQ_channels(source_type=DAQ_NIDAQ_source.Digital_Output.name)},
               {'title': 'DI Channels:', 'name': 'di_channels', 'type': 'groupdi',
-               'limits': DAQmx.get_NIDAQ_channels(source_type='Digital_Input')},
+               'limits': DAQmx.get_NIDAQ_channels(source_type=DAQ_NIDAQ_source.Digital_Input.name)},
               {'title': 'Counter Settings:', 'name': 'counter_settings', 'type': 'group', 'visible': True, 'children': [
                   {'title': 'Counting time (ms):', 'name': 'counting_time', 'type': 'float', 'value': 100.,
                    'default': 100., 'min': 0.},
                   {'title': 'Counting Channels:', 'name': 'counter_channels', 'type': 'groupcounter',
-                   'limits': DAQmx.get_NIDAQ_channels(source_type='Counter')},
+                   'limits': DAQmx.get_NIDAQ_channels(source_type=DAQ_NIDAQ_source.Counter.name)},
               ]},
               {'title': 'Trigger Settings:', 'name': 'trigger_settings', 'type': 'group', 'visible': True, 'children': [
                   {'title': 'Enable?:', 'name': 'enable', 'type': 'bool', 'value': False, },
@@ -368,7 +368,6 @@ class DAQ_NIDAQmx_base:
                 self.settings.child('do_channels').hide()
                 self.settings.child('di_channels').show()
 
-
             elif param.value() == DAQ_NIDAQ_source.Digital_Output.name:  # digital output
                 self.settings.child('clock_settings').show()
                 self.settings.child('ai_channels').hide()
@@ -387,14 +386,14 @@ class DAQ_NIDAQmx_base:
                 self.settings.child('refresh_hardware').setValue(False)
 
         elif param.name() == 'ai_type':
-            param.parent().child('voltage_settings').show(param.value() == 'Voltage')
-            param.parent().child('current_settings').show(param.value() == 'Current')
-            param.parent().child('thermoc_settings').show(param.value() == 'Thermocouple')
+            param.parent().child('voltage_settings').show(param.value() == UsageTypeAI.Voltage.name)
+            param.parent().child('current_settings').show(param.value() == UsageTypeAI.Current.name)
+            param.parent().child('thermoc_settings').show(param.value() == UsageTypeAI.TEMPERATURE_THERMOCOUPLE.name)
             self.update_task()
 
         elif param.name() == 'ao_type':
-            param.parent().child('voltage_settings').show(param.value() == 'Voltage')
-            param.parent().child('current_settings').show(param.value() == 'Current')
+            param.parent().child('voltage_settings').show(param.value() == UsageTypeAI.Voltage.name)
+            param.parent().child('current_settings').show(param.value() == UsageTypeAI.Current.name)
             self.update_task()
 
         elif param.name() == 'trigger_channel':
@@ -423,22 +422,22 @@ class DAQ_NIDAQmx_base:
         if self.settings['NIDAQ_type'] == DAQ_NIDAQ_source.Analog_Input.name:  # analog input
             for channel in self.settings.child('ai_channels').children():
                 logger.info("get_channels_from_settings - channel {}".format(channel))
-                analog_type = channel['ai_type']
+                analog_type = channel['ai_type']  # todo UsageTypeAI[channel['ai_type'].upper()].name
                 if analog_type == UsageTypeAI.VOLTAGE.name:
                     channels.append(AIChannel(name=channel.opts['title'],
-                                              source='Analog_Input', analog_type=analog_type,
+                                              source=DAQ_NIDAQ_source.Analog_Input.name, analog_type=analog_type,
                                               value_min=channel['voltage_settings', 'volt_min'],
                                               value_max=channel['voltage_settings', 'volt_max'],
                                               termination=TerminalConfiguration[channel['termination'].upper()], ))
                 elif analog_type == UsageTypeAI.CURRENT.name:
                     channels.append(AIChannel(name=channel.opts['title'],
-                                              source='Analog_Input', analog_type=analog_type,
+                                              source=DAQ_NIDAQ_source.Analog_Input.name, analog_type=analog_type,
                                               value_min=channel['current_settings', 'curr_min'],
                                               value_max=channel['current_settings', 'curr_max'],
                                               termination=TerminalConfiguration[channel['termination'].upper()], ))
                 elif analog_type == UsageTypeAI.TEMPERATURE_THERMOCOUPLE.name:
                     channels.append(AIThermoChannel(name=channel.opts['title'],
-                                                    source='Analog_Input', analog_type=analog_type,
+                                                    source=DAQ_NIDAQ_source.Analog_Input.name, analog_type=analog_type,
                                                     value_min=channel['thermoc_settings', 'T_min'],
                                                     value_max=channel['thermoc_settings', 'T_max'],
                                                     thermo_type=ThermocoupleType[
@@ -448,7 +447,7 @@ class DAQ_NIDAQmx_base:
             for channel in self.settings.child('ao_channels').children():
                 analog_type = channel['ao_type']
                 channels.append(AOChannel(name=channel.opts['title'],
-                                          source='Analog_Output', analog_type=analog_type,
+                                          source=DAQ_NIDAQ_source.Analog_Output.name, analog_type=analog_type,
                                           value_min=channel['voltage_settings', 'volt_min'],
                                           value_max=channel['voltage_settings', 'volt_max'],
                                           ))
@@ -461,12 +460,12 @@ class DAQ_NIDAQmx_base:
         elif self.settings['NIDAQ_type'] == DAQ_NIDAQ_source.Digital_Input.name:  # digital input
             for channel in self.settings.child('di_channels').children():
                 channels.append(DIChannel(name=channel.opts['title'],
-                                          source='Digital_Input'))
+                                          source=DAQ_NIDAQ_source.Digital_Input.name))
 
         elif self.settings['NIDAQ_type'] == DAQ_NIDAQ_source.Digital_Output.name:  # Digital output
             for channel in self.settings.child('do_channels').children():
                 channels.append(DOChannel(name=channel.opts['title'],
-                                          source='Digital_Output'))
+                                          source=DAQ_NIDAQ_source.Digital_Output.name))
 
         channels = [ch for ch in channels if self.settings.child("dev_to_use").value() in ch.name]
         return channels
@@ -505,12 +504,11 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
         self.live = False
         self.control_type = control_type  # could be "0D", "1D" or "Actuator"
         if self.control_type == "0D":
-            self.settings.child('NIDAQ_type').setLimits(
-                ['Analog_Input', 'Counter', 'Digital_Input'])  # analog input and counter
+            self.settings.child('NIDAQ_type').setLimits(DAQ_NIDAQ_source.Source0D())  # analog input and counter
         elif self.control_type == "1D":
-            self.settings.child('NIDAQ_type').setLimits(['Analog_Input'])
+            self.settings.child('NIDAQ_type').setLimits([DAQ_NIDAQ_source.sources1D()])
         elif self.control_type == "Actuator":
-            self.settings.child('NIDAQ_type').setLimits(['Analog_Output'])
+            self.settings.child('NIDAQ_type').setLimits([DAQ_NIDAQ_source.Actuator()])
 
         self.settings.child('ao_settings').hide()
         self.settings.child('ao_channels').hide()

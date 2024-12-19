@@ -7,7 +7,7 @@ from pymodaq.utils.logger import set_logger, get_module_name
 from nidaqmx.constants import AcquisitionType, VoltageUnits, CurrentUnits, CurrentShuntResistorLocation, \
                                 TemperatureUnits, CJCSource, CountDirection, Level, FrequencyUnits, TimeUnits, \
                                 LineGrouping
-from . import UsageTypeAI, Edge, TerminalConfiguration, ThermocoupleType
+from pymodaq_plugins_daqmx.hardware.national_instruments import UsageTypeAI, Edge, TerminalConfiguration, ThermocoupleType
 
 from nidaqmx.system import System as niSystem
 from nidaqmx.system.device import Device as niDevice
@@ -57,6 +57,15 @@ class DAQ_NIDAQ_source(IntEnumExtend):
     Digital_Input = 3
     Digital_Output = 4
     Terminals = 5
+
+    def sources0D(self):
+        return [self.Analog_Input.name, self.Counter.name, self.Digital_Input.name]
+
+    def sources1D(self):
+        return [self.Analog_Input.name]
+
+    def Actuator(self):
+        return [self.Analog_Output.name]
 
 
 class ClockSettingsBase:
@@ -275,7 +284,7 @@ class DAQmx:
         logger.info("Detected devices: {}".format(devices_info))
         try:
             viewer.config_devices = [config["NIDAQ_Devices", dev].get('name') for dev in viewer.config["NIDAQ_Devices"]
-                                   if "Mod" not in config["NIDAQ_Devices", dev].get('name')]
+                                     if "Mod" not in config["NIDAQ_Devices", dev].get('name')]
             logger.info(viewer.config_devices)
             for dev in config["NIDAQ_Devices"]:
                 if not isinstance(config["NIDAQ_Devices", dev], dict):
@@ -319,6 +328,13 @@ class DAQmx:
                                                                  value_max=float(ai[ch].get("value_max")),
                                                                  termination=TerminalConfiguration.__getitem__(term),
                                                                  ))
+                                                                  (name=name,
+                                                                   source=ai[ch].get("source"),
+                                                                   analog_type=ai[ch].get("analog_type"),
+                                                                   value_min=float(ai[ch].get("value_min")),
+                                                                   value_max=float(ai[ch].get("value_max")),
+                                                                   termination=TerminalConfiguration.__getitem__(term),
+                                                                   ))
                                 elif ai[ch].get("analog_type") == UsageTypeAI.CURRENT.name:
                                     viewer.config_channels.append(AIChannel
                                                                 (name=name,
