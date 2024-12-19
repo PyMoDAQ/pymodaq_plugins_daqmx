@@ -34,7 +34,7 @@ class ScalableGroupAI(GroupParameter):
     """
 
     params = [{'title': 'AI type:', 'name': 'ai_type', 'type': 'list', 'limits': UsageTypeAI.names()},
-              {'title': 'Voltages:', 'name': 'voltage_settings', 'type': 'group', 'children': [
+              {'title': 'Voltage:', 'name': 'voltage_settings', 'type': 'group', 'children': [
                   {'title': 'Voltage Min:', 'name': 'volt_min', 'type': 'float', 'value': -10.},
                   {'title': 'Voltage Max:', 'name': 'volt_max', 'type': 'float', 'value': 10.},
               ]},
@@ -424,24 +424,23 @@ class DAQ_NIDAQmx_base:
             for channel in self.settings.child('ai_channels').children():
                 logger.info("get_channels_from_settings - channel {}".format(channel))
                 analog_type = channel['ai_type']
-                if analog_type == 'Voltage':
+                if analog_type == UsageTypeAI.VOLTAGE.name:
                     channels.append(AIChannel(name=channel.opts['title'],
                                               source='Analog_Input', analog_type=analog_type,
                                               value_min=channel['voltage_settings', 'volt_min'],
                                               value_max=channel['voltage_settings', 'volt_max'],
                                               termination=TerminalConfiguration[channel['termination'].upper()], ))
-                elif analog_type == 'Current':
+                elif analog_type == UsageTypeAI.CURRENT.name:
                     channels.append(AIChannel(name=channel.opts['title'],
                                               source='Analog_Input', analog_type=analog_type,
                                               value_min=channel['current_settings', 'curr_min'],
                                               value_max=channel['current_settings', 'curr_max'],
                                               termination=TerminalConfiguration[channel['termination'].upper()], ))
-                elif analog_type == 'Thermocouple':
+                elif analog_type == UsageTypeAI.TEMPERATURE_THERMOCOUPLE.name:
                     channels.append(AIThermoChannel(name=channel.opts['title'],
                                                     source='Analog_Input', analog_type=analog_type,
                                                     value_min=channel['thermoc_settings', 'T_min'],
                                                     value_max=channel['thermoc_settings', 'T_max'],
-                                                    termination=TerminalConfiguration[channel['termination'].upper()],
                                                     thermo_type=ThermocoupleType[
                                                         channel['thermoc_settings', 'thermoc_type']], ))
 

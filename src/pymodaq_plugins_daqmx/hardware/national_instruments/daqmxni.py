@@ -310,7 +310,7 @@ class DAQmx:
                             for ch in ai.keys():
                                 name = module_name + "/" + str(ch)
                                 term = ai[ch].get("termination")
-                                if ai[ch].get("analog_type") == "Voltage":
+                                if ai[ch].get("analog_type") == UsageTypeAI.VOLTAGE.name:
                                     viewer.config_channels.append(AIChannel
                                                                 (name=name,
                                                                  source=ai[ch].get("source"),
@@ -319,7 +319,7 @@ class DAQmx:
                                                                  value_max=float(ai[ch].get("value_max")),
                                                                  termination=TerminalConfiguration.__getitem__(term),
                                                                  ))
-                                elif ai[ch].get("analog_type") == "Current":
+                                elif ai[ch].get("analog_type") == UsageTypeAI.CURRENT.name:
                                     viewer.config_channels.append(AIChannel
                                                                 (name=name,
                                                                  source=ai[ch].get("source"),
@@ -328,16 +328,16 @@ class DAQmx:
                                                                  value_max=float(ai[ch].get("value_max")),
                                                                  termination=TerminalConfiguration.__getitem__(term),
                                                                  ))
-                                elif ai[ch].get("analog_type") == "Thermocouple":
+                                elif ai[ch].get("analog_type") == UsageTypeAI.TEMPERATURE_THERMOCOUPLE.name:
                                     th = ai[ch].get("thermo_type")
                                     viewer.config_channels.append(AIThermoChannel
-                                                                (name=name,
-                                                                 source=ai[ch].get("source"),
-                                                                 analog_type=ai[ch].get("analog_type"),
-                                                                 value_min=float(ai[ch].get("value_min")),
-                                                                 value_max=float(ai[ch].get("value_max")),
-                                                                 thermo_type=ThermocoupleType.__getitem__(th),
-                                                                 ))
+                                                                  (name=name,
+                                                                   source=ai[ch].get("source"),
+                                                                   analog_type=ai[ch].get("analog_type"),
+                                                                   value_min=float(ai[ch].get("value_min")),
+                                                                   value_max=float(ai[ch].get("value_max")),
+                                                                   thermo_type=ThermocoupleType.__getitem__(th),
+                                                                   ))
             logger.info("Devices from config: {}".format(viewer.config_devices))
             logger.info("Current device: {}".format(current_device))
             logger.info("Current device modules from config: {}".format(viewer.config_modules))
@@ -399,9 +399,9 @@ class DAQmx:
 
             # create all channels one task for one type of channels
             for channel in channels:
-                if channel.source == 'Analog_Input':  # analog input
+                if channel.source == DAQ_NIDAQ_source.Digital_Input.name:  # analog input
                     try:
-                        if channel.analog_type == "Voltage":
+                        if channel.analog_type == UsageTypeAI.VOLTAGE.name:
                             self._task.ai_channels.add_ai_voltage_chan(channel.name,
                                                                        "",
                                                                        channel.termination,
@@ -410,7 +410,7 @@ class DAQmx:
                                                                        VoltageUnits.VOLTS,
                                                                        "")
 
-                        elif channel.analog_type == "Current":
+                        elif channel.analog_type == UsageTypeAI.CURRENT.name:
                             self._task.ai_channels.add_ai_current_chan(channel.name,
                                                                        "",
                                                                        channel.termination,
@@ -421,7 +421,7 @@ class DAQmx:
                                                                        0.,
                                                                        "")
 
-                        elif channel.analog_type == "Thermocouple":
+                        elif channel.analog_type == UsageTypeAI.CURRENT.name:
                             self._task.ai_channels.add_ai_thrmcpl_chan(channel.name,
                                                                        "",
                                                                        channel.value_min,
@@ -467,15 +467,15 @@ class DAQmx:
                     if not not err_code:
                         status = self.DAQmxGetErrorString(err_code)
                         raise IOError(status)
-                elif channel.source == 'Analog_Output':  # Analog_Output
+                elif channel.source == DAQ_NIDAQ_source.Analog_Output.name:  # Analog_Output
                     try:
-                        if channel.analog_type == "Voltage":
+                        if channel.analog_type == UsageTypeAI.VOLTAGE.name:
                             self._task.ao_channels.add_ao_voltage_chan(channel.name, "",
                                                                        channel.value_min,
                                                                        channel.value_max,
                                                                        VoltageUnits.VOLTS, None)
 
-                        elif channel.analog_type == "Current":
+                        elif channel.analog_type == UsageTypeAI.CURRENT.name:
                             self._task.ao_channels.add_ao_current_chan(channel.name, "",
                                                                        channel.value_min,
                                                                        channel.value_max,
@@ -485,7 +485,7 @@ class DAQmx:
                     if not not err_code:
                         status = self.DAQmxGetErrorString(err_code)
                         raise IOError(status)
-                elif channel.source == 'Digital_Output':
+                elif channel.source == DAQ_NIDAQ_source.Digital_Output.name:
                     try:
                         self._task.do_channels.add_do_chan(channel.name, "",
                                                            LineGrouping.CHAN_PER_LINE)
@@ -494,7 +494,7 @@ class DAQmx:
                     if not not err_code:
                         status = self.DAQmxGetErrorString(err_code)
                         raise IOError(status)
-                elif channel.source == 'Digital_Input':  # Digital_Input
+                elif channel.source == DAQ_NIDAQ_source.Digital_Input.name:  # Digital_Input
                     try:
                         self._task.di_channels.add_di_chan(channel.name, "",
                                                            LineGrouping.CHAN_PER_LINE)
