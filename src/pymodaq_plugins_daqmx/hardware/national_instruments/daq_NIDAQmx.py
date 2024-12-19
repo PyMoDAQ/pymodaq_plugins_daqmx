@@ -7,9 +7,9 @@ from pymodaq.control_modules.move_utility_classes import DAQ_Move_base, comon_pa
 import traceback
 from pymodaq.utils.parameter import Parameter
 from pymodaq.utils.parameter.pymodaq_ptypes import registerParameterType, GroupParameter
-from .daqmxni import DAQmx, Edge, DAQ_NIDAQ_source, ClockSettings, AIChannel, Counter, \
-                        AIThermoChannel, AOChannel, TriggerSettings, DOChannel, DIChannel
-from . import UsageTypeAI, ThermocoupleType, TerminalConfiguration
+from pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni import DAQmx, Edge, DAQ_NIDAQ_source, ClockSettings, \
+    AIChannel, Counter, AIThermoChannel, AOChannel, TriggerSettings, DOChannel, DIChannel, UsageTypeAI, \
+    ThermocoupleType, TerminalConfiguration
 from pymodaq.utils.daq_utils import ThreadCommand, getLineInfo
 from pymodaq.utils.data import DataToExport, DataFromPlugins, DataActuator
 from easydict import EasyDict as eDict
@@ -413,7 +413,7 @@ class DAQ_NIDAQmx_base:
         self.trigger_settings = \
             TriggerSettings(trig_source=self.settings['trigger_settings', 'trigger_channel'],
                             enable=self.settings['trigger_settings', 'enable'],
-                            edge=Edge[self.settings['trigger_settings', 'edge']],
+                            edge=Edge[self.settings['trigger_settings', 'edge'].upper()],
                             level=self.settings['trigger_settings', 'level'], )
         if not not self.channels:
             self.controller.update_task(self.channels, self.clock_settings, trigger_settings=self.trigger_settings)
@@ -429,19 +429,19 @@ class DAQ_NIDAQmx_base:
                                               source='Analog_Input', analog_type=analog_type,
                                               value_min=channel['voltage_settings', 'volt_min'],
                                               value_max=channel['voltage_settings', 'volt_max'],
-                                              termination=TerminalConfiguration[channel['termination']], ))
+                                              termination=TerminalConfiguration[channel['termination'].upper()], ))
                 elif analog_type == 'Current':
                     channels.append(AIChannel(name=channel.opts['title'],
                                               source='Analog_Input', analog_type=analog_type,
                                               value_min=channel['current_settings', 'curr_min'],
                                               value_max=channel['current_settings', 'curr_max'],
-                                              termination=TerminalConfiguration[channel['termination']], ))
+                                              termination=TerminalConfiguration[channel['termination'].upper()], ))
                 elif analog_type == 'Thermocouple':
                     channels.append(AIThermoChannel(name=channel.opts['title'],
                                                     source='Analog_Input', analog_type=analog_type,
                                                     value_min=channel['thermoc_settings', 'T_min'],
                                                     value_max=channel['thermoc_settings', 'T_max'],
-                                                    termination=channel['termination'],
+                                                    termination=TerminalConfiguration[channel['termination'].upper()],
                                                     thermo_type=ThermocoupleType[
                                                         channel['thermoc_settings', 'thermoc_type']], ))
 
@@ -458,7 +458,6 @@ class DAQ_NIDAQmx_base:
             for channel in self.settings.child('counter_settings', 'counter_channels').children():
                 channels.append(Counter(name=channel.opts['title'],
                                         source='Counter', edge=channel['edge']))
-
 
         elif self.settings['NIDAQ_type'] == DAQ_NIDAQ_source.Digital_Input.name:  # digital input
             for channel in self.settings.child('di_channels').children():
@@ -666,7 +665,7 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
              {'title': 'Status:', 'name': 'multi_status', 'type': 'list', 'value': 'Master',
               'limits': ['Master', 'Slave']},
              {'title': 'Axis:', 'name': 'axis', 'type': 'list', 'limits': stage_names},
-         ]}] + actuator_params
+         ]}] + actuator_params()
 
     def __init__(self, parent=None, params_state=None, control_type="Actuator"):
         DAQ_Move_base.__init__(self, parent, params_state)  # defines settings attribute and various other methods
@@ -783,7 +782,7 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
 
         return values
 
-    def move_Abs(self, position):
+    def move_abs(self, position):
         """ Move the actuator to the absolute target defined by position
 
         Parameters
@@ -820,7 +819,7 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
         self.task.StopTask()
         return 0
 
-    def move_Rel(self, position):
+    def move_rel(self, position):
         """ Move the actuator to the relative target actuator value defined by position
 
         Parameters
@@ -850,7 +849,7 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
         elif self.settings['NIDAQ_type'] == 'Digital_Output':
             self.writeDigital(1, np.array([self.target_position], dtype=np.uint8), autostart=True)
 
-    def move_Home(self):
+    def move_home(self):
         """
           Send the update status thread command.
             See Also

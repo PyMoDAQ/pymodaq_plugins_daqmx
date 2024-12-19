@@ -3,7 +3,7 @@ import numpy as np
 import traceback
 from qtpy import QtCore
 from .daqmxni import DAQmx
-from pymodaq_plugins_daqmx.hardware.national_instruments.daq_NIDAQmx import DAQ_NIDAQmx_base, DAQ_termination
+from pymodaq_plugins_daqmx.hardware.national_instruments.daq_NIDAQmx import DAQ_NIDAQmx_base, TerminalConfiguration
 from pymodaq.control_modules.viewer_utility_classes import DAQ_Viewer_base, comon_parameters as viewer_params
 from pymodaq.utils.daq_utils import ThreadCommand
 from pymodaq.utils.data import DataFromPlugins, DataToExport
@@ -139,7 +139,7 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
                                             "thermoc_settings",
                                             "T_max").setValue(ch.value_max)
                         self.settings.child("ai_channels", param.opts['name'], "termination").setValue(
-                            DAQ_termination.Auto)
+                            TerminalConfiguration.DEFAULT)
             info = "Plugin Initialized"
             initialized = True
             logger.info("Detector 0D initialized")

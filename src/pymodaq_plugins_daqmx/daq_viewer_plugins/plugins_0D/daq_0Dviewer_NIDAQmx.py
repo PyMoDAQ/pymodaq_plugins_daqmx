@@ -1,10 +1,10 @@
 from pymodaq.control_modules.viewer_utility_classes import main
 from pymodaq.control_modules.viewer_utility_classes import comon_parameters as viewer_params
 from pymodaq_plugins_daqmx import config
-from pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni import AIChannel, AIThermoChannel, DAQmx, \
-                                                            niTask, niconstants
+from pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni import AIChannel, AIThermoChannel, DAQmx, niTask, \
+    niDevice, TemperatureUnits, CJCSource, VoltageUnits, AcquisitionType
 from pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni import UsageTypeAI, ThermocoupleType, \
-                                                            TerminalConfiguration
+                                                            TerminalConfiguration, Edge
 from pymodaq_plugins_daqmx.hardware.national_instruments.daq_NIDAQmx import DAQ_NIDAQmx_base
 from pymodaq_plugins_daqmx.hardware.national_instruments.daq_NIDAQmx_Viewer import DAQ_NIDAQmx_Viewer
 from pymodaq.utils.logger import set_logger, get_module_name
@@ -18,11 +18,11 @@ class DAQ_0DViewer_NIDAQmx(DAQ_NIDAQmx_Viewer):
 
     config_channels: list
     channels_ai: list
-    config: config
+    config: config  # todo review Useful/Unused
     controller: DAQmx
     config_devices: list
     config_modules: list
-    current_device: nidaqmx.system.Device
+    current_device: niDevice
     live: bool
     Naverage: int
 
@@ -128,9 +128,9 @@ if __name__ == '__main__':
                                                           "",
                                                           channel.value_min,
                                                           channel.value_max,
-                                                          niconstants.TemperatureUnits.DEG_C,
+                                                          TemperatureUnits.DEG_C,
                                                           channel.thermo_type,
-                                                          niconstants.CJCSource.BUILT_IN,
+                                                          CJCSource.BUILT_IN,
                                                           0.,
                                                           "")
             for channel in channels_voltage:
@@ -139,14 +139,14 @@ if __name__ == '__main__':
                                                           channel.termination,
                                                           channel.value_min,
                                                           channel.value_max,
-                                                          niconstants.VoltageUnits.VOLTS,
+                                                          VoltageUnits.VOLTS,
                                                           "")
-            task_9211.timing.cfg_samp_clk_timing(5.0, None, niconstants.Edge.RISING,
-                                                 niconstants.AcquisitionType.CONTINUOUS, 5)
+            task_9211.timing.cfg_samp_clk_timing(5.0, None, Edge.RISING,
+                                                 AcquisitionType.CONTINUOUS, 5)
             task_9211.register_every_n_samples_acquired_into_buffer_event(10, callback_9211)
 
-            task_9205.timing.cfg_samp_clk_timing(10, None, niconstants.Edge.RISING,
-                                                 niconstants.AcquisitionType.CONTINUOUS, 10)
+            task_9205.timing.cfg_samp_clk_timing(10, None, Edge.RISING,
+                                                 AcquisitionType.CONTINUOUS, 10)
             task_9205.register_every_n_samples_acquired_into_buffer_event(2, callback_9205)
 
             task_9211.start()
