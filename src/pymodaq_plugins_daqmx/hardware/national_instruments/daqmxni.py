@@ -4,10 +4,12 @@ from enum import IntEnum
 import numpy as np
 from pymodaq.utils.logger import set_logger, get_module_name
 
-from nidaqmx.constants import UsageTypeAI, ThermocoupleType, TerminalConfiguration, Edge, AcquisitionType, \
-                                VoltageUnits, CurrentUnits, CurrentShuntResistorLocation, TemperatureUnits, \
-                                CJCSource, CountDirection, Level, FrequencyUnits, TimeUnits, LineGrouping
 from nidaqmx.system import System
+
+from nidaqmx.constants import AcquisitionType, VoltageUnits, CurrentUnits, CurrentShuntResistorLocation, \
+                                TemperatureUnits, CJCSource, CountDirection, Level, FrequencyUnits, TimeUnits, \
+                                LineGrouping
+from . import UsageTypeAI, Edge, TerminalConfiguration, ThermocoupleType
 
 from nidaqmx.system.device import Device
 from nidaqmx import Task
@@ -56,17 +58,6 @@ class DAQ_NIDAQ_source(IntEnumExtend):
     Digital_Input = 3
     Digital_Output = 4
     Terminals = 5
-
-
-# class DAQ_analog_types(UsageTypeAI):
-#     """
-#         Enum class of Ai types
-#
-#         =============== ==========
-#         **Attributes**   **Type**
-#         =============== ==========
-#     """
-#     Thermocouple = UsageTypeAI.TEMPERATURE_THERMOCOUPLE.value
 
 
 class ClockSettingsBase:
@@ -131,14 +122,14 @@ class AChannel(Channel):
 class AIChannel(AChannel):
     def __init__(self, termination=TerminalConfiguration.DEFAULT, **kwargs):
         super().__init__(**kwargs)
-        assert termination in TerminalConfiguration._member_map_.values()
+        assert termination in TerminalConfiguration.members()
         self.termination = termination
 
 
 class AIThermoChannel(AIChannel):
     def __init__(self, thermo_type=ThermocoupleType.K, **kwargs):
         super().__init__(**kwargs)
-        assert thermo_type in ThermocoupleType._member_map_.values()
+        assert thermo_type in ThermocoupleType.members()
         self.thermo_type = thermo_type
 
 
@@ -149,7 +140,7 @@ class AOChannel(AChannel):
 
 class Counter(Channel):
     def __init__(self, edge=Edge.RISING, **kwargs):
-        assert edge in Edge._member_map_.values()
+        assert edge in Edge.members()
         super().__init__(**kwargs)
         self.edge = edge
         self.counter_type = "Edge Counter"

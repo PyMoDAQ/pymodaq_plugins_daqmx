@@ -7,10 +7,9 @@ from pymodaq.control_modules.move_utility_classes import DAQ_Move_base, comon_pa
 import traceback
 from pymodaq.utils.parameter import Parameter
 from pymodaq.utils.parameter.pymodaq_ptypes import registerParameterType, GroupParameter
-from .daqmxni import DAQmx, Edge, DAQ_NIDAQ_source, \
-    ClockSettings, AIChannel, Counter, AIThermoChannel, AOChannel, TriggerSettings, DOChannel, DIChannel
-logger = set_logger(get_module_name(__file__))
-from .daqmxni import UsageTypeAI, ThermocoupleType, TerminalConfiguration
+from .daqmxni import DAQmx, Edge, DAQ_NIDAQ_source, ClockSettings, AIChannel, Counter, \
+                        AIThermoChannel, AOChannel, TriggerSettings, DOChannel, DIChannel
+from . import UsageTypeAI, ThermocoupleType, TerminalConfiguration
 from pymodaq.utils.daq_utils import ThreadCommand, getLineInfo
 from pymodaq.utils.data import DataToExport, DataFromPlugins, DataActuator
 from easydict import EasyDict as edict
@@ -31,7 +30,7 @@ class ScalableGroupAI(GroupParameter):
         hardware.DAQ_Move_Stage_type
     """
 
-    params = [{'title': 'AI type:', 'name': 'ai_type', 'type': 'list', 'limits': UsageTypeAI._member_names_},
+    params = [{'title': 'AI type:', 'name': 'ai_type', 'type': 'list', 'limits': UsageTypeAI.names()},
               {'title': 'Voltages:', 'name': 'voltage_settings', 'type': 'group', 'children': [
                   {'title': 'Voltage Min:', 'name': 'volt_min', 'type': 'float', 'value': -10.},
                   {'title': 'Voltage Max:', 'name': 'volt_max', 'type': 'float', 'value': 10.},
@@ -41,12 +40,12 @@ class ScalableGroupAI(GroupParameter):
                   {'title': 'Current Max:', 'name': 'curr_max', 'type': 'float', 'value': 1, 'suffix': 'A'},
               ]},
               {'title': 'Thermocouple:', 'name': 'thermoc_settings', 'type': 'group', 'visible': False, 'children': [
-                  {'title': 'Thc. type:', 'name': 'thermoc_type', 'type': 'list', 'limits': ThermocoupleType._member_names_,
+                  {'title': 'Thc. type:', 'name': 'thermoc_type', 'type': 'list', 'limits': ThermocoupleType.names(),
                    'value': 'K'},
                   {'title': 'Temp. Min (°C):', 'name': 'T_min', 'type': 'float', 'value': 0, 'suffix': '°C'},
                   {'title': 'Temp. Max (°C):', 'name': 'T_max', 'type': 'float', 'value': 50, 'suffix': '°C'},
               ]},
-              {'title': 'Termination:', 'name': 'termination', 'type': 'list', 'limits': TerminalConfiguration._member_names_},
+              {'title': 'Termination:', 'name': 'termination', 'type': 'list', 'limits': TerminalConfiguration.names()},
               ]
 
     def __init__(self, **opts):
@@ -93,7 +92,7 @@ class ScalableGroupAO(GroupParameter):
         hardware.DAQ_Move_Stage_type
     """
 
-    params = [{'title': 'AO type:', 'name': 'ao_type', 'type': 'list', 'limits': UsageTypeAI._member_names_[0:2]},
+    params = [{'title': 'AO type:', 'name': 'ao_type', 'type': 'list', 'limits': UsageTypeAI.names()[0:2]},
               {'title': 'Voltages:', 'name': 'voltage_settings', 'type': 'group', 'children': [
                   {'title': 'Voltage Min:', 'name': 'volt_min', 'type': 'list', 'value': -10., },
                   {'title': 'Voltage Max:', 'name': 'volt_max', 'type': 'list', 'value': 10., },
