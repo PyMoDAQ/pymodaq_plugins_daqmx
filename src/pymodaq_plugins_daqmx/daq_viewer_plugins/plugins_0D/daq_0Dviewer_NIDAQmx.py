@@ -2,7 +2,7 @@ from pymodaq.control_modules.viewer_utility_classes import main
 from pymodaq.control_modules.viewer_utility_classes import comon_parameters as viewer_params
 from pymodaq_plugins_daqmx import config
 from pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni import AIChannel, AIThermoChannel, DAQmx, \
-                                                            Task, niconstants
+                                                            niTask, niconstants
 from pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni import UsageTypeAI, ThermocoupleType, \
                                                             TerminalConfiguration
 from pymodaq_plugins_daqmx.hardware.national_instruments.daq_NIDAQmx import DAQ_NIDAQmx_base
@@ -64,10 +64,10 @@ if __name__ == '__main__':
     else:
         try:
             print("In main")
-            import nidaqmx.system.System
+            from pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni import niSystem
 
             # EXPLORE DEVICES
-            devices = nidaqmx.system.System.local().devices
+            devices = niSystem.local().devices
             print("devices {}".format(devices))
             print("devices names {}".format(devices.device_names))
             print("devices types {}".format([dev.product_type for dev in devices]))
@@ -112,8 +112,8 @@ if __name__ == '__main__':
                                           ),
                                 ]
             # CREATE TASK
-            task_9211 = Task()
-            task_9205 = Task()
+            task_9211 = niTask()
+            task_9205 = niTask()
 
             def callback_9211(task_handle, every_n_samples_event_type, number_of_samples, callback_data):
                 data9211 = task_9211.read(5)

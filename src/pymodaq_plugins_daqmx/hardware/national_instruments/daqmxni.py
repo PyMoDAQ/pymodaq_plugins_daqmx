@@ -4,15 +4,14 @@ from enum import IntEnum
 import numpy as np
 from pymodaq.utils.logger import set_logger, get_module_name
 
-from nidaqmx.system import System
-
 from nidaqmx.constants import AcquisitionType, VoltageUnits, CurrentUnits, CurrentShuntResistorLocation, \
                                 TemperatureUnits, CJCSource, CountDirection, Level, FrequencyUnits, TimeUnits, \
                                 LineGrouping
 from . import UsageTypeAI, Edge, TerminalConfiguration, ThermocoupleType
 
+from nidaqmx.system import System as niSystem
 from nidaqmx.system.device import Device
-from nidaqmx import Task
+from nidaqmx import Task as niTask
 from nidaqmx.errors import DaqError, DAQmxErrors
 from pymodaq_plugins_daqmx import config
 
@@ -209,7 +208,7 @@ class DAQmx:
             list of devices as strings to be used in subsequent commands
         """
         try:
-            devices = System.local().devices
+            devices = niSystem.local().devices
             if devices == ['']:
                 devices = []
             return devices
@@ -286,7 +285,7 @@ class DAQmx:
                     if not device_name == current_device.name:
                         continue
                     device_product = config["NIDAQ_Devices", dev].get('product')
-                    device = nidaqmx.system.device.Device(device_name)
+                    device = Device(device_name)
                     assert device in self.devices and device.product_type == device_product, device.name
                 except AssertionError as err:
                     logger.error("Device {} not detected: {}".format(device_name, err))
@@ -297,7 +296,7 @@ class DAQmx:
                     try:
                         module_name = config["NIDAQ_Devices", dev, mod].get('name')
                         module_product = config["NIDAQ_Devices", dev, mod].get('product')
-                        module = nidaqmx.system.device.Device(module_name)
+                        module = Device(module_name)
                         assert module in self.devices and module.product_type == module_product, module.name
                         viewer.config_modules.append(config["NIDAQ_Devices", dev, mod].get('name'))
                     except AssertionError as err:
@@ -318,7 +317,7 @@ class DAQmx:
                                                                  analog_type=ai[ch].get("analog_type"),
                                                                  value_min=float(ai[ch].get("value_min")),
                                                                  value_max=float(ai[ch].get("value_max")),
-                                                                 termination=DAQ_termination.__getitem__(term),
+                                                                 termination=TerminalConfiguration.__getitem__(term),
                                                                  ))
                                 elif ai[ch].get("analog_type") == "Current":
                                     viewer.config_channels.append(AIChannel
@@ -327,7 +326,7 @@ class DAQmx:
                                                                  analog_type=ai[ch].get("analog_type"),
                                                                  value_min=float(ai[ch].get("value_min")),
                                                                  value_max=float(ai[ch].get("value_max")),
-                                                                 termination=DAQ_termination.__getitem__(term),
+                                                                 termination=TerminalConfiguration.__getitem__(term),
                                                                  ))
                                 elif ai[ch].get("analog_type") == "Thermocouple":
                                     th = ai[ch].get("thermo_type")
@@ -388,13 +387,13 @@ class DAQmx:
 
         try:
             if self._task is not None:
-                if isinstance(self._task, Task):
+                if isinstance(self._task, niTask):
                     self._task.close()
 
                 self._task = None
                 self.c_callback = None
 
-            self._task = Task()
+            self._task = niTask()
             logger.info("TASK: {}".format(self._task))
             err_code = None
 
@@ -579,12 +578,12 @@ class DAQmx:
 
     @classmethod
     def getAIVoltageRange(cls, device='Dev1'):
-        ret = System.local().devices[device].ai_voltage_rngs  # todo self.devices[device].ai_voltage_rngs
+        ret = niSystem.local().devices[device].ai_voltage_rngs  # todo self.devices[device].ai_voltage_rngs
         return [tuple(ret[6:8])]
 
     @classmethod
     def getAOVoltageRange(cls, device='Dev1'):
-        ret = System.local().devices[device].ao_voltage_rngs  # todo self.devices[device].ao_voltage_rngs
+        ret = niSystem.local().devices[device].ao_voltage_rngs  # todo self.devices[device].ao_voltage_rngs
         return [tuple(ret)]  # [(-10., 10.)] Why this format is needed??
 
     def stop(self):
