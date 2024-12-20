@@ -58,12 +58,15 @@ class DAQ_NIDAQ_source(IntEnumExtend):
     Digital_Output = 4
     Terminals = 5
 
+    @classmethod
     def sources0D(self):
-        return [self.Analog_Input.name, self.Counter.name, self.Digital_Input.name]
+        return [self.Analog_Input.name, DAQ_NIDAQ_source.Counter.name, DAQ_NIDAQ_source.Digital_Input.name]
 
+    @classmethod
     def sources1D(self):
         return [self.Analog_Input.name]
 
+    @classmethod
     def Actuator(self):
         return [self.Analog_Output.name]
 
@@ -321,13 +324,6 @@ class DAQmx:
                                 term = ai[ch].get("termination")
                                 if ai[ch].get("analog_type") == UsageTypeAI.VOLTAGE.name:
                                     viewer.config_channels.append(AIChannel
-                                                                (name=name,
-                                                                 source=ai[ch].get("source"),
-                                                                 analog_type=ai[ch].get("analog_type"),
-                                                                 value_min=float(ai[ch].get("value_min")),
-                                                                 value_max=float(ai[ch].get("value_max")),
-                                                                 termination=TerminalConfiguration.__getitem__(term),
-                                                                 ))
                                                                   (name=name,
                                                                    source=ai[ch].get("source"),
                                                                    analog_type=ai[ch].get("analog_type"),
@@ -344,7 +340,8 @@ class DAQmx:
                                                                  value_max=float(ai[ch].get("value_max")),
                                                                  termination=TerminalConfiguration.__getitem__(term),
                                                                  ))
-                                elif ai[ch].get("analog_type") == UsageTypeAI.TEMPERATURE_THERMOCOUPLE.name:
+                                elif ai[ch].get("analog_type") == UsageTypeAI.TEMPERATURE_THERMOCOUPLE.name or \
+                                        ai[ch].get("analog_type") == "Thermocouple":
                                     th = ai[ch].get("thermo_type")
                                     viewer.config_channels.append(AIThermoChannel
                                                                   (name=name,
@@ -415,7 +412,7 @@ class DAQmx:
 
             # create all channels one task for one type of channels
             for channel in channels:
-                if channel.source == DAQ_NIDAQ_source.Digital_Input.name:  # analog input
+                if channel.source == DAQ_NIDAQ_source.Analog_Input.name:  # analog input
                     try:
                         if channel.analog_type == UsageTypeAI.VOLTAGE.name:
                             self._task.ai_channels.add_ai_voltage_chan(channel.name,
@@ -437,7 +434,7 @@ class DAQmx:
                                                                        0.,
                                                                        "")
 
-                        elif channel.analog_type == UsageTypeAI.CURRENT.name:
+                        elif channel.analog_type == UsageTypeAI.TEMPERATURE_THERMOCOUPLE.name:
                             self._task.ai_channels.add_ai_thrmcpl_chan(channel.name,
                                                                        "",
                                                                        channel.value_min,
@@ -449,7 +446,7 @@ class DAQmx:
                                                                        "")
                     except DaqError as e:
                         err_code = e.error_code
-                    if not not err_code:
+                    if err_code:
                         status = self.DAQmxGetErrorString(err_code)
                         raise IOError(status)
                 elif channel.source == 'Counter':  # counter

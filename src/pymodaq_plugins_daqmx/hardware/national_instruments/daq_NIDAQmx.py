@@ -414,7 +414,7 @@ class DAQ_NIDAQmx_base:
                             enable=self.settings['trigger_settings', 'enable'],
                             edge=Edge[self.settings['trigger_settings', 'edge'].upper()],
                             level=self.settings['trigger_settings', 'level'], )
-        if not not self.channels:
+        if self.channels:
             self.controller.update_task(self.channels, self.clock_settings, trigger_settings=self.trigger_settings)
 
     def get_channels_from_settings(self):
