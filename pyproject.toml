@@ -14,7 +14,8 @@ description = 'Hardware plugins for PyMoDAQ using the NiDAQmx framework (nidaq w
 dependencies = [
     "pymodaq>=4.4",
     "pydaqmx",
-    "nidaqmx"
+    "nidaqmx",
+    "aenum"
 ]
 
 authors = [
