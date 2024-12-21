@@ -3,7 +3,8 @@ import numpy as np
 import traceback
 from qtpy import QtCore
 from .daqmxni import DAQmx
-from pymodaq_plugins_daqmx.hardware.national_instruments.daq_NIDAQmx import DAQ_NIDAQmx_base, DAQ_termination
+from pymodaq_plugins_daqmx.hardware.national_instruments.daq_NIDAQmx import DAQ_NIDAQmx_base, TerminalConfiguration, \
+    UsageTypeAI, DAQ_NIDAQ_source
 from pymodaq.control_modules.viewer_utility_classes import DAQ_Viewer_base, comon_parameters as viewer_params
 from pymodaq.utils.daq_utils import ThreadCommand
 from pymodaq.utils.data import DataFromPlugins, DataToExport
@@ -37,12 +38,11 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
         self.live = False
         self.control_type = control_type  # could be "0D", "1D" or "Actuator"
         if self.control_type == "0D":
-            self.settings.child('NIDAQ_type').setLimits(
-                ['Analog_Input', 'Counter', 'Digital_Input'])  # analog input and counter
+            self.settings.child('NIDAQ_type').setLimits(DAQ_NIDAQ_source.sources0D())  # analog input and counter
         elif self.control_type == "1D":
-            self.settings.child('NIDAQ_type').setLimits(['Analog_Input'])
+            self.settings.child('NIDAQ_type').setLimits(DAQ_NIDAQ_source.sources1D())
         elif self.control_type == "Actuator":
-            self.settings.child('NIDAQ_type').setLimits(['Analog_Output'])
+            self.settings.child('NIDAQ_type').setLimits(DAQ_NIDAQ_source.Actuator())
 
         self.settings.child('ao_settings').hide()
         self.settings.child('ao_channels').hide()
@@ -104,28 +104,33 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
             # actions to perform in order to set properly the settings tree options
             self.commit_settings(self.settings.child('NIDAQ_type'))
             for ch in self.config_channels:
+                try:
+                    ch.analog_type = ch.analog_type.upper()
+                    ch.termination = ch.termination.upper()
+                except:
+                    pass
                 if self.settings.child("dev_to_use").value() in ch.name:
                     self.settings.child('ai_channels').addNew(ch.name)
                     param = [a for a in self.settings.child('ai_channels').childs if a.opts['title'] == ch.name][0]
-                    self.settings.child("ai_channels", param.opts['name'], "ai_type").setValue(ch.analog_type)
-                    param.child("voltage_settings").show(ch.analog_type == "Voltage")
-                    param.child("current_settings").show(ch.analog_type == "Current")
-                    param.child("thermoc_settings").show(ch.analog_type == "Thermocouple")
-                    if ch.analog_type == "Voltage":
+                    self.settings.child("ai_channels", param.opts['name'], "ai_type").setValue(ch.analog_type.upper())
+                    param.child("voltage_settings").show(ch.analog_type == UsageTypeAI.VOLTAGE.name)
+                    param.child("current_settings").show(ch.analog_type == UsageTypeAI.CURRENT.name)
+                    param.child("thermoc_settings").show(ch.analog_type == UsageTypeAI.TEMPERATURE_THERMOCOUPLE.name)
+                    if ch.analog_type == UsageTypeAI.VOLTAGE.name:
                         self.settings.child("ai_channels", param.opts['name'], "voltage_settings", "volt_min").setValue(
                             ch.value_min)
                         self.settings.child("ai_channels", param.opts['name'], "voltage_settings", "volt_max").setValue(
                             ch.value_max)
                         self.settings.child("ai_channels", param.opts['name'], "termination").setValue(
                             ch.termination.name)
-                    elif ch.analog_type == "Current":
+                    elif ch.analog_type == UsageTypeAI.CURRENT.name:
                         self.settings.child("ai_channels", param.opts['name'], "current_settings", "curr_min").setValue(
                             ch.value_min)
                         self.settings.child("ai_channels", param.opts['name'], "current_settings", "curr_max").setValue(
                             ch.value_max)
                         self.settings.child("ai_channels", param.opts['name'], "termination").setValue(
                             ch.termination.name)
-                    elif ch.analog_type == "Thermocouple":
+                    elif ch.analog_type == UsageTypeAI.TEMPERATURE_THERMOCOUPLE.name:
                         self.settings.child("ai_channels",
                                             param.opts['name'],
                                             "thermoc_settings",
@@ -139,7 +144,7 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
                                             "thermoc_settings",
                                             "T_max").setValue(ch.value_max)
                         self.settings.child("ai_channels", param.opts['name'], "termination").setValue(
-                            DAQ_termination.Auto)
+                            TerminalConfiguration.DEFAULT)
             info = "Plugin Initialized"
             initialized = True
             logger.info("Detector 0D initialized")
