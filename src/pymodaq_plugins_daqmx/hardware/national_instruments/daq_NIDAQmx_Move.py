@@ -32,8 +32,7 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
              {'title': 'Status:', 'name': 'multi_status', 'type': 'list', 'value': 'Master',
               'limits': ['Master', 'Slave']},
              {'title': 'Axis:', 'name': 'axis', 'type': 'list', 'limits': stage_names},
-
-         ]}] + actuator_params
+         ]}] + actuator_params()
 
     def __init__(self, parent=None, params_state=None, control_type="Actuator"):
         DAQ_Move_base.__init__(self, parent, params_state)  # defines settings attribute and various other methods
@@ -92,7 +91,7 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
 
         Returns
         -------
-        self.status (edict): with initialization status: three fields:
+        self.status (easydict): with initialization status: three fields:
             * info (str)
             * controller (object) initialized controller
             *initialized: (bool): False if initialization failed otherwise True
@@ -150,7 +149,7 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
 
         return values
 
-    def move_Abs(self, position):
+    def move_abs(self, position):
         """ Move the actuator to the absolute target defined by position
 
         Parameters
@@ -187,7 +186,7 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
         self.task.StopTask()
         return 0
 
-    def move_Rel(self, position):
+    def move_rel(self, position):
         """ Move the actuator to the relative target actuator value defined by position
 
         Parameters
@@ -217,7 +216,7 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
         elif self.settings['NIDAQ_type'] == 'Digital_Output':
             self.writeDigital(1, np.array([self.target_position], dtype=np.uint8), autostart=True)
 
-    def move_Home(self):
+    def move_home(self):
         """
           Send the update status thread command.
             See Also
@@ -245,4 +244,3 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
         self.stop()
         self.emit_status(ThreadCommand('Update_Status', ['Some info you want to log']))
         self.move_done()  # to let the interface know the actuator stopped
-        ##############################
