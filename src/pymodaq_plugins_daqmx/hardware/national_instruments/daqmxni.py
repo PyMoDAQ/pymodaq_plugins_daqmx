@@ -82,7 +82,7 @@ class ClockSettings(ClockSettingsBase):
     def __init__(self, source=None, frequency=1000, Nsamples=1000, edge=Edge.RISING, repetition=False):
         super().__init__(Nsamples, repetition)
         self.source = source
-        assert edge in Edge.members()
+        assert edge in Edge
         self.frequency = frequency
         self.edge = edge
 
@@ -97,7 +97,7 @@ class ChangeDetectionSettings(ClockSettingsBase):
 
 class TriggerSettings:
     def __init__(self, trig_source='', enable=False, edge=Edge.RISING, level=0.1):
-        assert edge in Edge.members()
+        assert edge in Edge
         self.trig_source = trig_source
         self.enable = enable
         self.edge = edge
@@ -133,14 +133,14 @@ class AChannel(Channel):
 class AIChannel(AChannel):
     def __init__(self, termination=TerminalConfiguration.DEFAULT, **kwargs):
         super().__init__(**kwargs)
-        assert termination in TerminalConfiguration.members()
+        assert termination in TerminalConfiguration
         self.termination = termination
 
 
 class AIThermoChannel(AIChannel):
     def __init__(self, thermo_type=ThermocoupleType.K, **kwargs):
         super().__init__(**kwargs)
-        assert thermo_type in ThermocoupleType.members()
+        assert thermo_type in ThermocoupleType
         self.thermo_type = thermo_type
 
 
@@ -151,7 +151,7 @@ class AOChannel(AChannel):
 
 class Counter(Channel):
     def __init__(self, edge=Edge.RISING, **kwargs):
-        assert edge in Edge.members()
+        assert edge in Edge
         super().__init__(**kwargs)
         self.edge = edge
         self.counter_type = "Edge Counter"
