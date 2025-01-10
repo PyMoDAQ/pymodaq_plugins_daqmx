@@ -32,8 +32,6 @@ class DAQ_0DViewer_NIDAQmx(DAQ_NIDAQmx_Viewer):
         {'title': 'Devices :', 'name': 'devices', 'type': 'list', 'limits': param_devices,
          'value': param_devices[0]
          },
-        {'title': 'Device To Use:', 'name': 'dev_to_use', 'type': 'list', 'limits': param_devices,
-         },
         ] + DAQ_NIDAQmx_base.params
 
     def __init__(self, parent=None, params_state=None):

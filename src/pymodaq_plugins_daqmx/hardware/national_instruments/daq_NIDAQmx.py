@@ -460,7 +460,7 @@ class DAQ_NIDAQmx_base:
                 channels.append(DOChannel(name=channel.opts['title'],
                                           source=DAQ_NIDAQ_source.Digital_Output.name))
 
-        channels = [ch for ch in channels if self.settings.child("dev_to_use").value() in ch.name]
+        channels = [ch for ch in channels if self.settings.child("devices").value() in ch.name]
         return channels
 
     def stop(self):

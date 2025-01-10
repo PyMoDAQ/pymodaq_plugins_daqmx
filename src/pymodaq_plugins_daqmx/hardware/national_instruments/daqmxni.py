@@ -288,7 +288,6 @@ class DAQmx:
         try:
             viewer.config_devices = [config["NIDAQ_Devices", dev].get('name') for dev in viewer.config["NIDAQ_Devices"]
                                      if "Mod" not in config["NIDAQ_Devices", dev].get('name')]
-            logger.info(viewer.config_devices)
             for dev in config["NIDAQ_Devices"]:
                 if not isinstance(config["NIDAQ_Devices", dev], dict):
                     continue
@@ -352,9 +351,8 @@ class DAQmx:
                                                                    thermo_type=ThermocoupleType.__getitem__(th),
                                                                    ))
             logger.info("Devices from config: {}".format(viewer.config_devices))
-            logger.info("Current device: {}".format(current_device))
-            logger.info("Current device modules from config: {}".format(viewer.config_modules))
-            logger.info("Current device channels from config: {}".format([ch.name for ch in viewer.config_channels]))
+            logger.info("Modules from config: {}".format(viewer.config_modules))
+            logger.info("Channels from config: {}".format([ch.name for ch in viewer.config_channels]))
         except AssertionError as err:
             logger.error("Configuration entries <{}> does not match the hardware ".format(err))
         except Exception as err:
@@ -644,15 +642,4 @@ class DAQmx:
 
 
 if __name__ == '__main__':
-    print(DAQmx.get_NIDAQ_channels())
-    controller = DAQmx()
-    ch_counter = Counter(name='Dev1/ctr0',
-                         source='Counter',
-                         edge=Edge.members()[0])
-    controller.update_task([ch_counter])
-    controller.start()
-    print(controller.readCounter())
-    controller.stop()
-    controller.close()
-
     pass
