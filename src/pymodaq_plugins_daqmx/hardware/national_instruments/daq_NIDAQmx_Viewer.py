@@ -105,32 +105,32 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
             self.commit_settings(self.settings.child('NIDAQ_type'))
             for ch in self.config_channels:
                 try:
-                    ch.analog_type = ch.analog_type.upper()
-                    ch.termination = ch.termination.upper()
+                    ch.analog_type = ch.analog_type
+                    ch.termination = ch.termination
                 except:
                     pass
-                if self.settings.child("dev_to_use").value() in ch.name:
+                if self.settings.child("devices").value() in ch.name:
                     self.settings.child('ai_channels').addNew(ch.name)
                     param = [a for a in self.settings.child('ai_channels').childs if a.opts['title'] == ch.name][0]
-                    self.settings.child("ai_channels", param.opts['name'], "ai_type").setValue(ch.analog_type.upper())
-                    param.child("voltage_settings").show(ch.analog_type == UsageTypeAI.VOLTAGE.name)
-                    param.child("current_settings").show(ch.analog_type == UsageTypeAI.CURRENT.name)
-                    param.child("thermoc_settings").show(ch.analog_type == UsageTypeAI.TEMPERATURE_THERMOCOUPLE.name)
-                    if ch.analog_type == UsageTypeAI.VOLTAGE.name:
+                    self.settings.child("ai_channels", param.opts['name'], "ai_type").setValue(ch.analog_type.name)
+                    param.child("voltage_settings").show(ch.analog_type == UsageTypeAI.VOLTAGE)
+                    param.child("current_settings").show(ch.analog_type == UsageTypeAI.CURRENT)
+                    param.child("thermoc_settings").show(ch.analog_type == UsageTypeAI.TEMPERATURE_THERMOCOUPLE)
+                    if ch.analog_type == UsageTypeAI.VOLTAGE:
                         self.settings.child("ai_channels", param.opts['name'], "voltage_settings", "volt_min").setValue(
                             ch.value_min)
                         self.settings.child("ai_channels", param.opts['name'], "voltage_settings", "volt_max").setValue(
                             ch.value_max)
                         self.settings.child("ai_channels", param.opts['name'], "termination").setValue(
                             ch.termination.name)
-                    elif ch.analog_type == UsageTypeAI.CURRENT.name:
+                    elif ch.analog_type == UsageTypeAI.CURRENT:
                         self.settings.child("ai_channels", param.opts['name'], "current_settings", "curr_min").setValue(
                             ch.value_min)
                         self.settings.child("ai_channels", param.opts['name'], "current_settings", "curr_max").setValue(
                             ch.value_max)
                         self.settings.child("ai_channels", param.opts['name'], "termination").setValue(
                             ch.termination.name)
-                    elif ch.analog_type == UsageTypeAI.TEMPERATURE_THERMOCOUPLE.name:
+                    elif ch.analog_type == UsageTypeAI.TEMPERATURE_THERMOCOUPLE:
                         self.settings.child("ai_channels",
                                             param.opts['name'],
                                             "thermoc_settings",
@@ -144,7 +144,7 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
                                             "thermoc_settings",
                                             "T_max").setValue(ch.value_max)
                         self.settings.child("ai_channels", param.opts['name'], "termination").setValue(
-                            TerminalConfiguration.DEFAULT)
+                            TerminalConfiguration.DEFAULT.name)
             info = "Plugin Initialized"
             initialized = True
             logger.info("Detector 0D initialized")

@@ -4,7 +4,7 @@ from pymodaq.utils.logger import set_logger, get_module_name
 from pymodaq.utils.parameter import Parameter
 from pymodaq.utils.parameter.pymodaq_ptypes import registerParameterType, GroupParameter
 from pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni import DAQmx, Edge, DAQ_NIDAQ_source, ClockSettings, \
-    AIChannel, Counter, AIThermoChannel, AOChannel, TriggerSettings, DOChannel, DIChannel, UsageTypeAI, \
+    AIChannel, Counter, AIThermoChannel, AOChannel, TriggerSettings, DOChannel, DIChannel, UsageTypeAI, UsageTypeAO, \
     ThermocoupleType, TerminalConfiguration
 
 
@@ -26,7 +26,7 @@ class ScalableGroupAI(GroupParameter):
         hardware.DAQ_Move_Stage_type
     """
 
-    params = [{'title': 'AI type:', 'name': 'ai_type', 'type': 'list', 'limits': UsageTypeAI.names()},
+    params = [{'title': 'AI type:', 'name': 'ai_type', 'type': 'list', 'limits': [Uai.name for Uai in UsageTypeAI]},
               {'title': 'Voltage:', 'name': 'voltage_settings', 'type': 'group', 'children': [
                   {'title': 'Voltage Min:', 'name': 'volt_min', 'type': 'float', 'value': -10.},
                   {'title': 'Voltage Max:', 'name': 'volt_max', 'type': 'float', 'value': 10.},
@@ -36,12 +36,13 @@ class ScalableGroupAI(GroupParameter):
                   {'title': 'Current Max:', 'name': 'curr_max', 'type': 'float', 'value': 1, 'suffix': 'A'},
               ]},
               {'title': 'Thermocouple:', 'name': 'thermoc_settings', 'type': 'group', 'visible': False, 'children': [
-                  {'title': 'Thc. type:', 'name': 'thermoc_type', 'type': 'list', 'limits': ThermocoupleType.names(),
-                   'value': 'K'},
+                  {'title': 'Thc. type:', 'name': 'thermoc_type', 'type': 'list',
+                   'limits': [Th.name for Th in ThermocoupleType], 'value': 'K'},
                   {'title': 'Temp. Min (°C):', 'name': 'T_min', 'type': 'float', 'value': 0, 'suffix': '°C'},
                   {'title': 'Temp. Max (°C):', 'name': 'T_max', 'type': 'float', 'value': 50, 'suffix': '°C'},
               ]},
-              {'title': 'Termination:', 'name': 'termination', 'type': 'list', 'limits': TerminalConfiguration.names()},
+              {'title': 'Termination:', 'name': 'termination', 'type': 'list',
+               'limits': [Te.name for Te in TerminalConfiguration]},
               ]
 
     def __init__(self, **opts):
@@ -88,7 +89,7 @@ class ScalableGroupAO(GroupParameter):
         hardware.DAQ_Move_Stage_type
     """
 
-    params = [{'title': 'AO type:', 'name': 'ao_type', 'type': 'list', 'limits': UsageTypeAI.names()[0:2]},
+    params = [{'title': 'AO type:', 'name': 'ao_type', 'type': 'list', 'limits': [Uao.name for Uao in UsageTypeAO]},
               {'title': 'Voltages:', 'name': 'voltage_settings', 'type': 'group', 'children': [
                   {'title': 'Voltage Min:', 'name': 'volt_min', 'type': 'list', 'value': -10., },
                   {'title': 'Voltage Max:', 'name': 'volt_max', 'type': 'list', 'value': 10., },
@@ -143,7 +144,7 @@ class ScalableGroupCounter(GroupParameter):
         hardware.DAQ_Move_Stage_type
     """
 
-    params = [{'title': 'Edge type:', 'name': 'edge', 'type': 'list', 'limits': Edge.names()}, ]
+    params = [{'title': 'Edge type:', 'name': 'edge', 'type': 'list', 'limits': [e.name for e in Edge]}, ]
 
     def __init__(self, **opts):
         opts['type'] = 'groupcounter'
@@ -252,7 +253,8 @@ class DAQ_NIDAQmx_base:
     data_grabed_signal = Signal(list)
     param_instance = DAQmx()
     params = [{'title': 'Refresh hardware:', 'name': 'refresh_hardware', 'type': 'bool', 'value': False},
-              {'title': 'Signal type:', 'name': 'NIDAQ_type', 'type': 'list', 'limits': DAQ_NIDAQ_source.names()},
+              {'title': 'Signal type:', 'name': 'NIDAQ_type', 'type': 'list',
+               'limits': [Ds.name for Ds in DAQ_NIDAQ_source]},
               {'title': 'NSamples To Read', 'name': 'nsamplestoread', 'type': 'int', 'value': 1000, 'default': 1000,
                'min': 1},
               {'title': 'AO Settings:', 'name': 'ao_settings', 'type': 'group', 'children': [
@@ -275,24 +277,25 @@ class DAQ_NIDAQmx_base:
               ]
                },
               {'title': 'AI Channels:', 'name': 'ai_channels', 'type': 'groupai',
-               'limits': DAQmx.get_NIDAQ_channels(source_type=DAQ_NIDAQ_source.Analog_Input.name)},
+               'limits': DAQmx.get_NIDAQ_channels(source_type=DAQ_NIDAQ_source.Analog_Input)},
               {'title': 'AO Channels:', 'name': 'ao_channels', 'type': 'groupao',
-               'limits': DAQmx.get_NIDAQ_channels(source_type=DAQ_NIDAQ_source.Analog_Output.name)},
+               'limits': DAQmx.get_NIDAQ_channels(source_type=DAQ_NIDAQ_source.Analog_Output)},
               {'title': 'DO Channels:', 'name': 'do_channels', 'type': 'groupdo',
-               'limits': DAQmx.get_NIDAQ_channels(source_type=DAQ_NIDAQ_source.Digital_Output.name)},
+               'limits': DAQmx.get_NIDAQ_channels(source_type=DAQ_NIDAQ_source.Digital_Output)},
               {'title': 'DI Channels:', 'name': 'di_channels', 'type': 'groupdi',
-               'limits': DAQmx.get_NIDAQ_channels(source_type=DAQ_NIDAQ_source.Digital_Input.name)},
+               'limits': DAQmx.get_NIDAQ_channels(source_type=DAQ_NIDAQ_source.Digital_Input)},
               {'title': 'Counter Settings:', 'name': 'counter_settings', 'type': 'group', 'visible': True, 'children': [
                   {'title': 'Counting time (ms):', 'name': 'counting_time', 'type': 'float', 'value': 100.,
                    'default': 100., 'min': 0.},
                   {'title': 'Counting Channels:', 'name': 'counter_channels', 'type': 'groupcounter',
-                   'limits': DAQmx.get_NIDAQ_channels(source_type=DAQ_NIDAQ_source.Counter.name)},
+                   'limits': DAQmx.get_NIDAQ_channels(source_type=DAQ_NIDAQ_source.Counter)},
               ]},
               {'title': 'Trigger Settings:', 'name': 'trigger_settings', 'type': 'group', 'visible': True, 'children': [
                   {'title': 'Enable?:', 'name': 'enable', 'type': 'bool', 'value': False, },
                   {'title': 'Trigger Source:', 'name': 'trigger_channel', 'type': 'list',
                    'limits': DAQmx.getTriggeringSources()},
-                  {'title': 'Edge type:', 'name': 'edge', 'type': 'list', 'limits': Edge.names(), 'visible': False},
+                  {'title': 'Edge type:', 'name': 'edge', 'type': 'list', 'limits': [e.name for e in Edge],
+                   'visible': False},
                   {'title': 'Level:', 'name': 'level', 'type': 'float', 'value': 1., 'visible': False}
               ]}
               ]
@@ -321,7 +324,6 @@ class DAQ_NIDAQmx_base:
         """
         if param.name() == 'NIDAQ_devices':
             self.controller.update_NIDAQ_channels()
-            self.update_task()
 
         if param.name() == 'NIDAQ_type':
             self.controller.update_NIDAQ_channels(param.value())
@@ -370,8 +372,6 @@ class DAQ_NIDAQmx_base:
                 self.settings.child('do_channels').show()
                 self.settings.child('di_channels').hide()
 
-            self.update_task()
-
         elif param.name() == 'refresh_hardware':
             if param.value():
                 self.controller.refresh_hardware()
@@ -379,25 +379,19 @@ class DAQ_NIDAQmx_base:
                 self.settings.child('refresh_hardware').setValue(False)
 
         elif param.name() == 'ai_type':
-            param.parent().child('voltage_settings').show(param.value() == UsageTypeAI.Voltage.name)
-            param.parent().child('current_settings').show(param.value() == UsageTypeAI.Current.name)
+            param.parent().child('voltage_settings').show(param.value() == UsageTypeAI.VOLTAGE.name)
+            param.parent().child('current_settings').show(param.value() == UsageTypeAI.CURRENT.name)
             param.parent().child('thermoc_settings').show(param.value() == UsageTypeAI.TEMPERATURE_THERMOCOUPLE.name)
-            self.update_task()
 
         elif param.name() == 'ao_type':
-            param.parent().child('voltage_settings').show(param.value() == UsageTypeAI.Voltage.name)
-            param.parent().child('current_settings').show(param.value() == UsageTypeAI.Current.name)
-            self.update_task()
+            param.parent().child('voltage_settings').show(param.value() == UsageTypeAI.VOLTAGE.name)
+            param.parent().child('current_settings').show(param.value() == UsageTypeAI.CURRENT.name)
 
         elif param.name() == 'trigger_channel':
             param.parent().child('level').show('PF' not in param.opts['title'])
 
-        else:
-            self.update_task()
-
     def update_task(self):
         self.channels = self.get_channels_from_settings()
-        logger.info("update_task - channels: {}".format(self.channels))
         self.clock_settings = ClockSettings(frequency=self.settings['clock_settings', 'frequency'],
                                             Nsamples=self.settings['clock_settings', 'Nsamples'],
                                             edge=Edge.RISING,
@@ -405,7 +399,7 @@ class DAQ_NIDAQmx_base:
         self.trigger_settings = \
             TriggerSettings(trig_source=self.settings['trigger_settings', 'trigger_channel'],
                             enable=self.settings['trigger_settings', 'enable'],
-                            edge=Edge[self.settings['trigger_settings', 'edge'].upper()],
+                            edge=Edge[self.settings['trigger_settings', 'edge']],
                             level=self.settings['trigger_settings', 'level'], )
         if self.channels:
             self.controller.update_task(self.channels, self.clock_settings, trigger_settings=self.trigger_settings)
@@ -414,23 +408,22 @@ class DAQ_NIDAQmx_base:
         channels = []
         if self.settings['NIDAQ_type'] == DAQ_NIDAQ_source.Analog_Input.name:  # analog input
             for channel in self.settings.child('ai_channels').children():
-                logger.info("get_channels_from_settings - channel {}".format(channel))
-                analog_type = channel['ai_type']  # todo UsageTypeAI[channel['ai_type'].upper()].name
-                if analog_type == UsageTypeAI.VOLTAGE.name:
+                analog_type = UsageTypeAI[channel['ai_type']]
+                if analog_type == UsageTypeAI.VOLTAGE:
                     channels.append(AIChannel(name=channel.opts['title'],
-                                              source=DAQ_NIDAQ_source.Analog_Input.name, analog_type=analog_type,
+                                              source=DAQ_NIDAQ_source.Analog_Input, analog_type=analog_type,
                                               value_min=channel['voltage_settings', 'volt_min'],
                                               value_max=channel['voltage_settings', 'volt_max'],
-                                              termination=TerminalConfiguration[channel['termination'].upper()], ))
-                elif analog_type == UsageTypeAI.CURRENT.name:
+                                              termination=TerminalConfiguration[channel['termination']], ))
+                elif analog_type == UsageTypeAI.CURRENT:
                     channels.append(AIChannel(name=channel.opts['title'],
-                                              source=DAQ_NIDAQ_source.Analog_Input.name, analog_type=analog_type,
+                                              source=DAQ_NIDAQ_source.Analog_Input, analog_type=analog_type,
                                               value_min=channel['current_settings', 'curr_min'],
                                               value_max=channel['current_settings', 'curr_max'],
-                                              termination=TerminalConfiguration[channel['termination'].upper()], ))
-                elif analog_type == UsageTypeAI.TEMPERATURE_THERMOCOUPLE.name:
+                                              termination=TerminalConfiguration[channel['termination']], ))
+                elif analog_type == UsageTypeAI.TEMPERATURE_THERMOCOUPLE:
                     channels.append(AIThermoChannel(name=channel.opts['title'],
-                                                    source=DAQ_NIDAQ_source.Analog_Input.name, analog_type=analog_type,
+                                                    source=DAQ_NIDAQ_source.Analog_Input, analog_type=analog_type,
                                                     value_min=channel['thermoc_settings', 'T_min'],
                                                     value_max=channel['thermoc_settings', 'T_max'],
                                                     thermo_type=ThermocoupleType[
@@ -438,9 +431,9 @@ class DAQ_NIDAQmx_base:
 
         elif self.settings['NIDAQ_type'] == DAQ_NIDAQ_source.Analog_Output.name:  # analog output
             for channel in self.settings.child('ao_channels').children():
-                analog_type = channel['ao_type']
+                analog_type = UsageTypeAO[channel['ao_type']]
                 channels.append(AOChannel(name=channel.opts['title'],
-                                          source=DAQ_NIDAQ_source.Analog_Output.name, analog_type=analog_type,
+                                          source=DAQ_NIDAQ_source.Analog_Output, analog_type=analog_type,
                                           value_min=channel['voltage_settings', 'volt_min'],
                                           value_max=channel['voltage_settings', 'volt_max'],
                                           ))
@@ -448,17 +441,17 @@ class DAQ_NIDAQmx_base:
         elif self.settings['NIDAQ_type'] == DAQ_NIDAQ_source.Counter.name:  # counter input
             for channel in self.settings.child('counter_settings', 'counter_channels').children():
                 channels.append(Counter(name=channel.opts['title'],
-                                        source='Counter', edge=channel['edge']))
+                                        source=DAQ_NIDAQ_source.Counter, edge=Edge[channel['edge']]))
 
         elif self.settings['NIDAQ_type'] == DAQ_NIDAQ_source.Digital_Input.name:  # digital input
             for channel in self.settings.child('di_channels').children():
                 channels.append(DIChannel(name=channel.opts['title'],
-                                          source=DAQ_NIDAQ_source.Digital_Input.name))
+                                          source=DAQ_NIDAQ_source.Digital_Input))
 
         elif self.settings['NIDAQ_type'] == DAQ_NIDAQ_source.Digital_Output.name:  # Digital output
             for channel in self.settings.child('do_channels').children():
                 channels.append(DOChannel(name=channel.opts['title'],
-                                          source=DAQ_NIDAQ_source.Digital_Output.name))
+                                          source=DAQ_NIDAQ_source.Digital_Output))
 
         channels = [ch for ch in channels if self.settings.child("devices").value() in ch.name]
         return channels

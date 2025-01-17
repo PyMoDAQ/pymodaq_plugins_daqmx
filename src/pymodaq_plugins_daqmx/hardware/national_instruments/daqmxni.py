@@ -1,13 +1,12 @@
 import time
 import traceback
-from enum import IntEnum
+from enum import Enum
 import numpy as np
 from pymodaq.utils.logger import set_logger, get_module_name
 
 from nidaqmx.constants import AcquisitionType, VoltageUnits, CurrentUnits, CurrentShuntResistorLocation, \
                                 TemperatureUnits, CJCSource, CountDirection, Level, FrequencyUnits, TimeUnits, \
-                                LineGrouping
-from pymodaq_plugins_daqmx.hardware.national_instruments import UsageTypeAI, Edge, TerminalConfiguration, ThermocoupleType
+                                LineGrouping, UsageTypeAI, UsageTypeAO, Edge, TerminalConfiguration, ThermocoupleType
 
 from nidaqmx.system import System as niSystem
 from nidaqmx.system.device import Device as niDevice
@@ -19,29 +18,7 @@ from pymodaq_plugins_daqmx import config
 logger = set_logger(get_module_name(__file__))
 
 
-class IntEnumExtend(IntEnum):
-    """
-        This class expose 3 privates and undocumented methods of Enum
-    """
-    @classmethod
-    def names(cls):
-        return cls._member_names_
-        # [item.name for item in cls.__members__.items()]
-        # [name for name, member in cls.__members__.items()]
-
-    @classmethod
-    def members(cls):
-        return list(cls._member_map_.values())
-        # [member for name, member in cls.__members__.items()]
-        # [item.member for item in cls.__members__.items()]
-
-    @classmethod
-    def values(cls):
-        return [cls[name].value for name in cls._member_names_]
-        # [cls[name].value for name, member in cls.__members__.items()]
-
-
-class DAQ_NIDAQ_source(IntEnumExtend):
+class DAQ_NIDAQ_source(Enum):
     """
         Enum class of NIDAQ_source
 
@@ -112,7 +89,7 @@ class Channel:
 
         """
         self.name = name
-        assert source in DAQ_NIDAQ_source.names()
+        assert source in DAQ_NIDAQ_source
         self.source = source
 
 
@@ -127,6 +104,7 @@ class AChannel(Channel):
         super().__init__(**kwargs)
         self.value_min = value_min
         self.value_max = value_max
+        assert analog_type in UsageTypeAI
         self.analog_type = analog_type
 
 
@@ -151,8 +129,8 @@ class AOChannel(AChannel):
 
 class Counter(Channel):
     def __init__(self, edge=Edge.RISING, **kwargs):
-        assert edge in Edge
         super().__init__(**kwargs)
+        assert edge in Edge
         self.edge = edge
         self.counter_type = "Edge Counter"
 
@@ -250,7 +228,7 @@ class DAQmx:
             devices = cls.get_NIDAQ_devices().device_names
 
         if source_type is None:
-            source_type = DAQ_NIDAQ_source.names()
+            source_type = DAQ_NIDAQ_source
         if not isinstance(source_type, list):
             source_type = [source_type]
         channels_tot = []
@@ -258,17 +236,17 @@ class DAQmx:
         if not not devices:
             for device in devices:
                 for source in source_type:
-                    if source == DAQ_NIDAQ_source.Analog_Input.name:  # analog input
+                    if source == DAQ_NIDAQ_source.Analog_Input:  # analog input
                         channels = niDevice(device).ai_physical_chans.channel_names
-                    elif source == DAQ_NIDAQ_source.Analog_Output.name:  # analog output
+                    elif source == DAQ_NIDAQ_source.Analog_Output:  # analog output
                         channels = niDevice(device).ao_physical_chans.channel_names
-                    elif source == DAQ_NIDAQ_source.Counter.name:  # counter
+                    elif source == DAQ_NIDAQ_source.Counter:  # counter
                         channels = niDevice(device).ci_physical_chans.channel_names
-                    elif source == DAQ_NIDAQ_source.Digital_Output.name:  # digital output
+                    elif source == DAQ_NIDAQ_source.Digital_Output:  # digital output
                         channels = niDevice(device).do_lines.channel_names
-                    elif source == DAQ_NIDAQ_source.Digital_Input.name:  # digital iutput
+                    elif source == DAQ_NIDAQ_source.Digital_Input:  # digital iutput
                         channels = niDevice(device).di_lines.channel_names
-                    elif source == DAQ_NIDAQ_source.Terminals.name:  # terminals
+                    elif source == DAQ_NIDAQ_source.Terminals:  # terminals
                         channels = niDevice(device).terminals
 
                     if channels != ['']:
@@ -313,42 +291,44 @@ class DAQmx:
                     except AssertionError as err:
                         logger.error("Module {} not detected: {}".format(module_name, err))
                         continue
-                    for source in config["NIDAQ_Devices", dev, mod]:
-                        if not isinstance(config["NIDAQ_Devices", dev, mod, source], dict):
+                    for src in config["NIDAQ_Devices", dev, mod]:
+                        if not isinstance(config["NIDAQ_Devices", dev, mod, src], dict):
                             continue
-                        if source == "ai":
-                            ai = config["NIDAQ_Devices", dev, mod, source]
+                        if src == "ai":
+                            ai = config["NIDAQ_Devices", dev, mod, src]
                             for ch in ai.keys():
                                 name = module_name + "/" + str(ch)
-                                term = ai[ch].get("termination")
-                                if ai[ch].get("analog_type") == UsageTypeAI.VOLTAGE.name:
+                                source = DAQ_NIDAQ_source[ai[ch].get("source")]
+                                analog_type = UsageTypeAI[ai[ch].get("analog_type")]
+                                if analog_type == UsageTypeAI.VOLTAGE:
+                                    term = TerminalConfiguration[ai[ch].get("termination")]
                                     viewer.config_channels.append(AIChannel
                                                                   (name=name,
-                                                                   source=ai[ch].get("source"),
-                                                                   analog_type=ai[ch].get("analog_type"),
+                                                                   source=source,
+                                                                   analog_type=analog_type,
                                                                    value_min=float(ai[ch].get("value_min")),
                                                                    value_max=float(ai[ch].get("value_max")),
-                                                                   termination=TerminalConfiguration.__getitem__(term),
+                                                                   termination=term,
                                                                    ))
-                                elif ai[ch].get("analog_type") == UsageTypeAI.CURRENT.name:
+                                elif analog_type == UsageTypeAI.CURRENT:
+                                    term = TerminalConfiguration[ai[ch].get("termination")]
                                     viewer.config_channels.append(AIChannel
                                                                 (name=name,
-                                                                 source=ai[ch].get("source"),
-                                                                 analog_type=ai[ch].get("analog_type"),
+                                                                 source=source,
+                                                                 analog_type=analog_type,
                                                                  value_min=float(ai[ch].get("value_min")),
                                                                  value_max=float(ai[ch].get("value_max")),
-                                                                 termination=TerminalConfiguration.__getitem__(term),
+                                                                 termination=term,
                                                                  ))
-                                elif ai[ch].get("analog_type") == UsageTypeAI.TEMPERATURE_THERMOCOUPLE.name or \
-                                        ai[ch].get("analog_type") == "Thermocouple":
-                                    th = ai[ch].get("thermo_type")
+                                elif analog_type == UsageTypeAI.TEMPERATURE_THERMOCOUPLE:
+                                    th = ThermocoupleType[ai[ch].get("thermo_type")]
                                     viewer.config_channels.append(AIThermoChannel
                                                                   (name=name,
-                                                                   source=ai[ch].get("source"),
-                                                                   analog_type=ai[ch].get("analog_type"),
+                                                                   source=source,
+                                                                   analog_type=analog_type,
                                                                    value_min=float(ai[ch].get("value_min")),
                                                                    value_max=float(ai[ch].get("value_max")),
-                                                                   thermo_type=ThermocoupleType.__getitem__(th),
+                                                                   thermo_type=th,
                                                                    ))
             logger.info("Devices from config: {}".format(viewer.config_devices))
             logger.info("Modules from config: {}".format(viewer.config_modules))
@@ -410,9 +390,9 @@ class DAQmx:
 
             # create all channels one task for one type of channels
             for channel in channels:
-                if channel.source == DAQ_NIDAQ_source.Analog_Input.name:  # analog input
+                if channel.source == DAQ_NIDAQ_source.Analog_Input:  # analog input
                     try:
-                        if channel.analog_type == UsageTypeAI.VOLTAGE.name:
+                        if channel.analog_type == UsageTypeAI.VOLTAGE:
                             self._task.ai_channels.add_ai_voltage_chan(channel.name,
                                                                        "",
                                                                        channel.termination,
@@ -421,7 +401,7 @@ class DAQmx:
                                                                        VoltageUnits.VOLTS,
                                                                        "")
 
-                        elif channel.analog_type == UsageTypeAI.CURRENT.name:
+                        elif channel.analog_type == UsageTypeAI.CURRENT:
                             self._task.ai_channels.add_ai_current_chan(channel.name,
                                                                        "",
                                                                        channel.termination,
@@ -432,7 +412,7 @@ class DAQmx:
                                                                        0.,
                                                                        "")
 
-                        elif channel.analog_type == UsageTypeAI.TEMPERATURE_THERMOCOUPLE.name:
+                        elif channel.analog_type == UsageTypeAI.TEMPERATURE_THERMOCOUPLE:
                             self._task.ai_channels.add_ai_thrmcpl_chan(channel.name,
                                                                        "",
                                                                        channel.value_min,
@@ -478,15 +458,15 @@ class DAQmx:
                     if not not err_code:
                         status = self.DAQmxGetErrorString(err_code)
                         raise IOError(status)
-                elif channel.source == DAQ_NIDAQ_source.Analog_Output.name:  # Analog_Output
+                elif channel.source == DAQ_NIDAQ_source.Analog_Output:  # Analog_Output
                     try:
-                        if channel.analog_type == UsageTypeAI.VOLTAGE.name:
+                        if channel.analog_type == UsageTypeAI.VOLTAGE:
                             self._task.ao_channels.add_ao_voltage_chan(channel.name, "",
                                                                        channel.value_min,
                                                                        channel.value_max,
                                                                        VoltageUnits.VOLTS, None)
 
-                        elif channel.analog_type == UsageTypeAI.CURRENT.name:
+                        elif channel.analog_type == UsageTypeAI.CURRENT:
                             self._task.ao_channels.add_ao_current_chan(channel.name, "",
                                                                        channel.value_min,
                                                                        channel.value_max,
@@ -496,7 +476,7 @@ class DAQmx:
                     if not not err_code:
                         status = self.DAQmxGetErrorString(err_code)
                         raise IOError(status)
-                elif channel.source == DAQ_NIDAQ_source.Digital_Output.name:
+                elif channel.source == DAQ_NIDAQ_source.Digital_Output:
                     try:
                         self._task.do_channels.add_do_chan(channel.name, "",
                                                            LineGrouping.CHAN_PER_LINE)
@@ -505,7 +485,7 @@ class DAQmx:
                     if not not err_code:
                         status = self.DAQmxGetErrorString(err_code)
                         raise IOError(status)
-                elif channel.source == DAQ_NIDAQ_source.Digital_Input.name:  # Digital_Input
+                elif channel.source == DAQ_NIDAQ_source.Digital_Input:  # Digital_Input
                     try:
                         self._task.di_channels.add_di_chan(channel.name, "",
                                                            LineGrouping.CHAN_PER_LINE)
