@@ -154,7 +154,7 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
 
         Parameters
         ----------
-        position: (flaot) value of the absolute target positioning
+        position: (float) value of the absolute target positioning
         """
 
         position = self.check_bound(position)  # if user checked bounds, the defined bounds are applied here
@@ -191,7 +191,7 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
 
         Parameters
         ----------
-        position: (flaot) value of the relative target positioning
+        position: (float) value of the relative target positioning
         """
 
         position = self.check_bound(self.current_position + position) - self.current_position
