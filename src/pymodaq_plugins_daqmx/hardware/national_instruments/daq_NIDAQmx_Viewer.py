@@ -4,7 +4,7 @@ import traceback
 from qtpy import QtCore
 from .daqmxni import DAQmx
 from pymodaq_plugins_daqmx.hardware.national_instruments.daq_NIDAQmx import DAQ_NIDAQmx_base, TerminalConfiguration, \
-    UsageTypeAI, DAQ_NIDAQ_source
+    UsageTypeAI, ChannelType
 from pymodaq.control_modules.viewer_utility_classes import DAQ_Viewer_base, comon_parameters as viewer_params
 from pymodaq.utils.daq_utils import ThreadCommand
 from pymodaq.utils.data import DataFromPlugins, DataToExport
@@ -38,11 +38,13 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
         self.live = False
         self.control_type = control_type  # could be "0D", "1D" or "Actuator"
         if self.control_type == "0D":
-            self.settings.child('NIDAQ_type').setLimits(DAQ_NIDAQ_source.sources0D())  # analog input and counter
+            self.settings.child('NIDAQ_type').setLimits([ChannelType.ANALOG_INPUT.name,
+                                                         ChannelType.COUNTER_INPUT.name,
+                                                         ChannelType.DIGITAL_INPUT.name])  # analog & digital input + counter
         elif self.control_type == "1D":
-            self.settings.child('NIDAQ_type').setLimits(DAQ_NIDAQ_source.sources1D())
+            self.settings.child('NIDAQ_type').setLimits(ChannelType.ANALOG_INPUT.name)
         elif self.control_type == "Actuator":
-            self.settings.child('NIDAQ_type').setLimits(DAQ_NIDAQ_source.Actuator())
+            self.settings.child('NIDAQ_type').setLimits(ChannelType.ANALOG_OUTPUT.name, ChannelType.COUNTER_OUTPUT.name)
 
         self.settings.child('ao_settings').hide()
         self.settings.child('ao_channels').hide()
@@ -74,7 +76,7 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
 
             See Also
             --------
-            update_NIDAQ_channels, update_task, DAQ_NIDAQ_source, refresh_hardware
+            update_NIDAQ_channels, update_task, refresh_hardware
         """
 
         if param.parent() is not None:
@@ -167,10 +169,6 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
             **Parameters**  **Type**  **Description**
             *Naverage*      int       Number of values to average
             =============== ======== ===============================================
-
-            See Also
-            --------
-            DAQ_NIDAQ_source
         """
         update = False
 

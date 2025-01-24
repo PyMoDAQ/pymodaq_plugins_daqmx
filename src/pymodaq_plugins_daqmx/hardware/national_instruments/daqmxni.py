@@ -6,7 +6,8 @@ from pymodaq.utils.logger import set_logger, get_module_name
 
 from nidaqmx.constants import AcquisitionType, VoltageUnits, CurrentUnits, CurrentShuntResistorLocation, \
                                 TemperatureUnits, CJCSource, CountDirection, Level, FrequencyUnits, TimeUnits, \
-                                LineGrouping, UsageTypeAI, UsageTypeAO, Edge, TerminalConfiguration, ThermocoupleType
+                                LineGrouping, UsageTypeAI, UsageTypeAO, UsageTypeCI, UsageTypeCO, Edge, \
+                                TerminalConfiguration, ThermocoupleType, ChannelType
 
 from nidaqmx.system import System as niSystem
 from nidaqmx.system.device import Device as niDevice
@@ -16,36 +17,6 @@ from pymodaq_plugins_daqmx import config
 
 
 logger = set_logger(get_module_name(__file__))
-
-
-class DAQ_NIDAQ_source(Enum):
-    """
-        Enum class of NIDAQ_source
-
-        =============== ==========
-        **Attributes**   **Type**
-        *Analog_Input*   int
-        *Counter*        int
-        =============== ==========
-    """
-    Analog_Input = 0
-    Analog_Output = 1
-    Counter = 2
-    Digital_Input = 3
-    Digital_Output = 4
-    Terminals = 5
-
-    @classmethod
-    def sources0D(self):
-        return [self.Analog_Input.name, DAQ_NIDAQ_source.Counter.name, DAQ_NIDAQ_source.Digital_Input.name]
-
-    @classmethod
-    def sources1D(self):
-        return [self.Analog_Input.name]
-
-    @classmethod
-    def Actuator(self):
-        return [self.Analog_Output.name]
 
 
 class ClockSettingsBase:
@@ -82,14 +53,14 @@ class TriggerSettings:
 
 
 class Channel:
-    def __init__(self, name='', source=DAQ_NIDAQ_source.Analog_Input):
+    def __init__(self, name='', source=ChannelType.ANALOG_INPUT):
         """
         Parameters
         ----------
 
         """
         self.name = name
-        assert source in DAQ_NIDAQ_source
+        assert source in ChannelType
         self.source = source
 
 
@@ -127,19 +98,30 @@ class AOChannel(AChannel):
         super().__init__(**kwargs)
 
 
-class Counter(Channel):
-    def __init__(self, edge=Edge.RISING, **kwargs):
+class CIChannel(Channel):
+    def __init__(self, edge=Edge.RISING, counter_type=UsageTypeCI.COUNT_EDGES, **kwargs):
         super().__init__(**kwargs)
         assert edge in Edge
+        assert counter_type in UsageTypeCI
         self.edge = edge
-        self.counter_type = "Edge Counter"
+        self.counter_type = counter_type
 
 
-class ClockCounter(Counter):
-    def __init__(self, clock_frequency=100, **kwargs):
+class COChannel(Channel):
+    def __init__(self, edge=Edge.RISING, counter_type=UsageTypeCO.PULSE_FREQUENCY, **kwargs):
+        super().__init__(**kwargs)
+        assert edge in Edge
+        assert counter_type in UsageTypeCO
+        self.edge = edge
+        self.counter_type = counter_type
+
+
+class ClockCounter(COChannel):
+    def __init__(self, clock_frequency=100, counter_type=UsageTypeCO.PULSE_FREQUENCY, **kwargs):
+        super().counter_type = counter_type
         super().__init__(**kwargs)
         self.clock_frequency = clock_frequency
-        self.counter_type = "Clock Output"
+        self.counter_type = counter_type
 
 
 class DigitalChannel(Channel):
@@ -217,7 +199,7 @@ class DAQmx:
         devices: list
                  list of strings, each one being a connected device
         source_type: str
-                     One of the entries of DAQ_NIDAQ_source enum
+                     Channels possible types
 
         Returns
         -------
@@ -228,7 +210,7 @@ class DAQmx:
             devices = cls.get_NIDAQ_devices().device_names
 
         if source_type is None:
-            source_type = DAQ_NIDAQ_source
+            source_type = ChannelType
         if not isinstance(source_type, list):
             source_type = [source_type]
         channels_tot = []
@@ -236,19 +218,18 @@ class DAQmx:
         if not not devices:
             for device in devices:
                 for source in source_type:
-                    if source == DAQ_NIDAQ_source.Analog_Input:  # analog input
+                    if source == ChannelType.ANALOG_INPUT:  # analog input
                         channels = niDevice(device).ai_physical_chans.channel_names
-                    elif source == DAQ_NIDAQ_source.Analog_Output:  # analog output
+                    elif source == ChannelType.ANALOG_OUTPUT:  # analog output
                         channels = niDevice(device).ao_physical_chans.channel_names
-                    elif source == DAQ_NIDAQ_source.Counter:  # counter
+                    elif source == ChannelType.COUNTER_INPUT:  # counter input
                         channels = niDevice(device).ci_physical_chans.channel_names
-                    elif source == DAQ_NIDAQ_source.Digital_Output:  # digital output
-                        channels = niDevice(device).do_lines.channel_names
-                    elif source == DAQ_NIDAQ_source.Digital_Input:  # digital iutput
+                    elif source == ChannelType.COUNTER_OUTPUT:  # counter output
+                        channels = niDevice(device).co_physical_chans.channel_names
+                    elif source == ChannelType.DIGITAL_INPUT:  # digital input
                         channels = niDevice(device).di_lines.channel_names
-                    elif source == DAQ_NIDAQ_source.Terminals:  # terminals
-                        channels = niDevice(device).terminals
-
+                    elif source == ChannelType.DIGITAL_OUTPUT:  # digital output
+                        channels = niDevice(device).do_lines.channel_names
                     if channels != ['']:
                         channels_tot.extend(channels)
 
@@ -298,7 +279,7 @@ class DAQmx:
                             ai = config["NIDAQ_Devices", dev, mod, src]
                             for ch in ai.keys():
                                 name = module_name + "/" + str(ch)
-                                source = DAQ_NIDAQ_source[ai[ch].get("source")]
+                                source = ChannelType[ai[ch].get("source")]
                                 analog_type = UsageTypeAI[ai[ch].get("analog_type")]
                                 if analog_type == UsageTypeAI.VOLTAGE:
                                     term = TerminalConfiguration[ai[ch].get("termination")]
@@ -390,7 +371,7 @@ class DAQmx:
 
             # create all channels one task for one type of channels
             for channel in channels:
-                if channel.source == DAQ_NIDAQ_source.Analog_Input:  # analog input
+                if channel.source == ChannelType.ANALOG_INPUT:  # analog input
                     try:
                         if channel.analog_type == UsageTypeAI.VOLTAGE:
                             self._task.ai_channels.add_ai_voltage_chan(channel.name,
@@ -458,7 +439,7 @@ class DAQmx:
                     if not not err_code:
                         status = self.DAQmxGetErrorString(err_code)
                         raise IOError(status)
-                elif channel.source == DAQ_NIDAQ_source.Analog_Output:  # Analog_Output
+                elif channel.source == ChannelType.ANALOG_OUTPUT:  # Analog_Output
                     try:
                         if channel.analog_type == UsageTypeAI.VOLTAGE:
                             self._task.ao_channels.add_ao_voltage_chan(channel.name, "",
@@ -476,7 +457,7 @@ class DAQmx:
                     if not not err_code:
                         status = self.DAQmxGetErrorString(err_code)
                         raise IOError(status)
-                elif channel.source == DAQ_NIDAQ_source.Digital_Output:
+                elif channel.source == ChannelType.DIGITAL_OUTPUT:
                     try:
                         self._task.do_channels.add_do_chan(channel.name, "",
                                                            LineGrouping.CHAN_PER_LINE)
@@ -485,7 +466,7 @@ class DAQmx:
                     if not not err_code:
                         status = self.DAQmxGetErrorString(err_code)
                         raise IOError(status)
-                elif channel.source == DAQ_NIDAQ_source.Digital_Input:  # Digital_Input
+                elif channel.source == ChannelType.DIGITAL_INPUT:  # Digital_Input
                     try:
                         self._task.di_channels.add_di_chan(channel.name, "",
                                                            LineGrouping.CHAN_PER_LINE)
