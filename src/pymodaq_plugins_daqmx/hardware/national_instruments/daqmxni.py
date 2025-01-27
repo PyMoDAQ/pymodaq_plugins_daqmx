@@ -410,13 +410,13 @@ class NIDAQmx:
                         raise IOError(status)
                 elif channel.source == ChannelType.ANALOG_OUTPUT:  # Analog_Output
                     try:
-                        if channel.analog_type == UsageTypeAI.VOLTAGE:
+                        if channel.analog_type == UsageTypeAO.VOLTAGE:
                             self._task.ao_channels.add_ao_voltage_chan(channel.name, "",
                                                                        channel.value_min,
                                                                        channel.value_max,
                                                                        VoltageUnits.VOLTS, None)
 
-                        elif channel.analog_type == UsageTypeAI.CURRENT:
+                        elif channel.analog_type == UsageTypeAO.CURRENT:
                             self._task.ao_channels.add_ao_current_chan(channel.name, "",
                                                                        channel.value_min,
                                                                        channel.value_max,
