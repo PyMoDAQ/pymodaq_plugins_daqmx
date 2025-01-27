@@ -2,7 +2,7 @@ import nidaqmx
 import numpy as np
 import traceback
 from qtpy import QtCore
-from .daqmxni import DAQmx
+from .daqmxni import NIDAQmx
 from pymodaq_plugins_daqmx.hardware.national_instruments.daq_NIDAQmx import DAQ_NIDAQmx_base, TerminalConfiguration, \
     UsageTypeAI, ChannelType
 from pymodaq.control_modules.viewer_utility_classes import DAQ_Viewer_base, comon_parameters as viewer_params
@@ -100,7 +100,7 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
         """
         try:
             self.current_device = nidaqmx.system.Device(self.settings["devices"])
-            self.controller = self.ini_detector_init(controller, DAQmx())
+            self.controller = self.ini_detector_init(controller, NIDAQmx())
             self.controller.configuration_sequence(self, self.current_device)
 
             # actions to perform in order to set properly the settings tree options

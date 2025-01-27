@@ -1,7 +1,7 @@
 from pymodaq.control_modules.viewer_utility_classes import main
 from pymodaq.control_modules.viewer_utility_classes import comon_parameters as viewer_params
 from pymodaq_plugins_daqmx import config
-from pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni import AIChannel, AIThermoChannel, DAQmx, niTask, \
+from pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni import AIChannel, AIThermoChannel, NIDAQmx, niTask, \
     niDevice, TemperatureUnits, CJCSource, VoltageUnits, AcquisitionType
 from pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni import UsageTypeAI, ThermocoupleType, \
                                                             TerminalConfiguration, Edge
@@ -19,14 +19,14 @@ class DAQ_0DViewer_NIDAQmx(DAQ_NIDAQmx_Viewer):
     config_channels: list
     channels_ai: list
     config: config  # todo review Useful/Unused
-    controller: DAQmx
+    controller: NIDAQmx
     config_devices: list
     config_modules: list
     current_device: niDevice
     live: bool
     Naverage: int
 
-    param_devices = DAQmx.get_NIDAQ_devices().device_names
+    param_devices = NIDAQmx.get_NIDAQ_devices().device_names
     params = viewer_params + [
         {'title': 'Display type:', 'name': 'display', 'type': 'list', 'limits': ['0D', '1D']},
         {'title': 'Devices :', 'name': 'devices', 'type': 'list', 'limits': param_devices,

@@ -139,7 +139,7 @@ class DIChannel(DigitalChannel):
         super().__init__(**kwargs)
 
 
-class DAQmx:
+class NIDAQmx:
     """Wrapper around the NIDAQmx package giving an easy-to-use object to instantiate channels and tasks"""
     def __init__(self):
         self.devices = []

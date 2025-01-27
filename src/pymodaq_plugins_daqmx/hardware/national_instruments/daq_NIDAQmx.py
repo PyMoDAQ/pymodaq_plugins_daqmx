@@ -3,7 +3,7 @@ from qtpy.QtCore import Signal
 from pymodaq.utils.logger import set_logger, get_module_name
 from pymodaq.utils.parameter import Parameter
 from pymodaq.utils.parameter.pymodaq_ptypes import registerParameterType, GroupParameter
-from pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni import DAQmx, Edge, ChannelType, ClockSettings, \
+from pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni import NIDAQmx, Edge, ChannelType, ClockSettings, \
     AIChannel, AIThermoChannel, AOChannel, CIChannel, COChannel, DOChannel, DIChannel, UsageTypeAI, UsageTypeAO, \
     ThermocoupleType, TerminalConfiguration, TriggerSettings
 
@@ -251,7 +251,7 @@ class DAQ_NIDAQmx_base:
         Base NIDAQmx class for using DAQmx objects from daqmxni.py in the DAQ_NIDAQmx_Move & DAQ_NIDAQmx_Viewer
     """
     data_grabed_signal = Signal(list)
-    param_instance = DAQmx()
+    param_instance = NIDAQmx()
     params = [{'title': 'Refresh hardware:', 'name': 'refresh_hardware', 'type': 'bool', 'value': False},
               {'title': 'Signal type:', 'name': 'NIDAQ_type', 'type': 'list',
                'limits': [Ds.name for Ds in ChannelType]},
@@ -277,25 +277,25 @@ class DAQ_NIDAQmx_base:
               ]
                },
               {'title': 'AI Channels:', 'name': 'ai_channels', 'type': 'groupai',
-               'limits': DAQmx.get_NIDAQ_channels(source_type=ChannelType.ANALOG_INPUT)},
+               'limits': NIDAQmx.get_NIDAQ_channels(source_type=ChannelType.ANALOG_INPUT)},
               {'title': 'AO Channels:', 'name': 'ao_channels', 'type': 'groupao',
-               'limits': DAQmx.get_NIDAQ_channels(source_type=ChannelType.ANALOG_OUTPUT)},
+               'limits': NIDAQmx.get_NIDAQ_channels(source_type=ChannelType.ANALOG_OUTPUT)},
               {'title': 'DO Channels:', 'name': 'do_channels', 'type': 'groupdo',
-               'limits': DAQmx.get_NIDAQ_channels(source_type=ChannelType.DIGITAL_OUTPUT)},
+               'limits': NIDAQmx.get_NIDAQ_channels(source_type=ChannelType.DIGITAL_OUTPUT)},
               {'title': 'DI Channels:', 'name': 'di_channels', 'type': 'groupdi',
-               'limits': DAQmx.get_NIDAQ_channels(source_type=ChannelType.DIGITAL_INPUT)},
+               'limits': NIDAQmx.get_NIDAQ_channels(source_type=ChannelType.DIGITAL_INPUT)},
               {'title': 'Counter Settings:', 'name': 'counter_settings', 'type': 'group', 'visible': True, 'children': [
                   {'title': 'Counting time (ms):', 'name': 'counting_time', 'type': 'float', 'value': 100.,
                    'default': 100., 'min': 0.},
                   {'title': 'CI Channels:', 'name': 'ci_channels', 'type': 'groupcounter',
-                   'limits': DAQmx.get_NIDAQ_channels(source_type=ChannelType.COUNTER_INPUT)},
+                   'limits': NIDAQmx.get_NIDAQ_channels(source_type=ChannelType.COUNTER_INPUT)},
                   {'title': 'CO Channels:', 'name': 'co_channels', 'type': 'groupcounter',
-                   'limits': DAQmx.get_NIDAQ_channels(source_type=ChannelType.COUNTER_OUTPUT)},
+                   'limits': NIDAQmx.get_NIDAQ_channels(source_type=ChannelType.COUNTER_OUTPUT)},
               ]},
               {'title': 'Trigger Settings:', 'name': 'trigger_settings', 'type': 'group', 'visible': True, 'children': [
                   {'title': 'Enable?:', 'name': 'enable', 'type': 'bool', 'value': False, },
                   {'title': 'Trigger Source:', 'name': 'trigger_channel', 'type': 'list',
-                   'limits': DAQmx.getTriggeringSources()},
+                   'limits': NIDAQmx.getTriggeringSources()},
                   {'title': 'Edge type:', 'name': 'edge', 'type': 'list', 'limits': [e.name for e in Edge],
                    'visible': False},
                   {'title': 'Level:', 'name': 'level', 'type': 'float', 'value': 1., 'visible': False}
