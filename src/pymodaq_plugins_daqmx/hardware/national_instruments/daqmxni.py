@@ -408,37 +408,6 @@ class NIDAQmx:
                     if err_code:
                         status = self.DAQmxGetErrorString(err_code)
                         raise IOError(status)
-                elif channel.source == 'Counter':  # counter
-                    try:
-                        if channel.counter_type == "Edge Counter":
-                            self._task.ci_channels.add_ci_count_edges_chan(channel.name, "",
-                                                                           channel.edge, 0,
-                                                                           CountDirection.COUNT_UP)
-
-                        elif channel.counter_type == "Clock Output":
-                            self._task.co_channels.add_co_pulse_chan_freq(channel.name, "clock task",
-                                                                          FrequencyUnits.HZ,
-                                                                          Level.LOW,
-                                                                          0,
-                                                                          channel.clock_frequency,
-                                                                          0.5)
-
-                        elif channel.counter_type == "SemiPeriod Input":
-                            self._task.ci_channels.add_ci_semi_period_chan(channel.name, "counter task",
-                                                                           0,  # expected min
-                                                                           channel.value_max,  # expected max
-                                                                           TimeUnits.TICKS, "")
-
-                    except DaqError as e:
-                        err_code = e.error_code
-
-                    if not not err_code:
-                        status = self.DAQmxGetErrorString(err_code)
-                        raise IOError(status)
-
-                    if not not err_code:
-                        status = self.DAQmxGetErrorString(err_code)
-                        raise IOError(status)
                 elif channel.source == ChannelType.ANALOG_OUTPUT:  # Analog_Output
                     try:
                         if channel.analog_type == UsageTypeAI.VOLTAGE:
@@ -454,6 +423,48 @@ class NIDAQmx:
                                                                        VoltageUnits.VOLTS, None)
                     except DaqError as e:
                         err_code = e.error_code
+                    if not not err_code:
+                        status = self.DAQmxGetErrorString(err_code)
+                        raise IOError(status)
+                elif channel.source == ChannelType.COUNTER_INPUT:  # counter input
+                    try:
+                        if channel.counter_type == UsageTypeCI.COUNT_EDGES:
+                            self._task.ci_channels.add_ci_count_edges_chan(channel.name, "",
+                                                                           channel.edge, 0,
+                                                                           CountDirection.COUNT_UP)
+                        elif channel.counter_type == UsageTypeCI.PULSE_WIDTH_DIGITAL_SEMI_PERIOD:
+                            self._task.ci_channels.add_ci_semi_period_chan(channel.name, "counter task",
+                                                                           0,  # expected min
+                                                                           channel.value_max,  # expected max
+                                                                           TimeUnits.TICKS, "")
+
+                    except DaqError as e:
+                        err_code = e.error_code
+
+                    if not not err_code:
+                        status = self.DAQmxGetErrorString(err_code)
+                        raise IOError(status)
+
+                    if not not err_code:
+                        status = self.DAQmxGetErrorString(err_code)
+                        raise IOError(status)
+                elif channel.source == ChannelType.COUNTER_OUTPUT:  # counter output
+                    try:
+                        if channel.counter_type == UsageTypeCO.PULSE_FREQUENCY:
+                            self._task.co_channels.add_co_pulse_chan_freq(channel.name, "clock task",
+                                                                          FrequencyUnits.HZ,
+                                                                          Level.LOW,
+                                                                          0,
+                                                                          channel.clock_frequency,
+                                                                          0.5)
+
+                    except DaqError as e:
+                        err_code = e.error_code
+
+                    if not not err_code:
+                        status = self.DAQmxGetErrorString(err_code)
+                        raise IOError(status)
+
                     if not not err_code:
                         status = self.DAQmxGetErrorString(err_code)
                         raise IOError(status)
@@ -503,7 +514,7 @@ class NIDAQmx:
 
             for channel in channels:
                 if not trigger_settings.enable:
-                    if channel.source == 'Counter':
+                    if channel.source == ChannelType.COUNTER_INPUT:
                         pass  # Maybe here adding the configuration fastCTr0 with Ctr1 etc...?
                     else:
                         pass
@@ -529,7 +540,6 @@ class NIDAQmx:
 
         if event == 'done':
             self._task.register_done_event(callback)
-            # NOT SURE HERE
         elif event == 'sample':
             self._task.register_every_n_samples_acquired_into_buffer_event(1, callback)
         elif event == 'Nsamples':
