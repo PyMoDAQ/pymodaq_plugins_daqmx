@@ -5,8 +5,8 @@ from pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni import AIChanne
     niDevice, TemperatureUnits, CJCSource, VoltageUnits, AcquisitionType
 from pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni import UsageTypeAI, ThermocoupleType, \
                                                             TerminalConfiguration, Edge
-from pymodaq_plugins_daqmx.hardware.national_instruments.daq_NIDAQmx import DAQ_NIDAQmx_base
-from pymodaq_plugins_daqmx.hardware.national_instruments.daq_NIDAQmx_Viewer import DAQ_NIDAQmx_Viewer
+from pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base import DAQ_NIDAQmx_base
+from pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Viewer import DAQ_NIDAQmx_Viewer
 from pymodaq.utils.logger import set_logger, get_module_name
 logger = set_logger(get_module_name(__file__))
 

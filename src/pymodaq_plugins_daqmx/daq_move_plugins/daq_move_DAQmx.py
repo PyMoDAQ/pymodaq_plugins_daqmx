@@ -1,4 +1,4 @@
-from ..hardware.national_instruments.daq_NIDAQmx_Move import DAQ_NIDAQmx_Actuator
+from ..hardware.national_instruments.NIDAQmx_Move import DAQ_NIDAQmx_Actuator
 
 
 class DAQ_Move_DAQmx(DAQ_NIDAQmx_Actuator):

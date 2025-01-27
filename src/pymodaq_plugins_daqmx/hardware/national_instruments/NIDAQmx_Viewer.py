@@ -3,7 +3,7 @@ import numpy as np
 import traceback
 from qtpy import QtCore
 from .daqmxni import NIDAQmx
-from pymodaq_plugins_daqmx.hardware.national_instruments.daq_NIDAQmx import DAQ_NIDAQmx_base, TerminalConfiguration, \
+from pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base import DAQ_NIDAQmx_base, TerminalConfiguration, \
     UsageTypeAI, ChannelType
 from pymodaq.control_modules.viewer_utility_classes import DAQ_Viewer_base, comon_parameters as viewer_params
 from pymodaq.utils.daq_utils import ThreadCommand

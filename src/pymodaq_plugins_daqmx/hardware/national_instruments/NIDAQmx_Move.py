@@ -2,7 +2,7 @@ import numpy as np
 from easydict import EasyDict as edict
 from qtpy import QtWidgets
 from pymodaq.control_modules.move_utility_classes import DAQ_Move_base, comon_parameters as actuator_params
-from pymodaq_plugins_daqmx.hardware.national_instruments.daq_NIDAQmx import DAQ_NIDAQmx_base
+from pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base import DAQ_NIDAQmx_base
 from pymodaq.utils.daq_utils import ThreadCommand, getLineInfo
 from pymodaq.utils.data import DataActuator
 from pymodaq.utils.logger import set_logger, get_module_name
