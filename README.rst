@@ -41,6 +41,6 @@ Viewer0D
 ++++++++
 
 * **DAQmx_PLcounter**: Single photon counting
-* **NIDAQmx: For now (01/2025) Only Analog Input measurements (current-voltage-temperature), working with cDAQ & DAQ-USB
+* **NIDAQmx**: For now (01/2025) Only Analog Input tested and working. (current-voltage-temperature measurements on cDAQ & DAQ-USB)
 
 
