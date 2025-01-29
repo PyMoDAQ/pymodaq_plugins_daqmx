@@ -8,10 +8,6 @@ from pymodaq_plugins_daqmx.hardware.national_instruments.daqmx import DAQmx, \
     Edge, ClockSettings, Counter, ClockCounter,  TriggerSettings
 
 from PyDAQmx import DAQmx_Val_ContSamps
-# DAQmx_Val_DoNotInvertPolarity, DAQmxConnectTerms,
-# DAQmx_Val_FiniteSamps, DAQmx_Val_CurrReadPos, \
-# DAQmx_Val_DoNotOverwriteUnreadSamps
-
 
 class DAQ_0DViewer_DAQmx_PLcounter(DAQ_Viewer_base):
     """

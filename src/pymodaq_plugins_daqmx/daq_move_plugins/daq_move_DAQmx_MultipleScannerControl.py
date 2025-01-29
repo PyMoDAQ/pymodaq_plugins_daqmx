@@ -11,6 +11,7 @@ from pymodaq_plugins_daqmx.hardware.national_instruments.daqmx import DAQmx, AOC
 
 import PyDAQmx
 
+
 class DAQ_Move_DAQmx_MultipleScannerControl(DAQ_Move_base):
     """Plugin to control a piezo scanners with a NI card. This modules requires a clock channel to handle the
     timing of the movement and display the position, and this clock channel is shared between the master and

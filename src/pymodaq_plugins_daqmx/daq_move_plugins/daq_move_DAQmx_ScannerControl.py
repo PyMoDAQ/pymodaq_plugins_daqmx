@@ -11,6 +11,7 @@ from PyDAQmx import DAQmx_Val_FiniteSamps
 
 import PyDAQmx
 
+
 class DAQ_Move_DAQmx_ScannerControl(DAQ_Move_base):
     """Plugin to control a piezo scanner with a NI card. This modules requires a clock channel to handle the
     timing of the movement and display the position. Avoid using several scanners (ie several analog outputs)
