@@ -1,0 +1,131 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Details about the implementation of the OD viewer PLcounter &mdash; pymodaq_plugins_daqmx 0.3.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=e259d695"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Details about the implementation of the MultipleScannerControl move" href="scanner_details.html" />
+    <link rel="prev" title="Using the ScannerControl and MultipleScannerControl moves" href="scanner_use.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pymodaq_plugins_daqmx
+              <img src="../_static/splash.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../user_guide.html">User guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="counter_use.html">Using the 0D viewer PLcounter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scanner_use.html">Using the ScannerControl and MultipleScannerControl moves</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../user_guide.html#working-principle-of-the-plugins">Working principle of the plugins</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Details about the implementation of the OD viewer PLcounter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scanner_details.html">Details about the implementation of the MultipleScannerControl move</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../daqmx.html">The DAQmx object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../creating_plugin.html">Creating a plugin for your specific needs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pymodaq_plugins_daqmx</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../user_guide.html">User guide</a></li>
+      <li class="breadcrumb-item active">Details about the implementation of the OD viewer PLcounter</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/user_guide/counter_details.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="details-about-the-implementation-of-the-od-viewer-plcounter">
+<h1>Details about the implementation of the OD viewer PLcounter<a class="headerlink" href="#details-about-the-implementation-of-the-od-viewer-plcounter" title="Link to this heading"></a></h1>
+<p>As you have seen from the configuration of the plugin, we use two counter channels to perform the measurement: a first one which is counting and a second one to handle the measurement timing. These are 2 separate tasks, although the channels will be connected together. As a result, we cannot use a single <code class="docutils literal notranslate"><span class="pre">DAQmx</span></code> object as hardware controller.</p>
+<p>The controller here is a dict containing two <code class="docutils literal notranslate"><span class="pre">DAQmx</span></code>, one of them is the “clock” and the other the “counter”. Each of them contains a single task.</p>
+<ul class="simple">
+<li><p>The clock channel is set up as a <code class="docutils literal notranslate"><span class="pre">ClockCounter</span></code> object (see the file <code class="docutils literal notranslate"><span class="pre">daqmx.py</span></code> for its definition).</p></li>
+<li><p>The counter channel is a <code class="docutils literal notranslate"><span class="pre">Counter</span></code>, and its timing source is the clock channel.</p></li>
+</ul>
+<p><strong>Continous grab or snap</strong></p>
+<p>By default, the <code class="docutils literal notranslate"><span class="pre">grab_data</span></code> function resets both the clock and the counting tasks. For a single snap, this is not an issue, but for continuous acquisition, this does not make sense, so we use the <code class="docutils literal notranslate"><span class="pre">&quot;live&quot;</span></code> parameter sent to <code class="docutils literal notranslate"><span class="pre">grab_data</span></code> to decide if we update the tasks or not.</p>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="scanner_use.html" class="btn btn-neutral float-left" title="Using the ScannerControl and MultipleScannerControl moves" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="scanner_details.html" class="btn btn-neutral float-right" title="Details about the implementation of the MultipleScannerControl move" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Sébastien Weber, Aurore Finco.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
