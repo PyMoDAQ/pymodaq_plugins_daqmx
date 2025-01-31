@@ -341,17 +341,17 @@ class DAQmx:
         if not not devices:
             for device in devices:
                 for source in source_type:
-                    if source == DAQ_NIDAQ_source['Analog_Input'].name:  # analog input
+                    if source == DAQ_NIDAQ_source.Analog_Input.name:  # analog input
                         string = try_string_buffer(PyDAQmx.DAQmxGetDevAIPhysicalChans, device)
-                    elif source == DAQ_NIDAQ_source['Counter'].name:  # counter
+                    elif source == DAQ_NIDAQ_source.Counter.name:  # counter
                         string = try_string_buffer(PyDAQmx.DAQmxGetDevCIPhysicalChans, device)
-                    elif source == DAQ_NIDAQ_source['Analog_Output'].name:  # analog output
+                    elif source == DAQ_NIDAQ_source.Analog_Output.name:  # analog output
                         string = try_string_buffer(PyDAQmx.DAQmxGetDevAOPhysicalChans, device)
-                    elif source == DAQ_NIDAQ_source['Digital_Output'].name:  # digital output
+                    elif source == DAQ_NIDAQ_source.Digital_Output.name:  # digital output
                         string = try_string_buffer(PyDAQmx.DAQmxGetDevDOLines, device)
-                    elif source == DAQ_NIDAQ_source['Digital_Input'].name:  # digital output
+                    elif source == DAQ_NIDAQ_source.Digital_Input.name:  # digital output
                         string = try_string_buffer(PyDAQmx.DAQmxGetDevDILines, device)
-                    elif source == DAQ_NIDAQ_source['Terminals'].name:  # digital output
+                    elif source == DAQ_NIDAQ_source.Terminals.name:  # digital output
                         string = try_string_buffer(PyDAQmx.DAQmxGetDevTerminals, device)
 
                     channels = string.split(', ')
