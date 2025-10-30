@@ -10,6 +10,9 @@ from easydict import EasyDict as edict
 from pymodaq.control_modules.viewer_utility_classes import comon_parameters as viewer_params
 from pymodaq.control_modules.move_utility_classes import comon_parameters_fun as actuator_params
 
+from pymodaq.control_modules.move_utility_classes import (DAQ_Move_base, comon_parameters_fun,
+                                                          main, DataActuatorType, DataActuator)
+
 from pymodaq.utils.parameter import Parameter
 from pymodaq.utils.parameter.pymodaq_ptypes import registerParameterType, GroupParameter
 
@@ -630,22 +633,13 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
         *params*          dictionnary
         =============== ==============
     """
-    _controller_units = 'Volts'
-    is_multiaxes = False  # set to True if this plugin is controlled for a multiaxis controller (with a unique communication link)
-    stage_names = []  # "list of strings of the multiaxes
+    _controller_units = 'V'
 
-    params = DAQ_NIDAQmx_base.params +[
-              # elements to be added here as dicts in order to control your custom stage
-              ############
-              {'title': 'MultiAxes:', 'name': 'multiaxes', 'type': 'group', 'visible': is_multiaxes,
-               'children': [
-                   {'title': 'is Multiaxes:', 'name': 'ismultiaxes', 'type': 'bool', 'value': is_multiaxes,
-                    'default': False},
-                   {'title': 'Status:', 'name': 'multi_status', 'type': 'list', 'value': 'Master',
-                    'limits': ['Master', 'Slave']},
-                   {'title': 'Axis:', 'name': 'axis', 'type': 'list', 'limits': stage_names},
-
-               ]}] + actuator_params
+    is_multiaxes = False
+    _axis_names = []
+    _epsilon = 0.1
+    data_actuator_type = DataActuatorType.DataActuator
+    params = DAQ_NIDAQmx_base.params + comon_parameters_fun(is_multiaxes, axis_names=_axis_names, epsilon=_epsilon)
 
     def __init__(self, parent=None, params_state=None, control_type="Actuator"):
         DAQ_Move_base.__init__(self, parent, params_state)  # defines settings attribute and various other methods
