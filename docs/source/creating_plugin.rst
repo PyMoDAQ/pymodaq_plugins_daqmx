@@ -7,10 +7,10 @@ In order to create a plugin using a NI card to acquire some data or control an a
 
 Then you have to analyze the experiment that you want to perform and find the best type of controller that you should use:
 
-* a single ``DAQmx`` object, if you need to perform only one type of task.
+* a single ``NIDAQmx`` object, if you need to perform only one type of task.
 
-* a dict of several ``DAQmx`` objects, like in the PLcounter example, if you will only use the NI card but need to combine several tasks.
+* a dict of several ``NIDAQmx`` objects, like in the PLcounter example, if you will only use the NI card but need to combine several tasks.
 
-* a dict of ``DAQmx`` objects and other hardware controllers, for example if you want to synchronise your acquisition with an actuator which will be triggered by the NI card.
+* a dict of ``NIDAQmx`` objects and other hardware controllers, for example if you want to synchronise your acquisition with an actuator which will be triggered by the NI card.
 
 * Another more complicated object (that you will need to write!), like in the MultipleScannerControl example, if you need to share some resources of the NI card between different instrument plugins which control independent parameters/measurements. Beware in particular of the Scan extension which sends all the move commands at the same time.

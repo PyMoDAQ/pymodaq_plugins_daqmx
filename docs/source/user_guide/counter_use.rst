@@ -1,5 +1,8 @@
-Using the 0D viewer PLcounter
-=============================
+0D viewer PLcounter
+===================
+
+.. note::
+    This viewer is deprecated since using the old PYDAQmx library. Install an anterior version to use it (<1.1.0).
 
 This plugin is meant to be used to count single photons with a NI card. The signal consists of TTL pulses sent by a detector (mainly an avalanche photodiode (APD)).
 

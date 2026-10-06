@@ -26,6 +26,8 @@ Contributors
 
 * Amelie Jarnac
 * Aurore Finco
+* Sébastien Guerrero  (sebastien.guerrero@insa-lyon.fr)
+* Cyril Auclair (cyril.auclair@insa-lyon.fr)
 
 Instruments
 ===========
@@ -34,12 +36,14 @@ Below is the list of instruments included in this plugin
 Actuators
 +++++++++
 
-* **DAQmx_MultipleScannerControl**: Control of piezo scanners with an analog output.
+* **NIDAQmx**: General generation (voltage / current) with National Instrument materials
 
-Viewer0D
+Viewer1D
 ++++++++
 
-* **DAQmx_PLcounter**: Single photon counting
+* **NIDAQmx**: General measurement with National Instrument materials
 
+Documentation
++++++++++++++
 
-
+Refer to the `documentation <https://pymodaq.github.io/pymodaq_plugins_daqmx/>`_ to use this plugin or discover its functionalities.
