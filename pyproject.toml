@@ -12,10 +12,13 @@ package-url = 'https://github.com/PyMoDAQ/pymodaq_plugins_daqmx'
 name = "pymodaq_plugins_daqmx"
 description = 'Hardware plugins for PyMoDAQ using the NiDAQmx framework (nidaq wrapper)'
 dependencies = [
-    "pymodaq>=4.4",
+    "pymodaq>=5.3.2",
+    "pymodaq_utils>=5.3.1",
+    "pymodaq_gui>=5.3.0",
+    "pymodaq_data>=5.3.0",
     "pydaqmx",
     "nidaqmx",
-    "aenum"
+    "aenum",
 ]
 
 authors = [
