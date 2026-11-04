@@ -1,5 +1,8 @@
-Using the ScannerControl and MultipleScannerControl moves
-=========================================================
+ScannerControl and MultipleScannerControl moves
+===============================================
+
+.. note::
+    This move is deprecated since using the old PYDAQmx library. Install an anterior version to use it (<1.1.0).
 
 These plugins allow you to use an analog output of a NI device to control a piezoelectric scanner. It was made for use with Attocube scanners, with an amplifier between the NI card and the scanner, but it should work with any type of scanner that takes a voltage as input.
 The main difference between the two is that ``ScannerControl`` cannot reliably be used with the Scan extension. It is therefore recommended to use MultipleScannerControl, which can also control a single scanner. This page is thus focussing on the latter.

@@ -9,23 +9,29 @@ jobs:
   docs:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v3
+      - uses: actions/checkout@v4.2.2
+      - uses: actions/setup-python@v5.4.0
       - name: Install dependencies
         run: |
-          pip install sphinx sphinx_rtd_theme myst_parser
+          sudo apt install graphviz
+          pip install -r docs/requirements.txt
       - name: Sphinx build
         run: |
           sphinx-build docs/source docs/build/html
+          cp docs/source/_static/classdiag.html docs/build/html/classdiag.html
+          cp docs/source/_static/daq_move_plugins.html docs/build/html/daq_move_plugins.html
+          cp docs/source/_static/daq_viewer_plugins.html docs/build/html/daq_viewer_plugins.html
+          cp docs/source/_static/hardware.html docs/build/html/hardware.html
+          cp docs/source/_static/library.html docs/build/html/library.html
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: html-docs
           path: docs/build/html
       - name: Create .nojekyll file
         run: touch docs/build/html/.nojekyll
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@v4
         if: ${{ github.event_name == 'push'}}
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}

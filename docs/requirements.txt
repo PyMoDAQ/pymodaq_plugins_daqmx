@@ -1,0 +1,7 @@
+.
+pymodaq
+pyqt5
+nidaqmx
+sphinx
+sphinx_rtd_theme
+myst_parser

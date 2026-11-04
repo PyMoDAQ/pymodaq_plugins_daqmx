@@ -1,6 +1,9 @@
 Details about the implementation of the MultipleScannerControl move
 ===================================================================
 
+.. note::
+    This move is deprecated since using the old PYDAQmx library. Install an anterior version to use it (<1.1.0).
+
 Similarly to the case of the PLcounter, we need to use several channels together to make the scanner work, a clock and an analog output. In principle, we can use the same trick as for the PLcounter and define the controller as a dict containing 2 ``DAQmx`` objects. This is what is done in the ScannerControl plugin, but its means that you need one clock channel for each analog output channel, so if you have many scanners, it will very quickly become an issue. In addition, with a scanner, you most probably want to use the Scan extension. For each movement, the extension sends the command to move to every actuator roughly simultaneously: if your scanners share the same clock, you will get into trouble.
 
 Introduction of a new object to use as controller

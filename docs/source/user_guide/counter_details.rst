@@ -1,6 +1,9 @@
 Details about the implementation of the OD viewer PLcounter
 ===========================================================
 
+.. note::
+    This viewer is deprecated since using the old PYDAQmx library. Install an anterior version to use it (<1.1.0).
+
 As you have seen from the configuration of the plugin, we use two counter channels to perform the measurement: a first one which is counting and a second one to handle the measurement timing. These are 2 separate tasks, although the channels will be connected together. As a result, we cannot use a single ``DAQmx`` object as hardware controller.
 
 The controller here is a dict containing two ``DAQmx``, one of them is the "clock" and the other the "counter". Each of them contains a single task.
