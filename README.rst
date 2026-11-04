@@ -71,7 +71,7 @@ do not share their instrument plugins (``NIDAQmx`` here, ``DAQmx_...`` there).
    * - Python interface
      - `nidaqmx <https://nidaqmx-python.readthedocs.io/en/stable/>`_, the package of National Instruments
        (``NIDAQmx`` object in ``daqmxni.py``)
-     - `PyDAQmx <https://pythonhosted.org/PyDAQmx/>`_ (``DAQmx`` object in ``hardware/national_instruments/daqmx.py``)
+     - `PyDAQmx <https://pythonhosted.org/PyDAQmx/>`_ (``DAQmx`` object in ``hardware/national_instruments/daqmx.py`` of that branch)
    * - Instruments
      - ``NIDAQmx`` actuator, 0D viewer and 1D viewer
      - generic ``DAQmx`` actuator and viewers (0D, 1D), ``DAQmxAI``, ``DAQmxDualAI``, ``DAQmx_PLcounter``,
@@ -85,8 +85,10 @@ do not share their instrument plugins (``NIDAQmx`` here, ``DAQmx_...`` there).
        ``NIDAQmx`` actuator is not finished yet (its movements still raise ``NotImplementedError``)
      - the ``PyDAQmx`` based plugins, kept as they are
 
-This branch still contains the ``PyDAQmx`` based ``DAQmx`` object and the user guides of the photon counter and the
-scanner control, but not the instrument plugins of the ``pydaqmx`` branch: use that branch if you need them.
+This branch does not contain the ``PyDAQmx`` based ``DAQmx`` object (``daqmx.py``, ``daqmx_objects.py``) nor the
+instrument plugins of the ``pydaqmx`` branch: use that branch (or the 1.1.x releases) if you need them. The
+user guides of the photon counter and the scanner control remain here as a reference, they describe those deprecated
+plugins.
 
 Requirements
 ============
@@ -94,4 +96,4 @@ Requirements
 * PyMoDAQ >= 5.3.7
 * the NI-DAQmx driver of National Instruments, installed on the computer connected to the device (use NI MAX to test
   your hardware). Where the driver cannot be found, the modules of this plugin are not usable and PyMoDAQ skips them.
-* the ``nidaqmx`` and ``pydaqmx`` Python packages, installed with the plugin.
+* the ``nidaqmx`` Python package, installed with the plugin.
