@@ -18,6 +18,43 @@ They include a ``NIDAQmx`` actuator for signal generation, a 0D viewer for quick
 acquisition as a function of time, and the ``NIDAQmx`` object (``hardware/national_instruments/daqmxni.py``) to build
 your own plugin on.
 
+Authors
+=======
+
+* Sébastien J. Weber
+
+Contributors
+============
+
+* Amelie Jarnac
+* Aurore Finco
+* Sébastien Guerrero  (sebastien.guerrero@insa-lyon.fr)
+* Cyril Auclair (cyril.auclair@insa-lyon.fr)
+
+Instruments
+===========
+Below is the list of instruments included in this plugin
+
+Actuators
++++++++++
+
+* **NIDAQmx**: General generation (voltage / current) with National Instrument materials
+
+Viewer0D
+++++++++
+
+* **NIDAQmx**: General measurement with National Instrument materials (one value per channel and per acquisition)
+
+Viewer1D
+++++++++
+
+* **NIDAQmx**: General measurement with National Instrument materials, acquired in the hardware buffer
+
+Documentation
++++++++++++++
+
+Refer to the `documentation <https://pymodaq.github.io/pymodaq_plugins_daqmx/>`_ to use this plugin or discover its functionalities.
+
 Difference with the pydaqmx branch
 ==================================
 
@@ -58,40 +95,3 @@ Requirements
 * the NI-DAQmx driver of National Instruments, installed on the computer connected to the device (use NI MAX to test
   your hardware). Where the driver cannot be found, the modules of this plugin are not usable and PyMoDAQ skips them.
 * the ``nidaqmx`` and ``pydaqmx`` Python packages, installed with the plugin.
-
-Authors
-=======
-
-* Sébastien J. Weber
-
-Contributors
-============
-
-* Amelie Jarnac
-* Aurore Finco
-* Sébastien Guerrero  (sebastien.guerrero@insa-lyon.fr)
-* Cyril Auclair (cyril.auclair@insa-lyon.fr)
-
-Instruments
-===========
-Below is the list of instruments included in this plugin
-
-Actuators
-+++++++++
-
-* **NIDAQmx**: General generation (voltage / current) with National Instrument materials
-
-Viewer0D
-++++++++
-
-* **NIDAQmx**: General measurement with National Instrument materials (one value per channel and per acquisition)
-
-Viewer1D
-++++++++
-
-* **NIDAQmx**: General measurement with National Instrument materials, acquired in the hardware buffer
-
-Documentation
-+++++++++++++
-
-Refer to the `documentation <https://pymodaq.github.io/pymodaq_plugins_daqmx/>`_ to use this plugin or discover its functionalities.
