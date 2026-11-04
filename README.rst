@@ -17,48 +17,6 @@ Plugins devoted to National Instruments signal acquisition and generation, using
 configured from the settings tree), plugins for specific uses (photon counting, piezo scanner control, analog input
 acquisition), and the ``DAQmx`` wrapper object to build your own plugin on.
 
-Difference with the 5.3.x branch
-================================
-
-The repository has two lines of plugins, which use two different Python interfaces to the same NI-DAQmx driver. They
-do not share their instrument plugins (``DAQmx_...`` here, ``NIDAQmx`` there).
-
-.. list-table::
-   :header-rows: 1
-   :widths: 20 40 40
-
-   * -
-     - ``pydaqmx`` branch (this one)
-     - ``5.3.x`` branch
-   * - Python interface
-     - `PyDAQmx <https://pythonhosted.org/PyDAQmx/>`_ (``DAQmx`` object in ``hardware/national_instruments/daqmx.py``)
-     - `nidaqmx <https://nidaqmx-python.readthedocs.io/en/stable/>`_, the package of National Instruments (``NIDAQmx``
-       object in ``daqmxni.py``)
-   * - Instruments
-     - generic ``DAQmx`` actuator and viewers (0D, 1D), ``DAQmxAI``, ``DAQmxDualAI``, ``DAQmx_PLcounter``,
-       ``DAQmx_ScannerControl``, ``DAQmx_MultipleScannerControl``
-     - ``NIDAQmx`` actuator, 0D viewer and 1D viewer
-   * - Use
-     - specific tasks (photon counting, piezo scanner control, analog input) and a base to write your own plugin
-     - measurement of voltage, current or temperature with a general viewer, whose channels can be loaded from a
-       configuration file of the user (``config_daqmx.toml``) and saved from the interface
-   * - State
-     - the ``PyDAQmx`` based plugins, kept as they are
-     - the ``NIDAQmx`` viewers were tested with a cDAQ-9174 and a USB-6341 (modules NI-9205, NI-9211, NI-9217); the
-       ``NIDAQmx`` actuator is not finished yet (its movements still raise ``NotImplementedError``)
-
-The ``5.3.x`` branch still contains the ``PyDAQmx`` based ``DAQmx`` object and its user guides, but not the instrument plugins
-of this branch.
-
-Requirements
-============
-
-* PyMoDAQ >= 5.3.7
-* the NI-DAQmx driver of National Instruments, installed on the computer connected to the device (use NI MAX to test
-  your hardware). Where ``PyDAQmx`` cannot find the driver, the modules of this plugin cannot be imported and PyMoDAQ
-  skips them.
-* the ``pydaqmx`` Python package, installed with the plugin.
-
 Authors
 =======
 
@@ -102,3 +60,45 @@ Documentation
 Refer to the `documentation <https://pymodaq.github.io/pymodaq_plugins_daqmx/>`_ to use this plugin or discover its
 functionalities (user guide for the photon counter and the scanner control, and how to create your own module with
 the ``DAQmx`` object).
+
+Difference with the 5.3.x branch
+================================
+
+The repository has two lines of plugins, which use two different Python interfaces to the same NI-DAQmx driver. They
+do not share their instrument plugins (``DAQmx_...`` here, ``NIDAQmx`` there).
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 40 40
+
+   * -
+     - ``pydaqmx`` branch (this one)
+     - ``5.3.x`` branch
+   * - Python interface
+     - `PyDAQmx <https://pythonhosted.org/PyDAQmx/>`_ (``DAQmx`` object in ``hardware/national_instruments/daqmx.py``)
+     - `nidaqmx <https://nidaqmx-python.readthedocs.io/en/stable/>`_, the package of National Instruments (``NIDAQmx``
+       object in ``daqmxni.py``)
+   * - Instruments
+     - generic ``DAQmx`` actuator and viewers (0D, 1D), ``DAQmxAI``, ``DAQmxDualAI``, ``DAQmx_PLcounter``,
+       ``DAQmx_ScannerControl``, ``DAQmx_MultipleScannerControl``
+     - ``NIDAQmx`` actuator, 0D viewer and 1D viewer
+   * - Use
+     - specific tasks (photon counting, piezo scanner control, analog input) and a base to write your own plugin
+     - measurement of voltage, current or temperature with a general viewer, whose channels can be loaded from a
+       configuration file of the user (``config_daqmx.toml``) and saved from the interface
+   * - State
+     - the ``PyDAQmx`` based plugins, kept as they are
+     - the ``NIDAQmx`` viewers were tested with a cDAQ-9174 and a USB-6341 (modules NI-9205, NI-9211, NI-9217); the
+       ``NIDAQmx`` actuator is not finished yet (its movements still raise ``NotImplementedError``)
+
+The ``5.3.x`` branch still contains the ``PyDAQmx`` based ``DAQmx`` object and its user guides, but not the instrument plugins
+of this branch.
+
+Requirements
+============
+
+* PyMoDAQ >= 5.3.7
+* the NI-DAQmx driver of National Instruments, installed on the computer connected to the device (use NI MAX to test
+  your hardware). Where ``PyDAQmx`` cannot find the driver, the modules of this plugin cannot be imported and PyMoDAQ
+  skips them.
+* the ``pydaqmx`` Python package, installed with the plugin.
