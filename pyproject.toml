@@ -13,7 +13,10 @@ name = "pymodaq_plugins_daqmx" #todo modify template by your plugin short name
 description = 'Hardware plugins for PyMoDAQ using the NiDAQmx framework (pydaqmx wrapper)'
 
 dependencies = [
-    "pymodaq>=5.0.0",
+    "pymodaq>=5.3.7",
+    "pymodaq_utils>=5.3.1",
+    "pymodaq_gui>=5.3.0",
+    "pymodaq_data>=5.3.0",
     "pydaqmx",
     #todo: list here all dependencies your package may have
 ]
@@ -29,32 +32,16 @@ maintainers = [
 
 # nottodo: leave everything below as is!
 
-dynamic = ["version", "urls", "entry-points"]
+dynamic = ["version", "urls", "entry-points", "classifiers"]
 readme = "README.rst"
 license = { file="LICENSE" }
-requires-python = ">=3.8"
-
-classifiers = [
-    "Development Status :: 5 - Production/Stable",
-    "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
-    "Natural Language :: English",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Topic :: Scientific/Engineering :: Human Machine Interfaces",
-    "Topic :: Scientific/Engineering :: Visualization",
-    "Topic :: Software Development :: Libraries :: Python Modules",
-    "Topic :: Software Development :: User Interfaces",
-]
+requires-python = ">=3.10"
 
 [build-system]
 requires = [
     "hatchling>=1.9.0",
     "hatch-vcs", "toml",
-    "pymodaq_utils>=0.0.6",
+    "pymodaq_utils>=5.3.6",
 ]
 build-backend = "hatchling.build"
 
@@ -62,4 +49,18 @@ build-backend = "hatchling.build"
 
 [tool.hatch.version]
 source = "vcs"
+
+[tool.pymodaq]
+# the "Operating System" and "Programming Language :: Python :: 3.x" classifiers are added when building the package,
+# from supported_platforms in your instrument plugins and from requires-python
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Topic :: Scientific/Engineering :: Human Machine Interfaces",
+    "Topic :: Scientific/Engineering :: Visualization",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: User Interfaces",
+]
 
