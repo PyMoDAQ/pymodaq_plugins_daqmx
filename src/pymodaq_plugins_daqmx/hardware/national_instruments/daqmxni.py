@@ -8,11 +8,29 @@ from nidaqmx.constants import AcquisitionType, VoltageUnits, CurrentUnits, Curre
 from nidaqmx.system import System as niSystem
 from nidaqmx.system.device import Device as niDevice
 from nidaqmx import Task as niTask
-from nidaqmx.errors import DaqError, DAQmxErrors
+from nidaqmx.errors import DaqError, DAQmxErrors, DaqNotFoundError
 from pymodaq_plugins_daqmx import config
 
 
 logger = set_logger(get_module_name(__file__))
+
+
+class _NoDevices:
+    """Stands for the collection of devices when the NI-DAQmx driver is not installed: no device at all.
+
+    The modules of the plugin build their settings when they are imported, which then must not fail on a computer
+    without the driver (for instance a continuous integration runner).
+    """
+    device_names = []
+
+    def __iter__(self):
+        return iter(())
+
+    def __len__(self):
+        return 0
+
+    def __contains__(self, item):
+        return False
 
 
 class ClockSettingsBase:
@@ -202,6 +220,9 @@ class NIDAQmx:
             if devices == ['']:
                 devices = []
             return devices
+        except DaqNotFoundError:  # the NI-DAQmx driver is not installed
+            logger.warning('The NI-DAQmx driver is not installed: no NI device can be listed')
+            return _NoDevices()
         except DaqError as e:
             return e.error_code
 

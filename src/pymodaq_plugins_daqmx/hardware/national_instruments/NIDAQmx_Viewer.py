@@ -59,7 +59,7 @@ class DAQ_NIDAQmx_Viewer(DAQ_Viewer_base, DAQ_NIDAQmx_base):
     param_devices = NIDAQmx.get_NIDAQ_devices().device_names
     params = viewer_params + [
         {'title': 'Devices :', 'name': 'devices', 'type': 'list', 'limits': param_devices,
-         'value': param_devices[0]
+         'value': param_devices[0] if param_devices else ''
          },
         ] + DAQ_NIDAQmx_base.params
 

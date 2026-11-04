@@ -17,7 +17,7 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
         *params*          dictionnary
         =============== ==============
     """
-    _controller_units = 'Volts'
+    _controller_units = 'V'
     is_multiaxes = False  # set to True if this plugin is controlled for a multiaxis controller (with a unique communication link)
     stage_names = []  # "list of strings of the multiaxes
 
@@ -162,6 +162,12 @@ class DAQ_NIDAQmx_Actuator(DAQ_Move_base, DAQ_NIDAQmx_base):
         """
         ## TODO: Reimplement in your daq_move with NIDAQmx library
         raise NotImplementedError
+
+    def close(self):
+        """Terminate the communication protocol: close the current task of the controller"""
+        controller = getattr(self, 'controller', None)
+        if controller is not None:
+            controller.close()
 
     def stop_motion(self):
         """
