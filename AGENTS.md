@@ -208,3 +208,17 @@ extensions already does the job and only the conversion of the measurements or o
       README from `Authors` to `Instruments` (`extract_authors_from_description` in its `validate.py`), so write nothing
       else before these sections or between them: requirements, installation, hardware notes or differences with
       another branch come after the `Instruments` list.
+
+## Agent skills
+
+### Issue tracker
+
+Issues and specs live in GitHub Issues of PyMoDAQ/pymodaq_plugins_daqmx (`gh` CLI). See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` and `docs/adr/` at the repo root, if present. See `docs/agents/domain.md`.
