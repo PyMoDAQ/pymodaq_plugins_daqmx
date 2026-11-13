@@ -1,0 +1,154 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Details about the implementation of the NIDAQmx_RampOutput move &mdash; pymodaq_plugins_daqmx 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="The NIDAQmx object" href="../nidaqmx.html" />
+    <link rel="prev" title="Details about the implementation of the 0D viewer DAQmx_Counter" href="counter_details.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pymodaq_plugins_daqmx
+              <img src="../_static/splash.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../user_guide.html">User guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="counter_use.html">0D viewer DAQmx_Counter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ai_use.html">0D viewers DAQmxAI and DAQmxDualAI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ramp_output_use.html">NIDAQmx_RampOutput move</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nidaqmx_viewer_use.html">NIDAQmx viewer</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../user_guide.html#working-principle-of-the-plugins">Working principle of the plugins</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="counter_details.html">Details about the implementation of the 0D viewer DAQmx_Counter</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Details about the implementation of the NIDAQmx_RampOutput move</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#the-controller">The controller</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#reading-the-position">Reading the position</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../nidaqmx.html">The NIDAQmx object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../library.html">Library Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../creating_plugin.html">Creating a plugin for your specific needs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pymodaq_plugins_daqmx</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../user_guide.html">User guide</a></li>
+      <li class="breadcrumb-item active">Details about the implementation of the NIDAQmx_RampOutput move</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/user_guide/ramp_output_details.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="details-about-the-implementation-of-the-nidaqmx-rampoutput-move">
+<h1>Details about the implementation of the NIDAQmx_RampOutput move<a class="headerlink" href="#details-about-the-implementation-of-the-nidaqmx-rampoutput-move" title="Link to this heading"></a></h1>
+<p>Several channels are needed for a movement: an analog output and a counter used as a clock. As in the case of the
+counter (see <a class="reference internal" href="counter_details.html"><span class="doc">Details about the implementation of the 0D viewer DAQmx_Counter</span></a>), they are separate tasks and a single <code class="docutils literal notranslate"><span class="pre">NIDAQmx</span></code> object is not enough. In
+addition, with several axes, all the outputs must be in the same task, driven by the same clock, and each axis is a
+different instrument plugin: they share a controller, <code class="docutils literal notranslate"><span class="pre">RampOutputController</span></code> (<code class="docutils literal notranslate"><span class="pre">ramp_output.py</span></code>).</p>
+<section id="the-controller">
+<h2>The controller<a class="headerlink" href="#the-controller" title="Link to this heading"></a></h2>
+<p>It has two <code class="docutils literal notranslate"><span class="pre">NIDAQmx</span></code> objects, <code class="docutils literal notranslate"><span class="pre">clock</span></code> and <code class="docutils literal notranslate"><span class="pre">analog</span></code>, and one <code class="docutils literal notranslate"><span class="pre">AOChannel</span></code> per axis. For each move:</p>
+<ul class="simple">
+<li><p>the clock task generates <code class="docutils literal notranslate"><span class="pre">n</span> <span class="pre">+</span> <span class="pre">1</span></code> pulses at the frequency <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">/</span> <span class="pre">step</span> <span class="pre">time</span></code>;</p></li>
+<li><p>the analog task has one output channel per axis, its sample clock is the internal output of the clock channel, and
+the <code class="docutils literal notranslate"><span class="pre">n</span></code> voltages of each axis are written to its buffer.</p></li>
+</ul>
+<p>The axes that are not moved get <code class="docutils literal notranslate"><span class="pre">n</span></code> times their current voltage. If another axis is asked to move while a ramp is
+running (the Scan extension sends the commands to all the actuators at about the same time), the steps of the running
+ramp that are still to do are restarted together with the new one: each axis reaches its target.</p>
+</section>
+<section id="reading-the-position">
+<h2>Reading the position<a class="headerlink" href="#reading-the-position" title="Link to this heading"></a></h2>
+<p>One cannot read the voltage of an analog output, and the list of voltages is written to the buffer at once, so the last
+written value is always the target. The controller estimates the voltage from the time elapsed since the start of the
+ramp (the index of the step, one every step time), and returns the final voltage when the ramp is over. The position
+is thus an estimate, and the output is set to 0 V when the plugin starts since its real value is unknown.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="counter_details.html" class="btn btn-neutral float-left" title="Details about the implementation of the 0D viewer DAQmx_Counter" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../nidaqmx.html" class="btn btn-neutral float-right" title="The NIDAQmx object" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Sébastien Weber, Aurore Finco, Sébastien Guerrero.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

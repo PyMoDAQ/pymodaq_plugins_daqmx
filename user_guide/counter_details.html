@@ -1,0 +1,140 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Details about the implementation of the 0D viewer DAQmx_Counter &mdash; pymodaq_plugins_daqmx 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Details about the implementation of the NIDAQmx_RampOutput move" href="ramp_output_details.html" />
+    <link rel="prev" title="NIDAQmx viewer" href="nidaqmx_viewer_use.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pymodaq_plugins_daqmx
+              <img src="../_static/splash.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../user_guide.html">User guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="counter_use.html">0D viewer DAQmx_Counter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ai_use.html">0D viewers DAQmxAI and DAQmxDualAI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ramp_output_use.html">NIDAQmx_RampOutput move</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nidaqmx_viewer_use.html">NIDAQmx viewer</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../user_guide.html#working-principle-of-the-plugins">Working principle of the plugins</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Details about the implementation of the 0D viewer DAQmx_Counter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ramp_output_details.html">Details about the implementation of the NIDAQmx_RampOutput move</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../nidaqmx.html">The NIDAQmx object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../library.html">Library Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../creating_plugin.html">Creating a plugin for your specific needs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pymodaq_plugins_daqmx</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../user_guide.html">User guide</a></li>
+      <li class="breadcrumb-item active">Details about the implementation of the 0D viewer DAQmx_Counter</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/user_guide/counter_details.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="details-about-the-implementation-of-the-0d-viewer-daqmx-counter">
+<h1>Details about the implementation of the 0D viewer DAQmx_Counter<a class="headerlink" href="#details-about-the-implementation-of-the-0d-viewer-daqmx-counter" title="Link to this heading"></a></h1>
+<p>Two counters are used for one measurement: a first one counts the edges and a second one gives the counting time.
+These are two separate tasks, although the channels are connected together, so a single <code class="docutils literal notranslate"><span class="pre">NIDAQmx</span></code> object cannot be
+the controller of the plugin.</p>
+<p>The controller is a dict containing two <code class="docutils literal notranslate"><span class="pre">NIDAQmx</span></code> objects, <code class="docutils literal notranslate"><span class="pre">clock</span></code> and <code class="docutils literal notranslate"><span class="pre">counter</span></code>, each with its own task:</p>
+<ul class="simple">
+<li><p>The clock is a <code class="docutils literal notranslate"><span class="pre">ClockCounter</span></code> channel (see <code class="docutils literal notranslate"><span class="pre">daqmxni.py</span></code>), producing pulses at the clock frequency.</p></li>
+<li><p>The counter is a <code class="docutils literal notranslate"><span class="pre">CIChannel</span></code> counting edges, whose sample clock is the internal output of the clock channel
+(<code class="docutils literal notranslate"><span class="pre">/Dev[X]/ctr[Y]InternalOutput</span></code>): one sample is taken at the first tick of the clock.</p></li>
+</ul>
+<p><strong>One grab</strong></p>
+<p>Each grab arms the counting task (it waits for the clock), starts the clock, reads the one sample and stops both
+tasks. The count rate is the number of counted edges divided by the counting time, <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">/</span> <span class="pre">clock</span> <span class="pre">frequency</span></code>. In live
+mode, the viewer calls the grab again and again. Changing a setting stops the tasks and creates them again.</p>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="nidaqmx_viewer_use.html" class="btn btn-neutral float-left" title="NIDAQmx viewer" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ramp_output_details.html" class="btn btn-neutral float-right" title="Details about the implementation of the NIDAQmx_RampOutput move" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Sébastien Weber, Aurore Finco, Sébastien Guerrero.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
