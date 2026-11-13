@@ -1,41 +1,27 @@
-0D viewer PLcounter
-===================
+0D viewer DAQmx_Counter
+=======================
 
-.. note::
-    This viewer is deprecated since using the old PYDAQmx library. Install an anterior version to use it (<1.1.0).
+This plugin counts the edges (rising by default) of a signal sent to a counter input of a NI card, for instance the TTL
+pulses of a single photon detector such as an avalanche photodiode (APD). It gives the count rate in counts/s (the
+unit of the data is ``counts/s``).
 
-This plugin is meant to be used to count single photons with a NI card. The signal consists of TTL pulses sent by a detector (mainly an avalanche photodiode (APD)).
-
-The signal is displayed in kcounts/s.
-
-It was tested only with NI PCIe 63XX devices.
+It replaces ``DAQmx_PLcounter`` of the ``pydaqmx`` branch, which was tested only with NI PCIe 63XX devices. The present
+version has been tested against a fake of the ``nidaqmx`` layer only, not yet on hardware.
 
 Configuration
 -------------
 
-You need to provide 4 parameters, as shown in the screenshot below.
+* **Counting channel**: the counter that counts the edges of the signal, something like ``Dev[X]/ctr[Y]``. The signal
+  must be wired to the default input terminal of this counter, check the documentation of your NI device about it.
 
-* **Counting channel**: the internal counting channel that you will use to count the rising edges of the signal, something like ``Dev[X]/ctr[Y]``
-  
-* **Photon source**: the channel on which you send the signal from the APD, something like ``/Dev[X]/PFI[Y]``, to choose from a given list.
+* **Clock channel**: the counter used to time the measurement, something like ``Dev[X]/ctr[Y]``. It cannot be the same
+  as the counting channel.
 
-* **Clock frequency**: the acquisition rate, each data point corresponds to counting during the associated time interval. 
+* **Clock frequency**: the acquisition rate in Hz. Each point is the number of edges counted during one period of the
+  clock (the counting time), divided by this time.
 
-* **Clock channel**: the channel which you will use for measurement timing, something like ``Dev[X]/ctr[Y]``. You cannot use the same as for the counting channel!
-
-  .. image:: /images/PLcounter.png
-    :width: 800
-
-This plugin is not intended to be used with a "Slave" configuration, but you can definitely use the same NI card device as hardware for other plugins at the same time.
-
-Be careful to use as photon source the default input terminal corresponding to the counting channel, check the documentation of your NI device about this.
-	    
-	    
 Use
 ---
 
-It works as a usual 0D viewer plugin. It is recommended to start with a snap before launching a continuous grab.
-
-If you need to use one of the counter/clock channels with another plugin, do not forget to stop the measurement, otherwise you will get an error about the resource being busy.
-
-You might get many warnings in the log about the task being stopped before being finished, do not worry about it, the measurement is still fine. If you know how to solve this, please contribute!
+It works as a usual 0D viewer plugin. If you need to use one of the counter channels with another plugin, stop the
+measurement first, otherwise you will get an error about the resource being busy.
