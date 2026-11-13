@@ -74,8 +74,7 @@ Documentation
 =============
 
 Refer to the `documentation <https://pymodaq.github.io/pymodaq_plugins_daqmx/>`_ to use this plugin or discover its
-functionalities. The user guides of the photon counter and of the scanner control describe the former plugins of the
-``pydaqmx`` branch (``DAQmx_PLcounter``, ``DAQmx_ScannerControl``), now ``DAQmx_Counter`` and ``NIDAQmx_RampOutput``.
+functionalities.
 
 Build your own plugin
 =====================
