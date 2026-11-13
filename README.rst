@@ -67,6 +67,10 @@ Difference with the 5.3.x branch
 The repository has two lines of plugins, which use two different Python interfaces to the same NI-DAQmx driver. They
 do not share their instrument plugins (``DAQmx_...`` here, ``NIDAQmx`` there).
 
+**This branch is frozen**: it is kept for the users of ``PyDAQmx`` and receives no new development. The specific
+plugins (analog input, counter, ramp output) have been ported to the ``5.3.x`` branch (``DAQmxAI``, ``DAQmxDualAI``,
+``DAQmx_Counter``, ``NIDAQmx_RampOutput``), which is the one to use and to contribute to.
+
 .. list-table::
    :header-rows: 1
    :widths: 20 40 40
