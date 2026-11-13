@@ -13,10 +13,9 @@ pymodaq_plugins_daqmx (National Instrument DAQmx)
     :target: https://github.com/PyMoDAQ/pymodaq_plugins_daqmx
 
 Plugins devoted to National Instruments signal acquisition and generation, using the NI-DAQmx driver through the
-``nidaqmx`` package of National Instruments (`documentation <https://nidaqmx-python.readthedocs.io/en/stable/>`_).
-They include a ``NIDAQmx`` actuator for signal generation, a 0D viewer for quick measurements and a 1D viewer for data
-acquisition as a function of time, and the ``NIDAQmx`` object (``hardware/national_instruments/daqmxni.py``) to build
-your own plugin on.
+``nidaqmx`` package of National Instruments (`documentation <https://nidaqmx-python.readthedocs.io/en/stable/>`_):
+general actuator and viewers configured from the settings tree, and ready-to-use plugins for analog inputs, counting
+and ramps on an analog output.
 
 Authors
 =======
@@ -40,7 +39,7 @@ Actuators
 
 * **NIDAQmx**: General generation (voltage / current) with National Instrument materials
 * **NIDAQmx_RampOutput**: A quantity driven by an analog output, changed by voltage ramps timed by a counter used as a
-  clock (nm = V x conversion factor); several axes (x, y, z) can share the clock
+  clock (value = voltage x conversion factor); several axes (x, y, z) can share the clock
 
 Viewer0D
 ++++++++
@@ -55,55 +54,44 @@ Viewer1D
 
 * **NIDAQmx**: General measurement with National Instrument materials, acquired in the hardware buffer
 
-Documentation
-+++++++++++++
-
-Refer to the `documentation <https://pymodaq.github.io/pymodaq_plugins_daqmx/>`_ to use this plugin or discover its functionalities.
-
-Difference with the pydaqmx branch
-==================================
-
-The repository has two lines of plugins, which use two different Python interfaces to the same NI-DAQmx driver. They
-do not share their instrument plugins (``NIDAQmx`` here, ``DAQmx_...`` there).
-
-.. list-table::
-   :header-rows: 1
-   :widths: 20 40 40
-
-   * -
-     - ``5.3.x`` branch (this one)
-     - ``pydaqmx`` branch
-   * - Python interface
-     - `nidaqmx <https://nidaqmx-python.readthedocs.io/en/stable/>`_, the package of National Instruments
-       (``NIDAQmx`` object in ``daqmxni.py``)
-     - `PyDAQmx <https://pythonhosted.org/PyDAQmx/>`_ (``DAQmx`` object in ``hardware/national_instruments/daqmx.py`` of that branch)
-   * - Instruments
-     - ``NIDAQmx`` actuator, 0D viewer and 1D viewer, ``DAQmxAI``, ``DAQmxDualAI``, ``DAQmx_Counter``,
-       ``NIDAQmx_RampOutput``
-     - generic ``DAQmx`` actuator and viewers (0D, 1D), ``DAQmxAI``, ``DAQmxDualAI``, ``DAQmx_PLcounter``,
-       ``DAQmx_ScannerControl``, ``DAQmx_MultipleScannerControl``
-   * - Use
-     - measurement of voltage, current or temperature with a general viewer, whose channels can be loaded from a
-       configuration file of the user (``config_daqmx.toml``) and saved from the interface; specific tasks (analog
-       input, counting, ramps on an analog output) in dedicated plugins
-     - the same specific tasks (``DAQmx_PLcounter`` and the scanner controls are the former names of ``DAQmx_Counter``
-       and ``NIDAQmx_RampOutput``) and a base to write your own plugin
-   * - State
-     - the ``NIDAQmx`` viewers were tested with a cDAQ-9174 and a USB-6341 (modules NI-9205, NI-9211, NI-9217); the
-       ``DAQmxAI``, ``DAQmxDualAI``, ``DAQmx_Counter`` and ``NIDAQmx_RampOutput`` plugins were ported from the
-       ``pydaqmx`` branch and tested against a fake of the ``nidaqmx`` layer only, not yet on hardware; the
-       ``NIDAQmx`` actuator is not finished yet (its movements still raise ``NotImplementedError``)
-     - the ``PyDAQmx`` based plugins, kept as they are (frozen: new developments go to this ``5.3.x`` branch)
-
-This branch does not contain the ``PyDAQmx`` based ``DAQmx`` object (``daqmx.py``, ``daqmx_objects.py``) nor the
-instrument plugins of the ``pydaqmx`` branch: use that branch (or the 1.1.x releases) if you need them. The
-user guides of the photon counter and the scanner control remain here as a reference, they describe those deprecated
-plugins.
-
 Requirements
 ============
 
-* PyMoDAQ >= 5.3.7
-* the NI-DAQmx driver of National Instruments, installed on the computer connected to the device (use NI MAX to test
-  your hardware). Where the driver cannot be found, the modules of this plugin are not usable and PyMoDAQ skips them.
-* the ``nidaqmx`` Python package, installed with the plugin.
+* PyMoDAQ >= 5.3.2
+* The NI-DAQmx driver of National Instruments, installed on the computer connected to the device (use NI MAX to test
+  your hardware). Where the driver cannot be found, the plugins are importable but list no device.
+* The ``nidaqmx`` Python package, installed with the plugin.
+
+Status
+======
+
+* The general ``NIDAQmx`` viewers were tested with a cDAQ-9174 and a USB-6341 (modules NI-9205, NI-9211, NI-9217).
+* The general ``NIDAQmx`` actuator is not finished yet: its movements still raise ``NotImplementedError``.
+* ``DAQmxAI``, ``DAQmxDualAI``, ``DAQmx_Counter`` and ``NIDAQmx_RampOutput`` were ported from the ``pydaqmx`` branch
+  and are tested against a fake of the ``nidaqmx`` layer only, not yet on hardware.
+
+Documentation
+=============
+
+Refer to the `documentation <https://pymodaq.github.io/pymodaq_plugins_daqmx/>`_ to use this plugin or discover its
+functionalities. The user guides of the photon counter and of the scanner control describe the former plugins of the
+``pydaqmx`` branch (``DAQmx_PLcounter``, ``DAQmx_ScannerControl``), now ``DAQmx_Counter`` and ``NIDAQmx_RampOutput``.
+
+Build your own plugin
+=====================
+
+The ``NIDAQmx`` object (``hardware/national_instruments/daqmxni.py``) wraps the ``nidaqmx`` package: it describes
+channels (``AIChannel``, ``AOChannel``, ``CIChannel``, ``ClockCounter``...), builds the task and gives access to it.
+``DAQmxAI`` (``NIDAQmx_AI.py``), ``DAQmx_Counter`` and ``NIDAQmx_RampOutput`` (``ramp_output.py``) are small examples
+of plugins built on it.
+
+The two branches of the repository
+==================================
+
+The repository has two lines of plugins, using two different Python interfaces to the same NI-DAQmx driver:
+
+* ``5.3.x`` (this branch): ``nidaqmx``, the package of National Instruments. This is the one to use and to contribute
+  to.
+* ``pydaqmx``: `PyDAQmx <https://pythonhosted.org/PyDAQmx/>`_ (``DAQmx`` object in
+  ``hardware/national_instruments/daqmx.py`` of that branch). It is frozen and kept for the users of ``PyDAQmx``
+  (also the 1.1.x releases). Its generic ``DAQmx`` plugins have no equivalent here: use the ``NIDAQmx`` ones.
