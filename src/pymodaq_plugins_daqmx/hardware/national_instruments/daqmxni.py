@@ -89,7 +89,7 @@ class AChannel(Channel):
         super().__init__(**kwargs)
         self.value_min = value_min
         self.value_max = value_max
-        assert analog_type in UsageTypeAI
+        assert analog_type in UsageTypeAI or analog_type in UsageTypeAO
         self.analog_type = analog_type
 
 
@@ -132,8 +132,9 @@ class AI_RTD_Channel(AIChannel):
 
 
 class AOChannel(AChannel):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, analog_type=UsageTypeAO.VOLTAGE, **kwargs):
+        kwargs.setdefault('source', ChannelType.ANALOG_OUTPUT)
+        super().__init__(analog_type=analog_type, **kwargs)
 
 
 class CIChannel(Channel):
