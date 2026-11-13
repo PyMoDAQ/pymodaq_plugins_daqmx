@@ -156,10 +156,9 @@ class COChannel(Channel):
 
 class ClockCounter(COChannel):
     def __init__(self, clock_frequency=100, counter_type=UsageTypeCO.PULSE_FREQUENCY, **kwargs):
-        super().counter_type = counter_type
-        super().__init__(**kwargs)
+        kwargs.setdefault('source', ChannelType.COUNTER_OUTPUT)
+        super().__init__(counter_type=counter_type, **kwargs)
         self.clock_frequency = clock_frequency
-        self.counter_type = counter_type
 
 
 class DigitalChannel(Channel):
