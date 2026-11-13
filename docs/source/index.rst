@@ -7,7 +7,7 @@ Welcome to pymodaq_plugins_daqmx's documentation!
 =================================================
 
 This PyMoDAQ plugin is devoted to the National Instrument signal acquisition and generation using the NiDAQmx library. It contains generic objects which should be used as a basis to build actuators and viewers performing custom signal acquisition and generation.
-In addition, and they are also meant as examples, it provides actuator plugins which can be used to move piezo scanners using the analog output functions of NI acquisition cards, as well as a 0D viewer corresponding to a single photon counter.
+In addition, and they are also meant as examples, it provides ready-to-use plugins: analog input viewers (``DAQmxAI``, ``DAQmxDualAI``), an edge counter (``DAQmx_Counter``) and an actuator driving a quantity through ramps on an analog output (``NIDAQmx_RampOutput``).
 
 This documentation is written as a tutorial to guide you when setting up your NI acquisition devices with PyMoDAQ.
 

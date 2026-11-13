@@ -92,8 +92,6 @@ def test_relative_move_from_the_position_reached(actuator, clock):
 
 
 def test_other_axes_stay_where_they_are(qapp, clock):
-    master = make_actuator(DAQ_Move_NIDAQmx_RampOutput, analog_channel='Dev1/ao0', clock_channel='Dev1/ctr0',
-                           conv_factor=1000., multiaxes_axis='x') if False else None
     ctrl = ramp_output.RampOutputController()
     ctrl._time = clock
     ctrl.clock_channel = 'Dev1/ctr0'
@@ -103,3 +101,19 @@ def test_other_axes_stay_where_they_are(qapp, clock):
     ctrl.ramp('y', [0.1, 0.2], 0.01)
     data, _ = ctrl.analog.writes[-1]
     assert data == [[1., 1.], [0.1, 0.2]]
+
+
+def test_an_axis_moved_during_the_ramp_of_another_one_does_not_stop_it(qapp, clock):
+    ctrl = ramp_output.RampOutputController()
+    ctrl._time = clock
+    ctrl.clock_channel = 'Dev1/ctr0'
+    ctrl.configure_axis('x', 'Dev1/ao0', -10., 10.)
+    ctrl.configure_axis('y', 'Dev1/ao1', -10., 10.)
+    ctrl.ramp('x', [0.1, 0.2, 0.3, 0.4, 0.5], 0.01)
+    clock.now = 0.015  # x is at its second step
+    ctrl.ramp('y', [1., 2.], 0.01)
+    x, y = ctrl.analog.writes[-1][0]
+    assert x == pytest.approx([0.2, 0.3, 0.4, 0.5])  # x carries on to its target
+    assert y == pytest.approx([1., 2., 2., 2.])  # y reaches its own, then stays
+    clock.now = 1.
+    assert ctrl.voltage('x') == pytest.approx(0.5) and ctrl.voltage('y') == pytest.approx(2.)
