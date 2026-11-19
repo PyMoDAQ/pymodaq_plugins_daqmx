@@ -2,6 +2,10 @@
   "nidaqmx_version": "1.7.0",
   "python": "3.13.13 | packaged by conda-forge | (main, Apr  8 2026, 01:56:49) [MSC v.1944 64 bit (AMD64)]",
   "devices": [
+    "cDAQ1",
+    "cDAQ1Mod1",
+    "cDAQ1Mod2",
+    "cDAQ1Mod3",
     "Dev1",
     "Dev2"
   ],
@@ -137,6 +141,39 @@
       "TriggerUsage.START"
     ]
   },
+  "ai_channel_kinds_probe": {
+    "channel": "Dev2/ai0",
+    "product_type": "PCIe-6363",
+    "voltage": {
+      "type": "float",
+      "shape": [],
+      "dtype": "float64",
+      "first": [
+        -0.07477034821619312
+      ]
+    },
+    "current": {
+      "type": "float",
+      "shape": [],
+      "dtype": "float64",
+      "first": [
+        -0.00014952844000287778
+      ]
+    },
+    "thermocouple": {
+      "type": "float",
+      "shape": [],
+      "dtype": "float64",
+      "first": [
+        49.20816556462721
+      ]
+    },
+    "rtd": {
+      "exception": "DaqError",
+      "error_code": -200161,
+      "message": "Device to which the sensor is attached does not have an available internal excitation source.\n\nSelect another device with an available internal excitation source or supply external excitation.\n\nChanne"
+    }
+  },
   "read_one_channel_finite_N_samples": {
     "type": "list",
     "shape": [
@@ -211,7 +248,7 @@
       "Exception",
       "BaseException"
     ],
-    "message": "Device identifier is invalid.\n\nDevice Specified: NoSuchDev\nSuggested Device(s): Dev1, Dev2\n\nTask Name: _unnamedTask<6>\nStatus Code: -200220",
+    "message": "Device identifier is invalid.\n\nDevice Specified: NoSuchDev\nSuggested Device(s): Dev1, Dev2, cDAQ1, cDAQ1Mod1, cDAQ1Mod2, cDAQ1Mod3\n\nTask Name: _unnamedTask<A>\nStatus Code: -200220",
     "error_code": -200220
   },
   "unknown_channel_error": {
@@ -221,7 +258,7 @@
       "Exception",
       "BaseException"
     ],
-    "message": "Physical channel specified does not exist on this device.\n\nRefer to the documentation for channels available on this device.\n\nDevice: Dev2\nPhysical Channel Name: ai9999\n\nTask Name: _unnamedTask<7>\n\nStatus Code: -200170",
+    "message": "Physical channel specified does not exist on this device.\n\nRefer to the documentation for channels available on this device.\n\nDevice: Dev2\nPhysical Channel Name: ai9999\n\nTask Name: _unnamedTask<B>\n\nStatus Code: -200170",
     "error_code": -200170
   },
   "invalid_range_error": null,
@@ -232,7 +269,7 @@
       "Exception",
       "BaseException"
     ],
-    "message": "Requested value is not a supported value for this property. The property value may be invalid because it conflicts with another property.\n\nProperty: DAQmx_SampClk_Rate\nRequested Value:  1.0e12\nMaximum Value:  10.0e6\nMinimum Value:  22.250739e-309\n\nTask Name: _unnamedTask<9>\n\nStatus Code: -200077",
+    "message": "Requested value is not a supported value for this property. The property value may be invalid because it conflicts with another property.\n\nProperty: DAQmx_SampClk_Rate\nRequested Value:  1.0e12\nMaximum Value:  10.0e6\nMinimum Value:  22.250739e-309\n\nTask Name: _unnamedTask<D>\n\nStatus Code: -200077",
     "error_code": -200077
   },
   "bad_trigger_source_error": {
@@ -242,7 +279,7 @@
       "Exception",
       "BaseException"
     ],
-    "message": "No device by the given name was found.\n\nDevice Specified: NoSuchDev\n\nTask Name: _unnamedTask<A>\n\nStatus Code: -88717",
+    "message": "No device by the given name was found.\n\nDevice Specified: NoSuchDev\n\nTask Name: _unnamedTask<E>\n\nStatus Code: -88717",
     "error_code": -88717
   },
   "callbacks_finite_task": {
@@ -332,5 +369,68 @@
       0.039979247413556324,
       0.014801477095858637
     ]
+  },
+  "read_explicit_one_sample_shapes": {
+    "1_channel": {
+      "type": "list",
+      "shape": [
+        1
+      ],
+      "dtype": "float64",
+      "first": [
+        -0.14969328897976622
+      ]
+    },
+    "2_channel": {
+      "type": "list",
+      "shape": [
+        2,
+        1
+      ],
+      "dtype": "float64",
+      "first": [
+        -0.14969328897976622,
+        0.44160283211767937
+      ]
+    }
+  },
+  "external_sample_clock_source": {
+    "source": "/Dev2/PFI0",
+    "started": true
+  },
+  "digital_edge_start_trigger_valid_source": {
+    "source": "/Dev2/PFI0",
+    "started": true
+  },
+  "analog_edge_start_trigger": {
+    "started": true
+  },
+  "change_detection_timing_digital_input": {
+    "line": "Dev2/port0/line0",
+    "started": true
+  },
+  "counter_output_pulse_frequency": {
+    "counter": "Dev2/ctr0",
+    "running_after_start": false
+  },
+  "counter_input_count_edges_with_clock": {
+    "type": "list",
+    "shape": [
+      1
+    ],
+    "dtype": "float64",
+    "first": [
+      0.0
+    ]
+  },
+  "analog_output_single_channel_write_shapes": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Write cannot be performed, because the number of channels in the data does not match the number of channels in the task.\n\nWhen writing, supply data for all channels in the task. Alternatively, modify the task to contain the same number of channels as the data written.\n\nNumber of Channels in Task: 1\n",
+    "error_code": -200524
   }
 }

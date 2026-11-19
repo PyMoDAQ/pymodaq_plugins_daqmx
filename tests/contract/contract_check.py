@@ -406,18 +406,32 @@ def _():
         return shape_of(t.read(number_of_samples_per_channel=1, timeout=0.5))
 
 
-@observe("analog_output_single_channel_write_shapes")
+def _write_one_channel(data):
+    with nidaqmx.Task() as t:
+        t.ao_channels.add_ao_voltage_chan(f"{dev}/ao0")
+        t.timing.cfg_samp_clk_timing(1000.0, sample_mode=AcquisitionType.FINITE, samps_per_chan=4)
+        return t.write(data, auto_start=False)
+
+
+# one observation per shape: the first one to fail must not hide the others
+@observe("ao_one_channel_write_python_list")
 def _():
-    out = {}
-    with nidaqmx.Task() as t:
-        t.ao_channels.add_ao_voltage_chan(f"{dev}/ao0")
-        t.timing.cfg_samp_clk_timing(1000.0, sample_mode=AcquisitionType.FINITE, samps_per_chan=4)
-        out["1d_array_1ch"] = t.write(np.zeros(4), auto_start=False)
-    with nidaqmx.Task() as t:
-        t.ao_channels.add_ao_voltage_chan(f"{dev}/ao0")
-        t.timing.cfg_samp_clk_timing(1000.0, sample_mode=AcquisitionType.FINITE, samps_per_chan=4)
-        out["2d_array_1ch"] = t.write(np.zeros((1, 4)), auto_start=False)
-    return out
+    return _write_one_channel([0.0, 0.1, 0.2, 0.3])
+
+
+@observe("ao_one_channel_write_numpy_1d")
+def _():
+    return _write_one_channel(np.zeros(4))
+
+
+@observe("ao_one_channel_write_numpy_2d_1xN")
+def _():
+    return _write_one_channel(np.zeros((1, 4)))
+
+
+@observe("ao_one_channel_write_numpy_2d_Nx1_transposed")
+def _():
+    return _write_one_channel(np.zeros((4, 1)))
 
 
 out = Path(__file__).with_name(f"contract_report_{dev}.json")
