@@ -1,0 +1,259 @@
+{
+  "nidaqmx_version": "1.7.0",
+  "python": "3.13.13 | packaged by conda-forge | (main, Apr  8 2026, 01:56:49) [MSC v.1944 64 bit (AMD64)]",
+  "devices": [
+    "cDAQ1",
+    "cDAQ1Mod1",
+    "cDAQ1Mod2",
+    "cDAQ1Mod3",
+    "Dev1",
+    "Dev2"
+  ],
+  "device_used": "cDAQ1Mod1",
+  "system_info": {
+    "product_type": "NI 9203",
+    "is_simulated": true,
+    "ai_physical_chans": [
+      "cDAQ1Mod1/ai0",
+      "cDAQ1Mod1/ai1",
+      "cDAQ1Mod1/ai2",
+      "cDAQ1Mod1/ai3",
+      "cDAQ1Mod1/ai4",
+      "cDAQ1Mod1/ai5",
+      "cDAQ1Mod1/ai6",
+      "cDAQ1Mod1/ai7"
+    ],
+    "ao_physical_chans": [],
+    "ci_physical_chans": [],
+    "co_physical_chans": [],
+    "di_lines": [],
+    "do_lines": [],
+    "terminals_sample": [
+      "/cDAQ1Mod1/ai/ConvertClock"
+    ],
+    "ai_voltage_rngs": [],
+    "ao_voltage_rngs": [],
+    "ai_current_rngs": [
+      [
+        0.0,
+        0.02
+      ],
+      [
+        -0.02,
+        0.02
+      ]
+    ],
+    "ai_max_multi_chan_rate": 200000.0,
+    "ai_max_single_chan_rate": 200000.0,
+    "ao_max_rate": {
+      "exception": "DaqError",
+      "error_code": -200197,
+      "message": "Device does not support this property.\n\nDevice: cDAQ1Mod1\nProperty: DAQmx_Dev_AO_MaxRate\n\nStatus Code: -200197"
+    },
+    "ai_trig_usage": [
+      "TriggerUsage.PAUSE",
+      "TriggerUsage.REFERENCE",
+      "TriggerUsage.START"
+    ],
+    "di_trig_usage": []
+  },
+  "ai_channel_kinds_probe": {
+    "channel": "cDAQ1Mod1/ai0",
+    "product_type": "NI 9203",
+    "voltage": {
+      "exception": "DaqError",
+      "error_code": -200431,
+      "message": "Selected physical channel does not support the measurement type required by the virtual channel you are creating.\n\nCreate a channel of a measurement type that is supported by the physical channel, or "
+    },
+    "current": {
+      "type": "float",
+      "shape": [],
+      "dtype": "float64",
+      "first": [
+        -0.00014953841458762495
+      ]
+    },
+    "thermocouple": {
+      "exception": "DaqError",
+      "error_code": -200431,
+      "message": "Selected physical channel does not support the measurement type required by the virtual channel you are creating.\n\nCreate a channel of a measurement type that is supported by the physical channel, or "
+    },
+    "rtd": {
+      "exception": "DaqError",
+      "error_code": -200431,
+      "message": "Selected physical channel does not support the measurement type required by the virtual channel you are creating.\n\nCreate a channel of a measurement type that is supported by the physical channel, or "
+    }
+  },
+  "read_one_channel_finite_N_samples": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Selected physical channel does not support the measurement type required by the virtual channel you are creating.\n\nCreate a channel of a measurement type that is supported by the physical channel, or select a physical channel that supports the measurement type.\n\nProperty: DAQmx_AI_MeasType\nRequested",
+    "error_code": -200431
+  },
+  "read_one_channel_single_sample": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Selected physical channel does not support the measurement type required by the virtual channel you are creating.\n\nCreate a channel of a measurement type that is supported by the physical channel, or select a physical channel that supports the measurement type.\n\nProperty: DAQmx_AI_MeasType\nRequested",
+    "error_code": -200431
+  },
+  "read_two_channels_finite_N_samples": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Selected physical channel does not support the measurement type required by the virtual channel you are creating.\n\nCreate a channel of a measurement type that is supported by the physical channel, or select a physical channel that supports the measurement type.\n\nProperty: DAQmx_AI_MeasType\nRequested",
+    "error_code": -200431
+  },
+  "read_two_channels_single_sample": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Selected physical channel does not support the measurement type required by the virtual channel you are creating.\n\nCreate a channel of a measurement type that is supported by the physical channel, or select a physical channel that supports the measurement type.\n\nProperty: DAQmx_AI_MeasType\nRequested",
+    "error_code": -200431
+  },
+  "read_two_channels_all_available_default": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Selected physical channel does not support the measurement type required by the virtual channel you are creating.\n\nCreate a channel of a measurement type that is supported by the physical channel, or select a physical channel that supports the measurement type.\n\nProperty: DAQmx_AI_MeasType\nRequested",
+    "error_code": -200431
+  },
+  "read_timeout_error": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Selected physical channel does not support the measurement type required by the virtual channel you are creating.\n\nCreate a channel of a measurement type that is supported by the physical channel, or select a physical channel that supports the measurement type.\n\nProperty: DAQmx_AI_MeasType\nRequested",
+    "error_code": -200431
+  },
+  "unknown_device_error": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Device identifier is invalid.\n\nDevice Specified: NoSuchDev\nSuggested Device(s): Dev1, Dev2, cDAQ1, cDAQ1Mod1, cDAQ1Mod2, cDAQ1Mod3\n\nTask Name: _unnamedTask<A>\nStatus Code: -200220",
+    "error_code": -200220
+  },
+  "unknown_channel_error": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Physical channel specified does not exist on this device.\n\nRefer to the documentation for channels available on this device.\n\nTask Name: _unnamedTask<B>\n\nStatus Code: -200170",
+    "error_code": -200170
+  },
+  "invalid_range_error": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Selected physical channel does not support the measurement type required by the virtual channel you are creating.\n\nCreate a channel of a measurement type that is supported by the physical channel, or select a physical channel that supports the measurement type.\n\nProperty: DAQmx_AI_MeasType\nRequested",
+    "error_code": -200431
+  },
+  "invalid_rate_error": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Selected physical channel does not support the measurement type required by the virtual channel you are creating.\n\nCreate a channel of a measurement type that is supported by the physical channel, or select a physical channel that supports the measurement type.\n\nProperty: DAQmx_AI_MeasType\nRequested",
+    "error_code": -200431
+  },
+  "bad_trigger_source_error": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Selected physical channel does not support the measurement type required by the virtual channel you are creating.\n\nCreate a channel of a measurement type that is supported by the physical channel, or select a physical channel that supports the measurement type.\n\nProperty: DAQmx_AI_MeasType\nRequested",
+    "error_code": -200431
+  },
+  "callbacks_finite_task": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Selected physical channel does not support the measurement type required by the virtual channel you are creating.\n\nCreate a channel of a measurement type that is supported by the physical channel, or select a physical channel that supports the measurement type.\n\nProperty: DAQmx_AI_MeasType\nRequested",
+    "error_code": -200431
+  },
+  "start_stop_restart": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Selected physical channel does not support the measurement type required by the virtual channel you are creating.\n\nCreate a channel of a measurement type that is supported by the physical channel, or select a physical channel that supports the measurement type.\n\nProperty: DAQmx_AI_MeasType\nRequested",
+    "error_code": -200431
+  },
+  "close_then_use_error": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Selected physical channel does not support the measurement type required by the virtual channel you are creating.\n\nCreate a channel of a measurement type that is supported by the physical channel, or select a physical channel that supports the measurement type.\n\nProperty: DAQmx_AI_MeasType\nRequested",
+    "error_code": -200431
+  },
+  "write_scalar_and_array_ao": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Physical channel specified does not exist on this device.\n\nRefer to the documentation for channels available on this device.\n\nTask Name: _unnamedTask<12>\n\nStatus Code: -200170",
+    "error_code": -200170
+  },
+  "write_wrong_shape_error": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Physical channel specified does not exist on this device.\n\nRefer to the documentation for channels available on this device.\n\nTask Name: _unnamedTask<13>\n\nStatus Code: -200170",
+    "error_code": -200170
+  },
+  "counter_input_read": "pas de compteur sur cet appareil",
+  "digital_read_write": {},
+  "unsupported_terminal_config_rse": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Selected physical channel does not support the measurement type required by the virtual channel you are creating.\n\nCreate a channel of a measurement type that is supported by the physical channel, or select a physical channel that supports the measurement type.\n\nProperty: DAQmx_AI_MeasType\nRequested",
+    "error_code": -200431
+  }
+}

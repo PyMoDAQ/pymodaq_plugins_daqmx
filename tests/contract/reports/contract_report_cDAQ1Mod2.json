@@ -1,0 +1,254 @@
+{
+  "nidaqmx_version": "1.7.0",
+  "python": "3.13.13 | packaged by conda-forge | (main, Apr  8 2026, 01:56:49) [MSC v.1944 64 bit (AMD64)]",
+  "devices": [
+    "cDAQ1",
+    "cDAQ1Mod1",
+    "cDAQ1Mod2",
+    "cDAQ1Mod3",
+    "Dev1",
+    "Dev2"
+  ],
+  "device_used": "cDAQ1Mod2",
+  "system_info": {
+    "product_type": "NI 9213",
+    "is_simulated": true,
+    "ai_physical_chans": [
+      "cDAQ1Mod2/ai0",
+      "cDAQ1Mod2/ai1",
+      "cDAQ1Mod2/ai2",
+      "cDAQ1Mod2/ai3",
+      "cDAQ1Mod2/ai4",
+      "cDAQ1Mod2/ai5",
+      "cDAQ1Mod2/ai6",
+      "cDAQ1Mod2/ai7",
+      "cDAQ1Mod2/ai8",
+      "cDAQ1Mod2/ai9",
+      "cDAQ1Mod2/ai10",
+      "cDAQ1Mod2/ai11",
+      "cDAQ1Mod2/ai12",
+      "cDAQ1Mod2/ai13",
+      "cDAQ1Mod2/ai14",
+      "cDAQ1Mod2/ai15"
+    ],
+    "ao_physical_chans": [],
+    "ci_physical_chans": [],
+    "co_physical_chans": [],
+    "di_lines": [],
+    "do_lines": [],
+    "terminals_sample": [
+      "/cDAQ1Mod2/ai/ConvertClock"
+    ],
+    "ai_voltage_rngs": [
+      [
+        -0.078125,
+        0.078125
+      ]
+    ],
+    "ao_voltage_rngs": [],
+    "ai_current_rngs": [],
+    "ai_max_multi_chan_rate": 1351.3513513513512,
+    "ai_max_single_chan_rate": 100.0,
+    "ao_max_rate": {
+      "exception": "DaqError",
+      "error_code": -200197,
+      "message": "Device does not support this property.\n\nDevice: cDAQ1Mod2\nProperty: DAQmx_Dev_AO_MaxRate\n\nStatus Code: -200197"
+    },
+    "ai_trig_usage": [
+      "TriggerUsage.PAUSE",
+      "TriggerUsage.REFERENCE",
+      "TriggerUsage.START"
+    ],
+    "di_trig_usage": []
+  },
+  "ai_channel_kinds_probe": {
+    "channel": "cDAQ1Mod2/ai0",
+    "product_type": "NI 9213",
+    "voltage": {
+      "exception": "DaqError",
+      "error_code": -200077,
+      "message": "Requested value is not a supported value for this property. The property value may be invalid because it conflicts with another property.\n\nProperty: DAQmx_AI_Min\nRequested Value: -5.0\nValue Must Be Gr"
+    },
+    "current": {
+      "exception": "DaqError",
+      "error_code": -200077,
+      "message": "Requested value is not a supported value for this property. The property value may be invalid because it conflicts with another property.\n\nProperty: DAQmx_AI_Min\nRequested Value: -10.0e-3\nValue Must B"
+    },
+    "thermocouple": {
+      "type": "float",
+      "shape": [],
+      "dtype": "float64",
+      "first": [
+        0.237166124561283
+      ]
+    },
+    "rtd": {
+      "exception": "DaqError",
+      "error_code": -200161,
+      "message": "Device to which the sensor is attached does not have an available internal excitation source.\n\nSelect another device with an available internal excitation source or supply external excitation.\n\nChanne"
+    }
+  },
+  "read_one_channel_finite_N_samples": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Requested value is not a supported value for this property. The property value may be invalid because it conflicts with another property.\n\nProperty: DAQmx_AI_Min\nRequested Value: -5.0\nValue Must Be Greater Than: -78.125000e-3\nValue Must Be Less Than:  78.125000e-3\n\n\nDevice: cDAQ1Mod2\n\nTask Name: _un",
+    "error_code": -200077
+  },
+  "read_one_channel_single_sample": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Requested value is not a supported value for this property. The property value may be invalid because it conflicts with another property.\n\nProperty: DAQmx_AI_Min\nRequested Value: -5.0\nValue Must Be Greater Than: -78.125000e-3\nValue Must Be Less Than:  78.125000e-3\n\n\nDevice: cDAQ1Mod2\n\nTask Name: _un",
+    "error_code": -200077
+  },
+  "read_two_channels_finite_N_samples": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Requested value is not a supported value for this property. The property value may be invalid because it conflicts with another property.\n\nProperty: DAQmx_AI_Min\nRequested Value: -5.0\nValue Must Be Greater Than: -78.125000e-3\nValue Must Be Less Than:  78.125000e-3\n\n\nDevice: cDAQ1Mod2\n\nTask Name: _un",
+    "error_code": -200077
+  },
+  "read_two_channels_single_sample": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Requested value is not a supported value for this property. The property value may be invalid because it conflicts with another property.\n\nProperty: DAQmx_AI_Min\nRequested Value: -5.0\nValue Must Be Greater Than: -78.125000e-3\nValue Must Be Less Than:  78.125000e-3\n\n\nDevice: cDAQ1Mod2\n\nTask Name: _un",
+    "error_code": -200077
+  },
+  "read_two_channels_all_available_default": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Requested value is not a supported value for this property. The property value may be invalid because it conflicts with another property.\n\nProperty: DAQmx_AI_Min\nRequested Value: -5.0\nValue Must Be Greater Than: -78.125000e-3\nValue Must Be Less Than:  78.125000e-3\n\n\nDevice: cDAQ1Mod2\n\nTask Name: _un",
+    "error_code": -200077
+  },
+  "read_timeout_error": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Requested value is not a supported value for this property. The property value may be invalid because it conflicts with another property.\n\nProperty: DAQmx_AI_Min\nRequested Value: -5.0\nValue Must Be Greater Than: -78.125000e-3\nValue Must Be Less Than:  78.125000e-3\n\n\nDevice: cDAQ1Mod2\n\nTask Name: _un",
+    "error_code": -200077
+  },
+  "unknown_device_error": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Device identifier is invalid.\n\nDevice Specified: NoSuchDev\nSuggested Device(s): Dev1, Dev2, cDAQ1, cDAQ1Mod1, cDAQ1Mod2, cDAQ1Mod3\n\nTask Name: _unnamedTask<A>\nStatus Code: -200220",
+    "error_code": -200220
+  },
+  "unknown_channel_error": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Physical channel specified does not exist on this device.\n\nRefer to the documentation for channels available on this device.\n\nTask Name: _unnamedTask<B>\n\nStatus Code: -200170",
+    "error_code": -200170
+  },
+  "invalid_range_error": null,
+  "invalid_rate_error": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Requested value is not a supported value for this property. The property value may be invalid because it conflicts with another property.\n\nProperty: DAQmx_SampClk_Rate\nRequested Value:  1.0e12\nMaximum Value:  26.666667e6\nMinimum Value:  22.250739e-309\n\nTask Name: _unnamedTask<D>\n\nStatus Code: -20007",
+    "error_code": -200077
+  },
+  "bad_trigger_source_error": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Requested value is not a supported value for this property. The property value may be invalid because it conflicts with another property.\n\nProperty: DAQmx_AI_Min\nRequested Value: -5.0\nValue Must Be Greater Than: -78.125000e-3\nValue Must Be Less Than:  78.125000e-3\n\n\nDevice: cDAQ1Mod2\n\nTask Name: _un",
+    "error_code": -200077
+  },
+  "callbacks_finite_task": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Requested value is not a supported value for this property. The property value may be invalid because it conflicts with another property.\n\nProperty: DAQmx_AI_Min\nRequested Value: -5.0\nValue Must Be Greater Than: -78.125000e-3\nValue Must Be Less Than:  78.125000e-3\n\n\nDevice: cDAQ1Mod2\n\nTask Name: _un",
+    "error_code": -200077
+  },
+  "start_stop_restart": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Requested value is not a supported value for this property. The property value may be invalid because it conflicts with another property.\n\nProperty: DAQmx_AI_Min\nRequested Value: -5.0\nValue Must Be Greater Than: -78.125000e-3\nValue Must Be Less Than:  78.125000e-3\n\n\nDevice: cDAQ1Mod2\n\nTask Name: _un",
+    "error_code": -200077
+  },
+  "close_then_use_error": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Task specified is invalid or does not exist.\nStatus Code: -200088",
+    "error_code": -200088
+  },
+  "write_scalar_and_array_ao": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Physical channel specified does not exist on this device.\n\nRefer to the documentation for channels available on this device.\n\nTask Name: _unnamedTask<12>\n\nStatus Code: -200170",
+    "error_code": -200170
+  },
+  "write_wrong_shape_error": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Physical channel specified does not exist on this device.\n\nRefer to the documentation for channels available on this device.\n\nTask Name: _unnamedTask<13>\n\nStatus Code: -200170",
+    "error_code": -200170
+  },
+  "counter_input_read": "pas de compteur sur cet appareil",
+  "digital_read_write": {},
+  "unsupported_terminal_config_rse": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Requested value is not a supported value for this property. The property value may be invalid because it conflicts with another property.\n\nProperty: DAQmx_AI_TermCfg\nRequested Value: DAQmx_Val_RSE\nPossible Values: DAQmx_Val_Diff\nChannel Name: cDAQ1Mod2/ai0\n\nTask Name: _unnamedTask<14>\n\nStatus Code: ",
+    "error_code": -200077
+  }
+}
