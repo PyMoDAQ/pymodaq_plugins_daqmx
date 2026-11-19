@@ -11,4 +11,6 @@ and a simulated device created in NI MAX (for instance a PCIe-6363):
     pip install nidaqmx
     python contract_check.py Dev1
 
-The result is written to `contract_report.json` next to the script. Re-run it when `nidaqmx` is upgraded.
+The result is written to `contract_report_<device>.json` next to the script.
+For a cDAQ chassis, run it on each module (`cDAQ1Mod1`, `cDAQ1Mod2`, ...) and not on the chassis itself,
+which has no channels of its own. Re-run it when `nidaqmx` is upgraded.
