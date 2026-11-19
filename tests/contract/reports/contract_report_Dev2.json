@@ -423,7 +423,19 @@
       0.0
     ]
   },
-  "analog_output_single_channel_write_shapes": {
+  "ao_one_channel_write_python_list": 4,
+  "ao_one_channel_write_numpy_1d": 4,
+  "ao_one_channel_write_numpy_2d_1xN": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Write cannot be performed, because the number of channels in the data does not match the number of channels in the task.\n\nWhen writing, supply data for all channels in the task. Alternatively, modify the task to contain the same number of channels as the data written.\n\nNumber of Channels in Task: 1\n",
+    "error_code": -200524
+  },
+  "ao_one_channel_write_numpy_2d_Nx1_transposed": {
     "exception": "DaqError",
     "bases": [
       "Error",
