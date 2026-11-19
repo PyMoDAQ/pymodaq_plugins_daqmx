@@ -4,7 +4,7 @@ Usage (Windows, driver NI-DAQmx + appareil simulé créé dans NI MAX) :
     pip install nidaqmx
     python contract_check.py [NomAppareil]      # ex. Dev1 ; défaut = premier appareil
 
-Écrit contract_report.json à côté du script. Rien d'autre n'est modifié.
+Écrit contract_report_<appareil>.json à côté du script. Rien d'autre n'est modifié.
 Chaque observation est isolée : une erreur ne bloque pas les suivantes.
 """
 import json
@@ -15,7 +15,9 @@ from pathlib import Path
 
 import nidaqmx
 import numpy as np
-from nidaqmx.constants import AcquisitionType, Edge, TerminalConfiguration
+from nidaqmx.constants import (AcquisitionType, CurrentUnits, Edge, RTDType, TemperatureUnits,
+                               TerminalConfiguration, ThermocoupleType, ResistanceConfiguration,
+                               ExcitationSource)
 from nidaqmx.system import System
 
 report = {"nidaqmx_version": getattr(nidaqmx, "__version__", "?"), "python": sys.version}
@@ -84,6 +86,34 @@ def shape_of(x):
     a = np.asarray(x)
     return {"type": type(x).__name__, "shape": list(a.shape), "dtype": str(a.dtype),
             "first": a.ravel()[:3].tolist()}
+
+
+@observe("ai_channel_kinds_probe")
+def _():
+    """For C series modules: which kind of AI channel the first channel accepts, and what a read gives."""
+    chans = list(d.ai_physical_chans.channel_names)
+    if not chans:
+        return "no AI channel on this device (for a chassis, run the script on a module, e.g. cDAQ1Mod1)"
+    ch = chans[0]
+    kinds = {
+        "voltage": lambda t: t.ai_channels.add_ai_voltage_chan(ch),
+        "current": lambda t: t.ai_channels.add_ai_current_chan(ch, units=CurrentUnits.AMPS),
+        "thermocouple": lambda t: t.ai_channels.add_ai_thrmcpl_chan(
+            ch, thermocouple_type=ThermocoupleType.K, units=TemperatureUnits.DEG_C),
+        "rtd": lambda t: t.ai_channels.add_ai_rtd_chan(
+            ch, rtd_type=RTDType.PT_3851, resistance_config=ResistanceConfiguration.THREE_WIRE,
+            current_excit_source=ExcitationSource.INTERNAL, current_excit_val=0.001),
+    }
+    out = {"channel": ch, "product_type": safe(lambda: d.product_type)}
+    for name, add in kinds.items():
+        try:
+            with nidaqmx.Task() as t:
+                add(t)
+                out[name] = shape_of(t.read())
+        except Exception as e:
+            out[name] = {"exception": type(e).__name__, "error_code": getattr(e, "error_code", None),
+                         "message": str(e)[:200]}
+    return out
 
 
 @observe("read_one_channel_finite_N_samples")
@@ -283,7 +313,7 @@ def _():
         return shape_of(t.read(number_of_samples_per_channel=3))
 
 
-out = Path(__file__).with_name("contract_report.json")
+out = Path(__file__).with_name(f"contract_report_{dev}.json")
 out.write_text(json.dumps(report, indent=2, default=str), encoding="utf-8")
 print(f"OK -> {out}")
 for k, v in report.items():
