@@ -154,10 +154,9 @@ class DoubleTask:
         import numpy as np
         array = np.asarray(data, dtype=float)
         nch = len(self.channels)
-        if nch == 1 and isinstance(data, np.ndarray):
-            # recorded on a PCIe-6363 (contract_report_Dev2.json): a numpy array written to a one-channel
-            # task was refused with -200524, whereas a plain list was accepted. Which of the 1D and the
-            # (1, N) array was refused is not known yet, so both are refused here: pass a list.
+        if nch == 1 and array.ndim == 2:
+            # recorded on a PCIe-6363 (contract_report_Dev2.json): a one-channel task accepts a python list or
+            # a 1D numpy array, and refuses a 2D numpy array, whether shaped (1, N) or (N, 1)
             raise nidaqmx.DaqError('Write cannot be performed, because the number of channels in the data '
                                    'does not match the number of channels in the task.', -200524)
         if nch > 1 and (array.ndim != 2 or array.shape[0] != nch):

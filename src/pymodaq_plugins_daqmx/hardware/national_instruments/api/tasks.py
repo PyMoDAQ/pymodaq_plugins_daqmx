@@ -90,7 +90,7 @@ class AnalogOutputTask(_Task):
         if array.ndim != 2 or array.shape[0] != nch:
             raise ValueError(f'the task has {nch} channels: data must be shaped ({nch}, samples), '
                              f'got {array.shape}')
-        # a single channel takes a plain list: a numpy array was refused by the driver on a one-channel task
+        # a single channel takes a 1D sequence: the driver refuses a 2D array on a one-channel task
         self._task.write(array[0].tolist() if nch == 1 else array, auto_start=False)
 
 
