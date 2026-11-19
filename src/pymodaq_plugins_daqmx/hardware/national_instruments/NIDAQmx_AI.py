@@ -36,7 +36,6 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
         {'title': 'Nsamples:', 'name': 'Nsamples', 'type': 'int', 'value': 100, 'default': 100, 'min': 1},
     ]
     hardware_averaging = True
-    live_mode_available = True
     data_name = 'NI AI'
 
     def ini_attributes(self):
