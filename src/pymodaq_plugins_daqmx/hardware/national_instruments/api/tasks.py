@@ -11,6 +11,7 @@ class _Task:
         if self.needs_timing and config.timing is None:
             raise ValueError(f'{type(self).__name__} needs a timing in its configuration')
         self.config = config
+        self._callbacks = []  # the driver does not keep the callbacks it is given: the task must
         self._task = nidaqmx.Task()
         try:
             for channel in config.channels:
@@ -22,6 +23,27 @@ class _Task:
         except Exception:
             self._task.close()
             raise
+
+    def on_done(self, status):
+        """Called from a driver thread when the task is done. ``status`` is 0 on success. Override it."""
+
+    def on_samples(self, data):
+        """Called from a driver thread with each block of samples shaped (channels, samples). Override it."""
+
+    def start(self, notify_every=None):
+        """Start the task. With ``notify_every=n``, ``on_samples`` gets each block of n samples per channel."""
+        def done(task_handle, status, callback_data):
+            self.on_done(status)
+            return 0
+
+        self._callbacks.append(done)
+        self._task.register_done_event(done)
+        if notify_every is not None:
+            self._register_samples_event(notify_every)
+        self._task.start()
+
+    def _register_samples_event(self, notify_every):
+        raise NotImplementedError(f'{type(self).__name__} cannot notify about samples')
 
     def close(self):
         self._task.close()
@@ -41,6 +63,15 @@ class AnalogInputTask(_Task):
         samples = self.config.timing.samples
         data = self._task.read(number_of_samples_per_channel=samples)
         return np.asarray(data, dtype=np.float64).reshape(len(self.config.channels), samples)
+
+    def _register_samples_event(self, notify_every):
+        def samples_acquired(task_handle, event_type, number_of_samples, callback_data):
+            data = self._task.read(number_of_samples_per_channel=number_of_samples)
+            self.on_samples(np.asarray(data, dtype=np.float64).reshape(len(self.config.channels), -1))
+            return 0
+
+        self._callbacks.append(samples_acquired)
+        self._task.register_every_n_samples_acquired_into_buffer_event(notify_every, samples_acquired)
 
 
 class AnalogOutputTask(_Task):

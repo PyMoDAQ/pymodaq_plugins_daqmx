@@ -4,6 +4,9 @@ Its behaviour copies what ``tests/contract/contract_check.py`` recorded on NI MA
 (nidaqmx 1.7.0): the shape returned by ``task.read`` depends on the number of channels and samples,
 and every driver error is a ``nidaqmx.DaqError`` carrying an ``error_code``.
 """
+import threading
+import weakref
+
 import nidaqmx
 import pytest
 
@@ -97,6 +100,8 @@ class DoubleTask:
         self.timing_calls = []
         self.trigger_calls = []
         self.closed = False
+        self.started = False
+        self.callback_threads = []
         self.ai_channels = _Channels(self)
         self.ao_channels = _AOChannels(self)
         self.writes = []
@@ -121,8 +126,34 @@ class DoubleTask:
         self.writes.append((array.tolist(), auto_start))
         return 1 if array.ndim == 0 else array.shape[-1]
 
+    def register_every_n_samples_acquired_into_buffer_event(self, sample_interval, callback_method):
+        # like a C driver, hold the callback weakly: whoever registers it must keep it alive
+        self._every_n = (sample_interval, weakref.ref(callback_method))
+
+    def register_done_event(self, callback_method):
+        self._done = weakref.ref(callback_method)
+
+    def _call_from_driver_thread(self, callback, *args):
+        """The driver calls back from a thread of its own, never from the caller's thread."""
+        callback = callback()
+        assert callback is not None, 'the callback was garbage collected: nobody kept a reference'
+        result = []
+        thread = threading.Thread(target=lambda: result.append(callback(*args)), name='driver')
+        thread.start()
+        thread.join()
+        self.callback_threads.append(thread.name)
+        return result[0]
+
+    def fire_samples(self):
+        """The driver has acquired another block of samples."""
+        interval, callback = self._every_n
+        return self._call_from_driver_thread(callback, 1234, 1, interval, None)
+
+    def fire_done(self, status=0):
+        return self._call_from_driver_thread(self._done, 1234, status, None)
+
     def start(self):
-        pass
+        self.started = True
 
     def stop(self):
         pass
