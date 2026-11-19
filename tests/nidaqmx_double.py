@@ -151,6 +151,8 @@ class DoubleTask:
         self.trigger_calls = []
         self.closed = False
         self.started = False
+        self.stops = 0
+        self.read_timeouts = []
         self.callback_threads = []
         self.ai_channels = _Channels(self)
         self.ao_channels = _AOChannels(self)
@@ -162,6 +164,7 @@ class DoubleTask:
 
     def read(self, number_of_samples_per_channel=None, timeout=10.0):
         n = number_of_samples_per_channel
+        self.read_timeouts.append(timeout)
         nch = len(self.channels)
         # values are chosen so that channel c, sample s reads c + s / 10
         if self.channels and self.channels[0][0] == 'di':
@@ -220,7 +223,8 @@ class DoubleTask:
         self.started = True
 
     def stop(self):
-        pass
+        self.stops += 1
+        self.started = False
 
     def close(self):
         self.closed = True

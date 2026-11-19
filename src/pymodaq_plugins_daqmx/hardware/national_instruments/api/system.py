@@ -36,6 +36,10 @@ class NIDAQSystem:
             raise ValueError(f'unknown kind {kind!r} of channel: use one of {sorted(_CHANNEL_KINDS)}')
         return list(self._device_property(device, _CHANNEL_KINDS[kind], lambda value: value.channel_names, []))
 
+    def all_channels(self, kind):
+        """Names of the channels of the given ``kind`` on all the devices, device after device."""
+        return [channel for device in self.devices() for channel in self.channels(device, kind)]
+
     def terminals(self, device):
         """Terminals of ``device`` (``/Dev1/PFI0``...), usable as clock or trigger sources."""
         return list(self._device_property(device, 'terminals', list, []))

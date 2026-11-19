@@ -57,6 +57,10 @@ class _Task:
     def _register_samples_event(self, notify_every):
         raise NotImplementedError(f'{type(self).__name__} cannot notify about samples')
 
+    def stop(self):
+        """Stop the task, which can then be started again."""
+        self._task.stop()
+
     def close(self):
         self._task.close()
 
@@ -70,10 +74,15 @@ class _Task:
 class AnalogInputTask(_Task):
     needs_timing = True
 
-    def read_analog(self):
-        """Read the configured number of samples as a float64 array shaped (channels, samples)."""
+    def read_analog(self, timeout: float = None):
+        """Read the configured number of samples as a float64 array shaped (channels, samples).
+
+        ``timeout`` (s) is how long to wait for the samples: by default the duration of the acquisition plus 5 s.
+        """
         samples = self.config.timing.samples
-        data = self._task.read(number_of_samples_per_channel=samples)
+        if timeout is None:
+            timeout = samples / self.config.timing.rate + 5.
+        data = self._task.read(number_of_samples_per_channel=samples, timeout=timeout)
         return np.asarray(data, dtype=np.float64).reshape(len(self.config.channels), samples)
 
     def _register_samples_event(self, notify_every):
