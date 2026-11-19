@@ -31,8 +31,9 @@ class ClockSettings:
 class ImplicitTiming:
     """No sample clock: the pace is given by the task itself, not by the onboard clock.
 
-    Use it for counter output (the pulse train is the signal) and for any task that needs no sample clock.
-    Continuous unless ``samples`` is given.
+    Use it for counter output: the counter itself generates the pulse train (continuous, or ``samples`` pulses).
+    For a counter input that is read on demand, give no timing at all (``timing=None``): each read returns the
+    count at the moment of the call. To count at a regular pace, use ``ClockSettings`` with a ``source``.
     """
     samples: Optional[int] = None
 
