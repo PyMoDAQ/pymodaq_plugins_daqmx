@@ -10,7 +10,7 @@ class DigitalEdgeTrigger:
     source: str
     edge: Edge = Edge.RISING
 
-    def apply(self, task):
+    def apply_to(self, task):
         task.triggers.start_trigger.cfg_dig_edge_start_trig(self.source, self.edge)
 
 
@@ -21,5 +21,5 @@ class AnalogEdgeTrigger:
     level: float
     slope: Slope = Slope.RISING
 
-    def apply(self, task):
+    def apply_to(self, task):
         task.triggers.start_trigger.cfg_anlg_edge_start_trig(self.source, self.slope, self.level)

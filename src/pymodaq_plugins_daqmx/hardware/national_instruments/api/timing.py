@@ -22,21 +22,25 @@ class ClockSettings:
         if not self.samples >= 1:
             raise ValueError(f'samples must be at least 1, got {self.samples}')
 
-    def apply(self, task):
+    def apply_to(self, task):
         task.timing.cfg_samp_clk_timing(self.rate, source=self.source, active_edge=self.edge,
                                         sample_mode=AcquisitionType.FINITE, samps_per_chan=self.samples)
 
 
 @dataclass(frozen=True)
 class ImplicitTiming:
-    """No sample clock: the task runs on its own signal. Continuous unless ``samples`` is given."""
+    """No sample clock: the pace is given by the task itself, not by the onboard clock.
+
+    Use it for counter output (the pulse train is the signal) and for any task that needs no sample clock.
+    Continuous unless ``samples`` is given.
+    """
     samples: Optional[int] = None
 
     def __post_init__(self):
         if self.samples is not None and not self.samples >= 1:
             raise ValueError(f'samples must be at least 1, got {self.samples}')
 
-    def apply(self, task):
+    def apply_to(self, task):
         if self.samples is None:
             task.timing.cfg_implicit_timing(sample_mode=AcquisitionType.CONTINUOUS)
         else:
@@ -45,7 +49,12 @@ class ImplicitTiming:
 
 @dataclass(frozen=True)
 class ChangeDetectionSettings:
-    """Sample on transitions of digital lines. Continuous unless ``samples`` is given."""
+    """Sample a digital input task on transitions of the chosen lines, instead of on a clock.
+
+    Example: ``TaskConfig((DigitalIn('Dev1/port0/line0'),),
+    timing=ChangeDetectionSettings(rising_lines=('Dev1/port0/line0',)))``, run with a ``DigitalTask``.
+    Continuous unless ``samples`` is given.
+    """
     rising_lines: Tuple[str, ...] = ()
     falling_lines: Tuple[str, ...] = ()
     samples: Optional[int] = None
@@ -58,7 +67,7 @@ class ChangeDetectionSettings:
         if self.samples is not None and not self.samples >= 1:
             raise ValueError(f'samples must be at least 1, got {self.samples}')
 
-    def apply(self, task):
+    def apply_to(self, task):
         mode = AcquisitionType.CONTINUOUS if self.samples is None else AcquisitionType.FINITE
         task.timing.cfg_change_detection_timing(
             rising_edge_chan=','.join(self.rising_lines), falling_edge_chan=','.join(self.falling_lines),

@@ -1,37 +1,47 @@
 """Typed tasks, created from a ``TaskConfig``."""
+from typing import Callable, List
+
 import nidaqmx
 import numpy as np
+
+from .config import TaskConfig
 
 
 class _Task:
     """What every typed task shares: a ``nidaqmx.Task`` built from a config, released on error and on close."""
     needs_timing = False
 
-    def __init__(self, config):
+    def __init__(self, config: TaskConfig):
         if self.needs_timing and config.timing is None:
             raise ValueError(f'{type(self).__name__} needs a timing in its configuration')
-        self.config = config
-        self._callbacks = []  # the driver does not keep the callbacks it is given: the task must
+        self.config: TaskConfig = config
+        self._callbacks: List[Callable] = []  # the driver does not keep the callbacks it is given: the task must
         self._task = nidaqmx.Task()
         try:
             for channel in config.channels:
                 channel.add_to(self._task)
             if config.timing is not None:
-                config.timing.apply(self._task)
+                config.timing.apply_to(self._task)
             if config.trigger is not None:
-                config.trigger.apply(self._task)
+                config.trigger.apply_to(self._task)
         except Exception:
             self._task.close()
             raise
 
-    def on_done(self, status):
+    def on_done(self, status: int):
         """Called from a driver thread when the task is done. ``status`` is 0 on success. Override it."""
 
-    def on_samples(self, data):
-        """Called from a driver thread with each block of samples shaped (channels, samples). Override it."""
+    def on_samples_ready(self, data: np.ndarray):
+        """Called from a driver thread with each block of samples shaped (channels, samples). Override it.
 
-    def start(self, notify_every=None):
-        """Start the task. With ``notify_every=n``, ``on_samples`` gets each block of n samples per channel."""
+        Blocks arrive while the task runs, every ``notify_every`` samples per channel (see ``start``). The driver
+        runs each callback on its own thread: do not assume an order between this and ``on_done``.
+        """
+
+    def start(self, notify_every: int = None):
+        """Start the task. With ``notify_every=n``, ``on_samples_ready`` gets each block of n samples per channel."""
+        # the driver calls back with (task handle, status, callback_data); the last one is a user pointer
+        # that we never use, the public hook is ``on_done``
         def done(task_handle, status, callback_data):
             self.on_done(status)
             return 0
@@ -65,9 +75,10 @@ class AnalogInputTask(_Task):
         return np.asarray(data, dtype=np.float64).reshape(len(self.config.channels), samples)
 
     def _register_samples_event(self, notify_every):
+        # same driver signature as ``done``; the public hook is ``on_samples_ready``
         def samples_acquired(task_handle, event_type, number_of_samples, callback_data):
             data = self._task.read(number_of_samples_per_channel=number_of_samples)
-            self.on_samples(np.asarray(data, dtype=np.float64).reshape(len(self.config.channels), -1))
+            self.on_samples_ready(np.asarray(data, dtype=np.float64).reshape(len(self.config.channels), -1))
             return 0
 
         self._callbacks.append(samples_acquired)
@@ -113,7 +124,7 @@ class CounterOutputTask(_Task):
 class DigitalTask(_Task):
     """Reads digital input lines or drives digital output lines (not both in one task)."""
 
-    def __init__(self, config):
+    def __init__(self, config: TaskConfig):
         from .channels import DigitalIn, DigitalOut
         kinds = {type(channel) for channel in config.channels}
         if kinds - {DigitalIn, DigitalOut}:

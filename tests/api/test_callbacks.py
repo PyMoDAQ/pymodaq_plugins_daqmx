@@ -20,7 +20,7 @@ class Recorder(AnalogInputTask):
         self.done = []
         self.threads = []
 
-    def on_samples(self, data):
+    def on_samples_ready(self, data):
         self.blocks.append(data)
         self.threads.append(threading.current_thread().name)
 
@@ -33,7 +33,7 @@ def make(driver):
     return Recorder(config), driver[-1]
 
 
-def test_on_samples_receives_each_block_as_a_2d_array(driver):
+def test_on_samples_ready_receives_each_block_as_a_2d_array(driver):
     task, nidaqmx_task = make(driver)
 
     task.start(notify_every=2)
