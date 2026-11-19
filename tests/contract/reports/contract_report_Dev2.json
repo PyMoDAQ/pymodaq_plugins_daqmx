@@ -560,5 +560,20 @@
       "error_code": -89120,
       "message": "Source terminal to be routed could not be found on the device.\n\nMake sure the terminal name is valid for the specified device. Refer to Measurement & Automation Explorer for valid terminal names.\n\nPro"
     }
+  },
+  "counter_input_clocked_by_counter_output": {
+    "clock_terminal": "/Dev2/Ctr1InternalOutput",
+    "read": {
+      "type": "list",
+      "shape": [
+        5
+      ],
+      "dtype": "float64",
+      "first": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
   }
 }
