@@ -8,12 +8,17 @@ import nidaqmx
 import pytest
 
 
+KNOWN_AI_CHANNELS = {f"Dev{d}/ai{c}" for d in (1, 2) for c in range(8)}
+
+
 class _Channels:
     def __init__(self, task):
         self._task = task
 
     def add_ai_voltage_chan(self, physical_channel, name_to_assign_to_channel="", terminal_config=None,
                             min_val=-5.0, max_val=5.0, units=None, custom_scale_name=None):
+        if physical_channel not in KNOWN_AI_CHANNELS:
+            raise nidaqmx.DaqError('Physical channel specified does not exist on this device.', -200170)
         self._task.channels.append(('ai_voltage', physical_channel, dict(
             terminal_config=terminal_config, min_val=min_val, max_val=max_val)))
 

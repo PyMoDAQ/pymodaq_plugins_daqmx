@@ -7,9 +7,13 @@ class AnalogInputTask:
     def __init__(self, config):
         self.config = config
         self._task = nidaqmx.Task()
-        for channel in config.channels:
-            channel.add_to(self._task)
-        config.timing.apply(self._task)
+        try:
+            for channel in config.channels:
+                channel.add_to(self._task)
+            config.timing.apply(self._task)
+        except Exception:
+            self._task.close()
+            raise
 
     def read_analog(self):
         """Read the configured number of samples as a float64 array shaped (channels, samples)."""
