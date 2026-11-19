@@ -157,6 +157,8 @@ class DoubleTask:
         self.stops = 0
         self.read_timeouts = []
         self.callback_threads = []
+        self._every_n = None
+        self._done = None
         self.ai_channels = _Channels(self)
         self.ao_channels = _AOChannels(self)
         self.di_channels = self.do_channels = _DigitalChannels(self)
@@ -202,10 +204,17 @@ class DoubleTask:
 
     def register_every_n_samples_acquired_into_buffer_event(self, sample_interval, callback_method):
         # like a C driver, hold the callback weakly: whoever registers it must keep it alive
-        self._every_n = (sample_interval, weakref.ref(callback_method))
+        # a callback of None unregisters, as in the driver, which refuses to register an event twice
+        if callback_method is not None and self._every_n is not None:
+            raise nidaqmx.DaqError('Every N Samples Event registration has failed because the event is already '
+                                   'registered within the task.', -200949)
+        self._every_n = None if callback_method is None else (sample_interval, weakref.ref(callback_method))
 
     def register_done_event(self, callback_method):
-        self._done = weakref.ref(callback_method)
+        if callback_method is not None and self._done is not None:
+            raise nidaqmx.DaqError('Done Event registration has failed because the event is already registered '
+                                   'within the task.', -200950)
+        self._done = None if callback_method is None else weakref.ref(callback_method)
 
     def _call_from_driver_thread(self, callback, *args):
         """The driver calls back from a thread of its own, never from the caller's thread."""
