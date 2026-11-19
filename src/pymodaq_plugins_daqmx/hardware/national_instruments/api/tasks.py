@@ -80,6 +80,9 @@ class AnalogInputTask(_Task):
         ``timeout`` (s) is how long to wait for the samples: by default the duration of the acquisition plus 5 s.
         """
         samples = self.config.timing.samples
+        if samples is None:
+            raise ValueError('a continuous acquisition cannot be read in one go: use start(notify_every=n) '
+                             'and on_samples_ready')
         if timeout is None:
             timeout = samples / self.config.timing.rate + 5.
         data = self._task.read(number_of_samples_per_channel=samples, timeout=timeout)

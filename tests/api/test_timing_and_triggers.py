@@ -64,3 +64,18 @@ def test_only_a_counter_has_a_terminal_of_pulses():
 
     with pytest.raises(ValueError, match='counter'):
         counter_output_terminal('Dev2/ao0')
+
+
+def test_without_a_number_of_samples_the_acquisition_is_continuous(driver):
+    task, nidaqmx_task = open_task(driver, timing=ClockSettings(rate=2000.))
+
+    (call,) = nidaqmx_task.timing_calls
+    assert call[2]['sample_mode'] == AcquisitionType.CONTINUOUS
+    assert call[2]['samps_per_chan'] >= 2000  # the driver buffer holds at least one second
+
+
+def test_a_continuous_acquisition_cannot_be_read_in_one_go(driver):
+    task, _ = open_task(driver, timing=ClockSettings(rate=2000.))
+
+    with pytest.raises(ValueError, match='continuous'):
+        task.read_analog()
