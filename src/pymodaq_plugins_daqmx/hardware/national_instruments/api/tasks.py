@@ -16,6 +16,8 @@ class _Task:
             raise ValueError(f'{type(self).__name__} needs a timing in its configuration')
         self.config: TaskConfig = config
         self._callbacks: List[Callable] = []  # the driver does not keep the callbacks it is given: the task must
+        self._done_registered = False
+        self._samples_interval: Optional[int] = None  # block size of the registered samples event, if any
         self._task = nidaqmx.Task()
         try:
             for channel in config.channels:
@@ -41,7 +43,19 @@ class _Task:
         """
 
     def start(self, notify_every: int = None):
-        """Start the task. With ``notify_every=n``, ``on_samples_ready`` gets each block of n samples per channel."""
+        """Start the task. With ``notify_every=n``, ``on_samples_ready`` gets each block of n samples per channel.
+
+        The task can be started again after ``stop()``, with another ``notify_every``.
+        """
+        self._register_done_event()
+        if notify_every != self._samples_interval:
+            self._set_samples_event(notify_every)
+        self._task.start()
+
+    def _register_done_event(self):
+        if self._done_registered:  # the driver refuses to register an event twice
+            return
+
         # the driver calls back with (task handle, status, callback_data); the last one is a user pointer
         # that we never use, the public hook is ``on_done``
         def done(task_handle, status, callback_data):
@@ -50,9 +64,18 @@ class _Task:
 
         self._callbacks.append(done)
         self._task.register_done_event(done)
+        self._done_registered = True
+
+    def _set_samples_event(self, notify_every):
+        if self._samples_interval is not None:
+            self._unregister_samples_event(self._samples_interval)
+            self._samples_interval = None
         if notify_every is not None:
             self._register_samples_event(notify_every)
-        self._task.start()
+            self._samples_interval = notify_every
+
+    def _unregister_samples_event(self, interval):
+        self._task.register_every_n_samples_acquired_into_buffer_event(interval, None)
 
     def _register_samples_event(self, notify_every):
         raise NotImplementedError(f'{type(self).__name__} cannot notify about samples')

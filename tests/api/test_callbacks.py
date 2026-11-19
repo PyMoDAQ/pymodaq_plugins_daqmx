@@ -71,3 +71,37 @@ def test_the_task_keeps_the_registered_callbacks_alive(driver):
     nidaqmx_task.fire_done(0)
 
     assert len(task.blocks) == 1 and task.done == [0]
+
+
+def test_the_task_can_be_started_again_and_still_reports(driver):
+    task, nidaqmx_task = make(driver)
+    task.start(notify_every=2)
+    task.stop()
+
+    task.start(notify_every=2)  # the driver refuses to register an event twice
+
+    nidaqmx_task.fire_samples()
+    nidaqmx_task.fire_done(0)
+    assert len(task.blocks) == 1 and task.done == [0]
+    assert nidaqmx_task.starts == 2
+
+
+def test_the_block_size_can_change_between_two_runs(driver):
+    task, nidaqmx_task = make(driver)
+    task.start(notify_every=2)
+    task.stop()
+
+    task.start(notify_every=3)
+
+    nidaqmx_task.fire_samples()
+    assert nidaqmx_task._every_n[0] == 3 and len(task.blocks) == 1
+
+
+def test_a_run_without_blocks_after_a_run_with_blocks_stops_the_notifications(driver):
+    task, nidaqmx_task = make(driver)
+    task.start(notify_every=2)
+    task.stop()
+
+    task.start()
+
+    assert nidaqmx_task._every_n is None

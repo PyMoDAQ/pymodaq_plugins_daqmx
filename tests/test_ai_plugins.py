@@ -81,3 +81,10 @@ class TestDualAI:
         assert [float(d.mean()) for d in dte[0].data] == pytest.approx([0.35, 1.35])  # channel c, sample s: c + s/10
         assert dte[0].data[0].shape == (8,)
         plugin.close()
+
+
+@pytest.mark.parametrize('plugin_class', [DAQ_0DViewer_DAQmxAI, DAQ_0DViewer_DAQmxDualAI])
+def test_live_grab_is_repeated_by_the_viewer(plugin_class):
+    # a plugin that claims a live mode must keep emitting by itself after one grab_data call; these plugins
+    # make one acquisition per call, so the viewer has to call them again for each data
+    assert plugin_class.live_mode_available is False
