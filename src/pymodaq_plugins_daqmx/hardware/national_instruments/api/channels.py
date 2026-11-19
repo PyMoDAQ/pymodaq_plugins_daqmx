@@ -84,3 +84,33 @@ class AIRtd:
             rtd_type=self.rtd_type, resistance_config=self.resistance_config,
             current_excit_source=ExcitationSource.INTERNAL, current_excit_val=self.excitation_current,
             r_0=self.r_0)
+
+
+@dataclass(frozen=True)
+class AOVoltage:
+    """Analog output generating a voltage on a physical channel such as ``Dev2/ao0``."""
+    name: str
+    min_val: float = -10.
+    max_val: float = 10.
+
+    def __post_init__(self):
+        _check_range(self.min_val, self.max_val)
+
+    def add_to(self, task):
+        task.ao_channels.add_ao_voltage_chan(self.name, min_val=self.min_val, max_val=self.max_val,
+                                             units=VoltageUnits.VOLTS)
+
+
+@dataclass(frozen=True)
+class AOCurrent:
+    """Analog output generating a current, in amperes."""
+    name: str
+    min_val: float = 0.
+    max_val: float = 0.02
+
+    def __post_init__(self):
+        _check_range(self.min_val, self.max_val)
+
+    def add_to(self, task):
+        task.ao_channels.add_ao_current_chan(self.name, min_val=self.min_val, max_val=self.max_val,
+                                             units=CurrentUnits.AMPS)

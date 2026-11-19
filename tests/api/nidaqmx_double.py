@@ -8,6 +8,7 @@ import nidaqmx
 import pytest
 
 
+KNOWN_AO_CHANNELS = {f"Dev2/ao{c}" for c in range(4)}
 KNOWN_AI_CHANNELS = {f"Dev{d}/ai{c}" for d in (1, 2) for c in range(8)}
 
 
@@ -45,6 +46,24 @@ class _Channels:
                   current_excit_source=current_excit_source, current_excit_val=current_excit_val, r_0=r_0)
 
 
+class _AOChannels:
+    def __init__(self, task):
+        self._task = task
+
+    def _add(self, kind, physical_channel, **settings):
+        if physical_channel not in KNOWN_AO_CHANNELS:
+            raise nidaqmx.DaqError('Physical channel specified does not exist on this device.', -200170)
+        self._task.channels.append((kind, physical_channel, settings))
+
+    def add_ao_voltage_chan(self, physical_channel, name_to_assign_to_channel="", min_val=-5.0, max_val=5.0,
+                            units=None, custom_scale_name=None):
+        self._add('ao_voltage', physical_channel, min_val=min_val, max_val=max_val)
+
+    def add_ao_current_chan(self, physical_channel, name_to_assign_to_channel="", min_val=0.0, max_val=0.02,
+                            units=None, custom_scale_name=None):
+        self._add('ao_current', physical_channel, min_val=min_val, max_val=max_val)
+
+
 class _Timing:
     def __init__(self, task):
         self._task = task
@@ -79,6 +98,8 @@ class DoubleTask:
         self.trigger_calls = []
         self.closed = False
         self.ai_channels = _Channels(self)
+        self.ao_channels = _AOChannels(self)
+        self.writes = []
         self.timing = _Timing(self)
         self.triggers = _Triggers(self)
 
@@ -88,6 +109,17 @@ class DoubleTask:
         # values are chosen so that channel c, sample s reads c + s / 10
         rows = [[c + s / 10 for s in range(n)] for c in range(nch)]
         return rows[0] if nch == 1 else rows
+
+    def write(self, data, auto_start=False, timeout=10.0):
+        """Like nidaqmx: the data must hold one row per channel; returns the samples written per channel."""
+        import numpy as np
+        array = np.asarray(data, dtype=float)
+        nch = len(self.channels)
+        if nch > 1 and (array.ndim != 2 or array.shape[0] != nch):
+            raise nidaqmx.DaqError('Write cannot be performed, because the number of channels in the data '
+                                   'does not match the number of channels in the task.', -200524)
+        self.writes.append((array.tolist(), auto_start))
+        return 1 if array.ndim == 0 else array.shape[-1]
 
     def start(self):
         pass

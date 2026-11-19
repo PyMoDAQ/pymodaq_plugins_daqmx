@@ -6,7 +6,7 @@ from typing import Tuple
 @dataclass(frozen=True)
 class TaskConfig:
     channels: Tuple
-    timing: object
+    timing: object = None
     trigger: object = None
 
     def __post_init__(self):
