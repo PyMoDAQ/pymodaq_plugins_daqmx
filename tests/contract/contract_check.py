@@ -44,25 +44,40 @@ if dev is None:
 d = system.devices[dev]
 
 
-@observe("system_info")
-def _():
-    return {
-        "product_type": d.product_type,
-        "is_simulated": d.is_simulated,
-        "ai_physical_chans": list(d.ai_physical_chans.channel_names),
-        "ao_physical_chans": list(d.ao_physical_chans.channel_names),
-        "ci_physical_chans": list(d.ci_physical_chans.channel_names),
-        "co_physical_chans": list(d.co_physical_chans.channel_names),
-        "di_lines": list(d.di_lines.channel_names)[:4],
-        "do_lines": list(d.do_lines.channel_names)[:4],
-        "terminals_sample": list(d.terminals)[:6],
-        "ai_voltage_rngs": [list(map(float, d.ai_voltage_rngs[i:i + 2])) for i in range(0, len(d.ai_voltage_rngs), 2)],
-        "ao_voltage_rngs": [list(map(float, d.ao_voltage_rngs[i:i + 2])) for i in range(0, len(d.ao_voltage_rngs), 2)],
-        "ai_max_multi_chan_rate": d.ai_max_multi_chan_rate,
-        "ai_max_single_chan_rate": d.ai_max_single_chan_rate,
-        "ao_max_rate": d.ao_max_rate,
-        "ai_trig_usage": [str(x) for x in d.ai_trig_usage],
-    }
+def safe(fn):
+    try:
+        v = fn()
+        return v if v is None or isinstance(v, (int, float, str, bool, dict)) else list(v)
+    except Exception as e:
+        return {"exception": type(e).__name__, "error_code": getattr(e, "error_code", None),
+                "message": str(e)[:200]}
+
+
+def rngs(flat):
+    flat = list(map(float, flat))
+    return [flat[i:i + 2] for i in range(0, len(flat), 2)]
+
+
+# one entry per property: a property the device does not support must not hide the others
+report["system_info"] = {
+    "product_type": safe(lambda: d.product_type),
+    "is_simulated": safe(lambda: d.is_simulated),
+    "ai_physical_chans": safe(lambda: d.ai_physical_chans.channel_names),
+    "ao_physical_chans": safe(lambda: d.ao_physical_chans.channel_names),
+    "ci_physical_chans": safe(lambda: d.ci_physical_chans.channel_names),
+    "co_physical_chans": safe(lambda: d.co_physical_chans.channel_names),
+    "di_lines": safe(lambda: list(d.di_lines.channel_names)[:4]),
+    "do_lines": safe(lambda: list(d.do_lines.channel_names)[:4]),
+    "terminals_sample": safe(lambda: list(d.terminals)[:6]),
+    "ai_voltage_rngs": safe(lambda: rngs(d.ai_voltage_rngs)),
+    "ao_voltage_rngs": safe(lambda: rngs(d.ao_voltage_rngs)),
+    "ai_current_rngs": safe(lambda: rngs(d.ai_current_rngs)),
+    "ai_max_multi_chan_rate": safe(lambda: d.ai_max_multi_chan_rate),
+    "ai_max_single_chan_rate": safe(lambda: d.ai_max_single_chan_rate),
+    "ao_max_rate": safe(lambda: d.ao_max_rate),
+    "ai_trig_usage": safe(lambda: [str(x) for x in d.ai_trig_usage]),
+    "di_trig_usage": safe(lambda: [str(x) for x in d.di_trig_usage]),
+}
 
 
 def shape_of(x):
@@ -261,7 +276,7 @@ def _():
     return out
 
 
-@observe("read_after_wait_until_done_with_nan_check")
+@observe("unsupported_terminal_config_rse")
 def _():
     with nidaqmx.Task() as t:
         t.ai_channels.add_ai_voltage_chan(f"{dev}/ai0", terminal_config=TerminalConfiguration.RSE)
