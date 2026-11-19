@@ -1,6 +1,4 @@
 """Base class of the thin analog input viewers (AI and DualAI) built on top of the NIDAQmx wrapper."""
-from collections import deque
-
 import numpy as np
 
 from pymodaq.control_modules.viewer_utility_classes import DAQ_Viewer_base, comon_parameters
@@ -70,10 +68,6 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
         """Points of one acquisition: the averaging of the viewer in 0D, the length of the trace in 1D."""
         return self.Naverage if self.settings['display'] == '0D' else self.settings['Nsamples']
 
-    def traces_to_average(self) -> int:
-        """Number of acquisitions averaged by the plugin: in 0D, the averaging is done within the acquisition."""
-        return 1 if self.settings['display'] == '0D' else self.Naverage
-
     def update_tasks(self, streaming=False):
         """Replace the task by one that follows the settings: finite for a snap, continuous for the live mode."""
         self.close()
@@ -100,38 +94,60 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
             return
         if self.controller.config.timing.samples != self.samples_per_block():
             self.update_tasks()  # the 0D acquisition follows the Naverage of the viewer
-        traces = self.traces_to_average()
-        self.emit_data(sum(self.read_samples() for _ in range(traces)) / traces)
+        if self.settings['display'] == '0D':
+            self.emit_points(self.read_samples())
+        else:
+            self.emit_traces([self.read_samples() for _ in range(Naverage)])
 
     def start_live(self):
-        """Acquire continuously: each block of Nsamples is emitted as a data (1D: mean of the last Naverage traces)."""
+        """Acquire continuously: 0D, one data per block of Naverage points; 1D, one data per Naverage traces."""
         self.stop_live()
         self.update_tasks(streaming=True)  # a stopped task still reserves its channels: no snap task in parallel
-        self._recent_blocks = deque(maxlen=self.traces_to_average())
+        self._traces = []
         self._bridge = QtTaskBridge(self.controller)
-        self._bridge.samples_ready.connect(self._emit_block)
+        self._bridge.samples_ready.connect(self._on_block)
         self.controller.start(notify_every=self.samples_per_block())
 
     def stop_live(self):
         if self._bridge is not None:
-            self._bridge.samples_ready.disconnect(self._emit_block)
+            self._bridge.samples_ready.disconnect(self._on_block)
             self._bridge = None
             self.update_tasks()  # back to the task of the snaps
 
-    def _emit_block(self, block: np.ndarray):
-        self._recent_blocks.append(block)
-        self.emit_data(sum(self._recent_blocks) / len(self._recent_blocks))
+    def _on_block(self, block: np.ndarray):
+        if self.settings['display'] == '0D':
+            self.emit_points(block)
+            return
+        self._traces.append(block)
+        if len(self._traces) >= self.Naverage:  # the traces are averaged, emitted, then a new series starts
+            traces, self._traces = self._traces, []
+            self.emit_traces(traces)
 
-    def emit_data(self, data: np.ndarray):
+    @staticmethod
+    def _standard_error(values: np.ndarray, axis: int, keepdims: bool = False):
+        """Standard error of the mean along ``axis``; None if there is a single value."""
+        n = values.shape[axis]
+        return values.std(axis=axis, ddof=1, keepdims=keepdims) / np.sqrt(n) if n > 1 else None
+
+    def emit_points(self, block: np.ndarray):
+        """0D data: the mean of the points of the block (channels, points), with its standard error."""
+        self.emit_data(block.mean(axis=1, keepdims=True), self._standard_error(block, axis=1, keepdims=True))
+
+    def emit_traces(self, traces: list):
+        """1D data: the mean of the traces (each shaped (channels, points)), with its standard error."""
+        stack = np.stack(traces)
+        self.emit_data(stack.mean(axis=0), self._standard_error(stack, axis=0))
+
+    def emit_data(self, data: np.ndarray, errors: np.ndarray = None):
         display = self.settings['display']
         if display == '0D':
-            data = data.mean(axis=1, keepdims=True)
             axes = []
         else:
             axes = [Axis('time', 's', data=np.arange(data.shape[1]) / self.settings['frequency'], index=0)]
         self.dte_signal.emit(DataToExport(self.data_name, data=[
             DataFromPlugins(name=self.data_name, data=[row for row in data], dim=f'Data{display}',
-                            labels=self.channel_labels, axes=axes)]))
+                            labels=self.channel_labels, axes=axes,
+                            errors=None if errors is None else [row for row in errors])]))
 
     def stop(self):
         try:

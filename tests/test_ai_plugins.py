@@ -133,21 +133,41 @@ class TestLive:
         plugin.stop()
         plugin.close()
 
-    def test_1d_live_emits_the_mean_of_the_last_naverage_traces(self, qapp, qtbot, driver):
+    def test_1d_live_emits_the_mean_and_error_of_naverage_traces_then_starts_again(self, qapp, qtbot, driver):
         import numpy as np
         plugin = make_detector(DAQ_0DViewer_DAQmxAI, ai_channel='Dev1/ai0', Nsamples=4)
         plugin.settings.child('display').setValue('1D')
         plugin.grab_data(Naverage=2, live=True)
         live_task = driver[-1]
-        blocks = iter([np.full((1, 4), 1.), np.full((1, 4), 3.), np.full((1, 4), 5.)])
-        live_task.read = lambda number_of_samples_per_channel=None, timeout=10.: next(blocks)[0].tolist()
-        means = []
-        for _ in range(3):
-            with qtbot.waitSignal(plugin.dte_signal, timeout=2000) as blocker:
-                live_task.fire_samples()
-            means.append(float(blocker.args[0][0].data[0][0]))
+        values = iter([1., 3., 5., 9.])
+        live_task.read = lambda number_of_samples_per_channel=None, timeout=10.: np.full(4, next(values)).tolist()
+        emitted = []
+        plugin.dte_signal.connect(emitted.append)
 
-        assert means == [1., 2., 4.]  # the first trace alone, then (1+3)/2, then (3+5)/2
+        for _ in range(4):
+            live_task.fire_samples()
+        qtbot.waitUntil(lambda: len(emitted) == 2, timeout=2000)
+
+        means = [float(dte[0].data[0][0]) for dte in emitted]
+        errors = [float(dte[0].errors[0][0]) for dte in emitted]
+        assert means == [2., 7.]  # (1+3)/2 then (5+9)/2: the traces are not reused
+        assert errors == pytest.approx([1., 2.])  # standard error of the mean: std(ddof=1) / sqrt(2)
+        plugin.stop()
+        plugin.close()
+
+    def test_0d_live_emits_the_mean_of_the_points_with_its_error(self, qapp, qtbot, driver):
+        import numpy as np
+        plugin = make_detector(DAQ_0DViewer_DAQmxAI, ai_channel='Dev1/ai0')
+        plugin.grab_data(Naverage=4, live=True)
+        live_task = driver[-1]
+        live_task.read = lambda number_of_samples_per_channel=None, timeout=10.: [1., 3., 1., 3.]
+
+        with qtbot.waitSignal(plugin.dte_signal, timeout=2000) as blocker:
+            live_task.fire_samples()
+
+        dte = blocker.args[0]
+        assert float(dte[0].data[0][0]) == 2.
+        assert float(dte[0].errors[0][0]) == pytest.approx(np.std([1., 3., 1., 3.], ddof=1) / 2)
         plugin.stop()
         plugin.close()
 
