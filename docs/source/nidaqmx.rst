@@ -1,3 +1,11 @@
+The NIDAQmx object (being replaced)
+===================================
+
+.. note::
+   The plugins are being ported to :doc:`the Python API <api/index>`, which replaces this object. Write new code with
+   the API; :doc:`api/migration` maps the names below to the new ones. This page describes the object while the
+   generic plugins still use it.
+
 The NIDAQmx object
 ==================
 
