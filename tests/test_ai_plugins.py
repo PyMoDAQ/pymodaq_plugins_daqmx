@@ -83,8 +83,81 @@ class TestDualAI:
         plugin.close()
 
 
-@pytest.mark.parametrize('plugin_class', [DAQ_0DViewer_DAQmxAI, DAQ_0DViewer_DAQmxDualAI])
-def test_live_grab_is_repeated_by_the_viewer(plugin_class):
-    # a plugin that claims a live mode must keep emitting by itself after one grab_data call; these plugins
-    # make one acquisition per call, so the viewer has to call them again for each data
-    assert plugin_class.live_mode_available is False
+class TestLive:
+    def test_each_block_of_samples_is_emitted_as_a_data_without_further_grab_calls(self, qapp, qtbot, driver):
+        from nidaqmx.constants import AcquisitionType
+        plugin = make_detector(DAQ_0DViewer_DAQmxAI, ai_channel='Dev1/ai0', Nsamples=10, frequency=100)
+        emitted = []
+        plugin.dte_signal.connect(emitted.append)
+
+        plugin.grab_data(Naverage=1, live=True)
+        live_task = driver[-1]
+        assert live_task.timing_calls[0][2]['sample_mode'] == AcquisitionType.CONTINUOUS
+        for _ in range(2):
+            with qtbot.waitSignal(plugin.dte_signal, timeout=2000):
+                live_task.fire_samples()
+
+        assert len(emitted) == 2
+        assert emitted[0][0].dim == 'Data0D'
+        assert float(emitted[0][0].data[0][0]) == pytest.approx(0.45)  # the double reads s / 10 for sample s
+        assert live_task.starts == 1  # one start, not one per data
+        plugin.stop()
+        plugin.close()
+
+    def test_1d_live_emits_the_trace_of_each_block(self, qapp, qtbot, driver):
+        plugin = make_detector(DAQ_0DViewer_DAQmxAI, ai_channel='Dev1/ai0', Nsamples=10, frequency=100)
+        plugin.settings.child('display').setValue('1D')
+        plugin.grab_data(live=True)
+
+        with qtbot.waitSignal(plugin.dte_signal, timeout=2000) as blocker:
+            driver[-1].fire_samples()
+
+        dte = blocker.args[0]
+        assert dte[0].dim == 'Data1D' and dte[0].data[0].shape == (10,)
+        assert dte[0].data[0][3] == pytest.approx(0.3)
+        plugin.stop()
+        plugin.close()
+
+    def test_the_data_is_the_mean_of_the_last_naverage_blocks(self, qapp, qtbot, driver):
+        import numpy as np
+        plugin = make_detector(DAQ_0DViewer_DAQmxAI, ai_channel='Dev1/ai0', Nsamples=4)
+        plugin.grab_data(Naverage=2, live=True)
+        live_task = driver[-1]
+        blocks = iter([np.full((1, 4), 1.), np.full((1, 4), 3.), np.full((1, 4), 5.)])
+        live_task.read = lambda number_of_samples_per_channel=None, timeout=10.: next(blocks)[0].tolist()
+        means = []
+        for _ in range(3):
+            with qtbot.waitSignal(plugin.dte_signal, timeout=2000) as blocker:
+                live_task.fire_samples()
+            means.append(float(blocker.args[0][0].data[0][0]))
+
+        assert means == [1., 2., 4.]  # the first block alone, then (1+3)/2, then (3+5)/2
+        plugin.stop()
+        plugin.close()
+
+    def test_stopping_the_live_gives_back_the_task_of_the_snaps(self, qapp, driver):
+        plugin = make_detector(DAQ_0DViewer_DAQmxAI, ai_channel='Dev1/ai0', Nsamples=5)
+        plugin.grab_data(live=True)
+        live_task = driver[-1]
+
+        plugin.stop()
+
+        assert live_task.closed  # a stopped task keeps its channels reserved: it must be closed
+        dte = grab_and_wait(plugin)
+        assert dte[0].dim == 'Data0D'
+        assert not driver[-1].closed and driver[-1] is not live_task
+        plugin.close()
+
+    def test_no_data_is_emitted_after_the_stop(self, qapp, qtbot, driver):
+        plugin = make_detector(DAQ_0DViewer_DAQmxAI, ai_channel='Dev1/ai0', Nsamples=5)
+        emitted = []
+        plugin.dte_signal.connect(emitted.append)
+        plugin.grab_data(live=True)
+        live_task = driver[-1]
+        live_task.fire_samples()  # queued, not yet delivered to the Qt thread
+
+        plugin.stop()
+        qtbot.wait(100)
+
+        assert emitted == []
+        plugin.close()
