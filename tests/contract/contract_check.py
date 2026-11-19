@@ -555,6 +555,27 @@ def _():
     return seen
 
 
+@observe("digital_edge_start_trigger_on_digital_line")
+def _():
+    """Is a digital line (not a PFI terminal) accepted as the source of a digital edge start trigger?"""
+    line = first(d.di_lines.channel_names)
+    if line is None:
+        return "no digital input line"
+    out = {}
+    for label, source in (("line_name", line), ("terminal_name", "/" + line)):
+        try:
+            with nidaqmx.Task() as t:
+                t.ai_channels.add_ai_voltage_chan(f"{dev}/ai0")
+                t.timing.cfg_samp_clk_timing(1000.0, sample_mode=AcquisitionType.FINITE, samps_per_chan=5)
+                t.triggers.start_trigger.cfg_dig_edge_start_trig(source, Edge.RISING)
+                t.start()
+                out[label] = {"source": source, "started": True}
+        except Exception as e:
+            out[label] = {"source": source, "exception": type(e).__name__,
+                          "error_code": getattr(e, "error_code", None), "message": str(e)[:200]}
+    return out
+
+
 out = Path(__file__).with_name(f"contract_report_{dev}.json")
 out.write_text(json.dumps(report, indent=2, default=str), encoding="utf-8")
 print(f"OK -> {out}")
