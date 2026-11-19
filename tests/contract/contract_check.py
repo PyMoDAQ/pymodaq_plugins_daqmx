@@ -16,7 +16,7 @@ from pathlib import Path
 import nidaqmx
 import numpy as np
 from nidaqmx.constants import (AcquisitionType, CurrentUnits, Edge, RTDType, TemperatureUnits,
-                               TerminalConfiguration, ThermocoupleType, ResistanceConfiguration,
+                               TerminalConfiguration, ThermocoupleType, LineGrouping, ResistanceConfiguration,
                                ExcitationSource)
 from nidaqmx.system import System
 
@@ -445,7 +445,8 @@ def _():
                         ("ndarray_bool", np.array([True, False])), ("scalar", True)):
         try:
             with nidaqmx.Task() as t:
-                t.do_channels.add_do_chan(f"{lines[0]}:{lines[1].split('/')[-1]}")
+                for line in lines[:2]:
+                    t.do_channels.add_do_chan(line, line_grouping=LineGrouping.CHAN_PER_LINE)
                 out[label] = t.write(data, auto_start=True)
         except Exception as e:
             out[label] = {"exception": type(e).__name__, "error_code": getattr(e, "error_code", None),
@@ -459,7 +460,8 @@ def _():
     if len(lines) < 2:
         return "fewer than two digital input lines"
     with nidaqmx.Task() as t:
-        t.di_channels.add_di_chan(f"{lines[0]}:{lines[1].split('/')[-1]}")
+        for line in lines[:2]:
+            t.di_channels.add_di_chan(line, line_grouping=LineGrouping.CHAN_PER_LINE)
         return shape_of(t.read())
 
 
