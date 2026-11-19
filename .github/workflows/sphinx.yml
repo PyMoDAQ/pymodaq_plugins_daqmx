@@ -32,7 +32,8 @@ jobs:
         run: touch docs/build/html/.nojekyll
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
-        if: ${{ github.event_name == 'push'}}
+        # only the default branch publishes: a force-orphan push from a feature branch would replace the site
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/5.3.x' }}
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: docs/build/html
