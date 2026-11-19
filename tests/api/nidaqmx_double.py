@@ -15,12 +15,34 @@ class _Channels:
     def __init__(self, task):
         self._task = task
 
-    def add_ai_voltage_chan(self, physical_channel, name_to_assign_to_channel="", terminal_config=None,
-                            min_val=-5.0, max_val=5.0, units=None, custom_scale_name=None):
+    def _add(self, kind, physical_channel, **settings):
         if physical_channel not in KNOWN_AI_CHANNELS:
             raise nidaqmx.DaqError('Physical channel specified does not exist on this device.', -200170)
-        self._task.channels.append(('ai_voltage', physical_channel, dict(
-            terminal_config=terminal_config, min_val=min_val, max_val=max_val)))
+        self._task.channels.append((kind, physical_channel, settings))
+
+    def add_ai_voltage_chan(self, physical_channel, name_to_assign_to_channel="", terminal_config=None,
+                            min_val=-5.0, max_val=5.0, units=None, custom_scale_name=None):
+        self._add('ai_voltage', physical_channel, terminal_config=terminal_config,
+                  min_val=min_val, max_val=max_val)
+
+    def add_ai_current_chan(self, physical_channel, name_to_assign_to_channel="", terminal_config=None,
+                            min_val=-0.02, max_val=0.02, units=None, shunt_resistor_loc=None,
+                            ext_shunt_resistor_val=249.0, custom_scale_name=None):
+        self._add('ai_current', physical_channel, terminal_config=terminal_config,
+                  min_val=min_val, max_val=max_val)
+
+    def add_ai_thrmcpl_chan(self, physical_channel, name_to_assign_to_channel="", min_val=0.0,
+                            max_val=100.0, units=None, thermocouple_type=None, cjc_source=None,
+                            cjc_val=25.0, cjc_channel=""):
+        self._add('ai_thermocouple', physical_channel, min_val=min_val, max_val=max_val, units=units,
+                  thermocouple_type=thermocouple_type)
+
+    def add_ai_rtd_chan(self, physical_channel, name_to_assign_to_channel="", min_val=0.0, max_val=100.0,
+                        units=None, rtd_type=None, resistance_config=None, current_excit_source=None,
+                        current_excit_val=0.0025, r_0=100.0):
+        self._add('ai_rtd', physical_channel, min_val=min_val, max_val=max_val, units=units,
+                  rtd_type=rtd_type, resistance_config=resistance_config,
+                  current_excit_source=current_excit_source, current_excit_val=current_excit_val, r_0=r_0)
 
 
 class _Timing:

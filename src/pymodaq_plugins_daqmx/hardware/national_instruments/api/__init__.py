@@ -2,10 +2,10 @@
 
 It never imports Qt nor the PyMoDAQ GUI. See the documentation for the stability promise.
 """
-from .channels import AIVoltage
+from .channels import AICurrent, AIRtd, AIThermocouple, AIVoltage
 from .config import TaskConfig
 from .tasks import AnalogInputTask
 from .timing import ClockSettings
 from .triggers import DigitalEdgeTrigger
 
-__all__ = ['AIVoltage', 'AnalogInputTask', 'ClockSettings', 'DigitalEdgeTrigger', 'TaskConfig']
+__all__ = ['AICurrent', 'AIRtd', 'AIThermocouple', 'AIVoltage', 'AnalogInputTask', 'ClockSettings', 'DigitalEdgeTrigger', 'TaskConfig']
