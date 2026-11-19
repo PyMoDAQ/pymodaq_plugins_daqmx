@@ -578,6 +578,32 @@ def _():
     return out
 
 
+@observe("counter_input_clocked_by_counter_output")
+def _():
+    """A counter output pulse train, routed internally, as the sample clock of a counter input."""
+    ctrs = [c for c in d.co_physical_chans.channel_names if "ctr" in c]
+    cins = list(d.ci_physical_chans.channel_names)
+    if len(ctrs) < 2 or not cins:
+        return "needs two counters"
+    co_chan = ctrs[1]
+    clock = "/" + co_chan.split("/")[0] + "/Ctr" + co_chan.split("ctr")[-1] + "InternalOutput"
+    out = {"clock_terminal": clock}
+    try:
+        with nidaqmx.Task() as ci, nidaqmx.Task() as co:
+            ci.ci_channels.add_ci_count_edges_chan(cins[0])
+            ci.timing.cfg_samp_clk_timing(1000.0, source=clock, sample_mode=AcquisitionType.FINITE,
+                                          samps_per_chan=5)
+            co.co_channels.add_co_pulse_chan_freq(co_chan, freq=1000.0, duty_cycle=0.5)
+            co.timing.cfg_implicit_timing(sample_mode=AcquisitionType.CONTINUOUS)
+            ci.start()
+            co.start()
+            out["read"] = shape_of(ci.read(number_of_samples_per_channel=5, timeout=1.0))
+    except Exception as e:
+        out["exception"] = {"type": type(e).__name__, "error_code": getattr(e, "error_code", None),
+                            "message": str(e)[:200]}
+    return out
+
+
 out = Path(__file__).with_name(f"contract_report_{dev}.json")
 out.write_text(json.dumps(report, indent=2, default=str), encoding="utf-8")
 print(f"OK -> {out}")
