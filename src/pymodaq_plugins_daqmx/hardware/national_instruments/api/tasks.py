@@ -34,8 +34,10 @@ class _Task:
     def on_samples_ready(self, data: np.ndarray):
         """Called from a driver thread with each block of samples shaped (channels, samples). Override it.
 
-        Blocks arrive while the task runs, every ``notify_every`` samples per channel (see ``start``). The driver
-        runs each callback on its own thread: do not assume an order between this and ``on_done``.
+        Called only if the task was started with ``start(notify_every=n)``: each block of n samples per channel is
+        read in the driver callback registered by ``_register_samples_event`` (analog input tasks only for now,
+        the other tasks raise ``NotImplementedError``).
+        The driver runs each callback on its own thread: do not assume an order between this and ``on_done``.
         """
 
     def start(self, notify_every: int = None):
