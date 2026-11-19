@@ -23,10 +23,19 @@ class QtTaskBridge(QtCore.QObject):
         super().__init__(parent)
         self.task = task
         # queued: whatever thread emits the private signals, the public ones are emitted from the bridge's thread
-        self._samples_from_driver.connect(self.samples_ready.emit, QtCore.Qt.QueuedConnection)
-        self._done_from_driver.connect(self.done.emit, QtCore.Qt.QueuedConnection)
+        self._samples_from_driver.connect(self._relay_samples, QtCore.Qt.QueuedConnection)
+        self._done_from_driver.connect(self._relay_done, QtCore.Qt.QueuedConnection)
         task.on_samples_ready = self._samples_from_driver.emit
         task.on_done = self._done_from_driver.emit
+
+    # slots of the bridge itself (not the ``emit`` of a signal): Qt drops the calls queued for a bridge that is gone
+    @QtCore.Slot(object)
+    def _relay_samples(self, data):
+        self.samples_ready.emit(data)
+
+    @QtCore.Slot(int)
+    def _relay_done(self, status):
+        self.done.emit(status)
 
     def start(self, notify_every: Optional[int] = None):
         self.task.start(notify_every=notify_every)
