@@ -116,6 +116,18 @@ class AnalogOutputTask(_Task):
         self._task.write(array[0].tolist() if nch == 1 else array, auto_start=False)
 
 
+    def write_levels(self, levels):
+        """Set every output to a DC level at once, one level per channel, and start the task."""
+        nch = len(self.config.channels)
+        levels = [float(level) for level in levels]
+        if len(levels) != nch:
+            raise ValueError(f'the task has {nch} channels: give {nch} levels, got {len(levels)}')
+        if nch == 1:
+            self._task.write(levels[0], auto_start=True)
+        else:
+            self._task.write(np.array(levels).reshape(nch, 1), auto_start=True)
+
+
 class CounterInputTask(_Task):
     def read_counter(self, samples=None):
         """Read counter values as a float64 array shaped (counters, samples).

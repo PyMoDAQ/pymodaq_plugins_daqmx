@@ -10,7 +10,7 @@ from nidaqmx.constants import Edge
 
 from pymodaq_plugins_daqmx.hardware.national_instruments.api import (
     CICountEdges, COPulseFreq, ClockSettings, CounterInputTask, CounterOutputTask, ImplicitTiming, NIDAQSystem,
-    TaskConfig)
+    TaskConfig, counter_output_terminal)
 
 logger = set_logger(get_module_name(__file__))
 
@@ -19,12 +19,6 @@ COUNTER_CHANNELS = NIDAQSystem().all_channels('ci')
 
 def _channel(index: int) -> str:
     return COUNTER_CHANNELS[min(index, len(COUNTER_CHANNELS) - 1)] if COUNTER_CHANNELS else ''
-
-
-def _internal_output(counter_channel: str) -> str:
-    """The terminal where a counter output sends its pulses, such as ``/Dev1/Ctr1InternalOutput``."""
-    device, counter = counter_channel.split('/')
-    return f'/{device}/Ctr{counter[len("ctr"):]}InternalOutput'
 
 
 class DAQ_0DViewer_DAQmx_Counter(DAQ_Viewer_base):
@@ -67,7 +61,7 @@ class DAQ_0DViewer_DAQmx_Counter(DAQ_Viewer_base):
         # one sample is taken at the first tick of the clock: the number of edges during one counting time
         counter = CounterInputTask(TaskConfig(
             channels=[CICountEdges(self.settings['counter_channel'], edge=Edge.RISING)],
-            timing=ClockSettings(rate=frequency, samples=1, source=_internal_output(clock_channel))))
+            timing=ClockSettings(rate=frequency, samples=1, source=counter_output_terminal(clock_channel))))
         self.controller = {'clock': clock, 'counter': counter}
 
     def _dte(self, rate: float) -> DataToExport:

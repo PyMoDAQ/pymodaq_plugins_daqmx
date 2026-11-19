@@ -6,7 +6,7 @@ from .channels import AICurrent, AIRtd, AIThermocouple, AIVoltage, AOCurrent, AO
 from .config import TaskConfig
 from .system import NIDAQSystem
 from .tasks import AnalogInputTask, AnalogOutputTask, CounterInputTask, CounterOutputTask, DigitalTask
-from .timing import ChangeDetectionSettings, ClockSettings, ImplicitTiming
+from .timing import ChangeDetectionSettings, ClockSettings, ImplicitTiming, counter_output_terminal
 from .triggers import AnalogEdgeTrigger, DigitalEdgeTrigger
 
 __all__ = [
@@ -14,5 +14,5 @@ __all__ = [
     'AnalogEdgeTrigger', 'AnalogInputTask', 'AnalogOutputTask',
     'CICountEdges', 'COPulseFreq', 'ChangeDetectionSettings', 'ClockSettings',
     'CounterInputTask', 'CounterOutputTask', 'DigitalEdgeTrigger', 'DigitalIn', 'DigitalOut', 'DigitalTask', 'ImplicitTiming', 'NIDAQSystem',
-    'TaskConfig',
+    'TaskConfig', 'counter_output_terminal',
 ]

@@ -73,3 +73,12 @@ class ChangeDetectionSettings:
         task.timing.cfg_change_detection_timing(
             rising_edge_chan=','.join(self.rising_lines), falling_edge_chan=','.join(self.falling_lines),
             sample_mode=mode, samps_per_chan=1000 if self.samples is None else self.samples)
+
+
+def counter_output_terminal(counter: str) -> str:
+    """The terminal where a counter output sends its pulses, such as ``/Dev1/Ctr1InternalOutput`` for
+    ``Dev1/ctr1``: give it as ``source`` of a ``ClockSettings`` to clock another task with these pulses."""
+    device, _, channel = counter.partition('/')
+    if not (device and channel.startswith('ctr') and channel[3:].isdigit()):
+        raise ValueError(f'{counter!r} is not a counter such as Dev1/ctr0')
+    return f'/{device}/Ctr{channel[3:]}InternalOutput'
