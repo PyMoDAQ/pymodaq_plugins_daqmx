@@ -10,11 +10,11 @@ from pymodaq_data import DataToExport
 from nidaqmx.constants import TerminalConfiguration
 
 from pymodaq_plugins_daqmx.hardware.national_instruments.api import (
-    AIVoltage, AnalogInputTask, ClockSettings, NIDAQSystem, TaskConfig)
+    AIVoltage, AnalogInputTask, ChannelKind, ClockSettings, NIDAQSystem, TaskConfig)
 
 logger = set_logger(get_module_name(__file__))
 
-AI_CHANNELS = NIDAQSystem().all_channels('ai')
+AI_CHANNELS = NIDAQSystem().all_channels(ChannelKind.AI)
 
 
 def default_channel(index: int) -> str:

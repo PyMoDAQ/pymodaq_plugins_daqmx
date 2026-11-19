@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 import numpy as np
 
 from pymodaq.control_modules.viewer_utility_classes import DAQ_Viewer_base, comon_parameters, main
@@ -9,16 +11,26 @@ from pymodaq_data import DataToExport
 from nidaqmx.constants import Edge
 
 from pymodaq_plugins_daqmx.hardware.national_instruments.api import (
-    CICountEdges, COPulseFreq, ClockSettings, CounterInputTask, CounterOutputTask, ImplicitTiming, NIDAQSystem,
+    CICountEdges, COPulseFreq, ChannelKind, ClockSettings, CounterInputTask, CounterOutputTask, ImplicitTiming, NIDAQSystem,
     TaskConfig, counter_output_terminal)
 
 logger = set_logger(get_module_name(__file__))
 
-COUNTER_CHANNELS = NIDAQSystem().all_channels('ci')
+COUNTER_CHANNELS = NIDAQSystem().all_channels(ChannelKind.CI)
 
 
 def _channel(index: int) -> str:
     return COUNTER_CHANNELS[min(index, len(COUNTER_CHANNELS) - 1)] if COUNTER_CHANNELS else ''
+
+
+@dataclass
+class CounterControllers:
+    """The two tasks of the plugin: the clock sets the counting time, the counter counts edges during it."""
+    clock: CounterOutputTask
+    counter: CounterInputTask
+
+    def __iter__(self):
+        return iter((self.clock, self.counter))
 
 
 class DAQ_0DViewer_DAQmx_Counter(DAQ_Viewer_base):
@@ -37,7 +49,7 @@ class DAQ_0DViewer_DAQmx_Counter(DAQ_Viewer_base):
     ]
 
     def ini_attributes(self):
-        self.controller: dict = None  # the task of the clock (CounterOutputTask), the task of the counter (CounterInputTask)
+        self.controller = None  # CounterControllers
 
     @property
     def counting_time(self) -> float:
@@ -62,7 +74,7 @@ class DAQ_0DViewer_DAQmx_Counter(DAQ_Viewer_base):
         counter = CounterInputTask(TaskConfig(
             channels=[CICountEdges(self.settings['counter_channel'], edge=Edge.RISING)],
             timing=ClockSettings(rate=frequency, samples=1, source=counter_output_terminal(clock_channel))))
-        self.controller = {'clock': clock, 'counter': counter}
+        self.controller = CounterControllers(clock, counter)
 
     def _dte(self, rate: float) -> DataToExport:
         return DataToExport('Counter', data=[DataFromPlugins(
@@ -76,7 +88,7 @@ class DAQ_0DViewer_DAQmx_Counter(DAQ_Viewer_base):
 
     def count_once(self) -> int:
         """Number of edges during one counting time."""
-        counter, clock = self.controller['counter'], self.controller['clock']
+        counter, clock = self.controller.counter, self.controller.clock
         counter.start()  # armed first: it waits for the clock
         clock.start()
         try:
@@ -87,7 +99,7 @@ class DAQ_0DViewer_DAQmx_Counter(DAQ_Viewer_base):
 
     def stop(self):
         if self.controller is not None:
-            for ctrl in self.controller.values():
+            for ctrl in self.controller:
                 try:
                     ctrl.stop()
                 except Exception:
@@ -96,7 +108,7 @@ class DAQ_0DViewer_DAQmx_Counter(DAQ_Viewer_base):
 
     def close(self):
         if self.controller is not None:
-            for ctrl in self.controller.values():
+            for ctrl in self.controller:
                 ctrl.close()
             self.controller = None
 

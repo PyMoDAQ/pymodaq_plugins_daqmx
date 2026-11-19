@@ -1,5 +1,5 @@
 """Typed tasks, created from a ``TaskConfig``."""
-from typing import Callable, List
+from typing import Callable, List, Optional, Sequence, Union
 
 import nidaqmx
 import numpy as np
@@ -74,7 +74,7 @@ class _Task:
 class AnalogInputTask(_Task):
     needs_timing = True
 
-    def read_analog(self, timeout: float = None):
+    def read_analog(self, timeout: Optional[float] = None) -> np.ndarray:
         """Read the configured number of samples as a float64 array shaped (channels, samples).
 
         ``timeout`` (s) is how long to wait for the samples: by default the duration of the acquisition plus 5 s.
@@ -97,7 +97,7 @@ class AnalogInputTask(_Task):
 
 
 class AnalogOutputTask(_Task):
-    def write_analog(self, data):
+    def write_analog(self, data: Union[float, Sequence[float], np.ndarray]) -> None:
         """Write a DC level (scalar, single channel) or samples: 1D for one channel, 2D (channels, samples).
 
         A scalar is written and started at once; samples are written without starting the task.
@@ -116,8 +116,11 @@ class AnalogOutputTask(_Task):
         self._task.write(array[0].tolist() if nch == 1 else array, auto_start=False)
 
 
-    def write_levels(self, levels):
-        """Set every output to a DC level at once, one level per channel, and start the task."""
+    def write_levels(self, levels: Sequence[float]) -> None:
+        """Set every output to a DC level at once, and start the task.
+
+        ``levels`` holds one level (volts or amperes) per channel, in the order of the channels of the task.
+        """
         nch = len(self.config.channels)
         levels = [float(level) for level in levels]
         if len(levels) != nch:
@@ -129,7 +132,7 @@ class AnalogOutputTask(_Task):
 
 
 class CounterInputTask(_Task):
-    def read_counter(self, samples=None):
+    def read_counter(self, samples: Optional[int] = None) -> np.ndarray:
         """Read counter values as a float64 array shaped (counters, samples).
 
         ``samples`` defaults to the number of samples of the clock, or 1 when the task has no clock.
@@ -156,12 +159,12 @@ class DigitalTask(_Task):
             raise ValueError('a DigitalTask cannot mix inputs and outputs: use one task for each')
         super().__init__(config)
 
-    def read_digital(self, samples=1):
+    def read_digital(self, samples: int = 1) -> np.ndarray:
         """Read the levels as a boolean array shaped (lines, samples)."""
         data = self._task.read(number_of_samples_per_channel=samples)
         return np.asarray(data, dtype=np.bool_).reshape(len(self.config.channels), samples)
 
-    def write_digital(self, levels):
+    def write_digital(self, levels: Union[bool, Sequence[bool]]) -> None:
         """Drive the lines now: a bool for a single line, else one bool per line."""
         nch = len(self.config.channels)
         if np.ndim(levels) == 0:
