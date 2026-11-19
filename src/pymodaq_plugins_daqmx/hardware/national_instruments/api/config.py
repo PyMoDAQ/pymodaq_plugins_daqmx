@@ -7,6 +7,7 @@ from typing import Tuple
 class TaskConfig:
     channels: Tuple
     timing: object
+    trigger: object = None
 
     def __post_init__(self):
         object.__setattr__(self, 'channels', tuple(self.channels))

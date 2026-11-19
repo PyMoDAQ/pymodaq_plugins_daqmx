@@ -6,5 +6,6 @@ from .channels import AIVoltage
 from .config import TaskConfig
 from .tasks import AnalogInputTask
 from .timing import ClockSettings
+from .triggers import DigitalEdgeTrigger
 
-__all__ = ['AIVoltage', 'AnalogInputTask', 'ClockSettings', 'TaskConfig']
+__all__ = ['AIVoltage', 'AnalogInputTask', 'ClockSettings', 'DigitalEdgeTrigger', 'TaskConfig']

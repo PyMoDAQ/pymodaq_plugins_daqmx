@@ -11,6 +11,8 @@ class AnalogInputTask:
             for channel in config.channels:
                 channel.add_to(self._task)
             config.timing.apply(self._task)
+            if config.trigger is not None:
+                config.trigger.apply(self._task)
         except Exception:
             self._task.close()
             raise

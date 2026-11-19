@@ -32,15 +32,33 @@ class _Timing:
             source=source, active_edge=active_edge, sample_mode=sample_mode, samps_per_chan=samps_per_chan)))
 
 
+class _StartTrigger:
+    def __init__(self, task):
+        self._task = task
+
+    def cfg_dig_edge_start_trig(self, trigger_source, trigger_edge=None):
+        self._task.trigger_calls.append(('dig_edge', trigger_source, trigger_edge))
+
+    def cfg_anlg_edge_start_trig(self, trigger_source="", trigger_slope=None, trigger_level=0.0):
+        self._task.trigger_calls.append(('anlg_edge', trigger_source, trigger_slope, trigger_level))
+
+
+class _Triggers:
+    def __init__(self, task):
+        self.start_trigger = _StartTrigger(task)
+
+
 class DoubleTask:
     """What ``nidaqmx.Task`` does, without driver nor hardware."""
 
     def __init__(self, new_task_name=""):
         self.channels = []
         self.timing_calls = []
+        self.trigger_calls = []
         self.closed = False
         self.ai_channels = _Channels(self)
         self.timing = _Timing(self)
+        self.triggers = _Triggers(self)
 
     def read(self, number_of_samples_per_channel=None, timeout=10.0):
         n = number_of_samples_per_channel
