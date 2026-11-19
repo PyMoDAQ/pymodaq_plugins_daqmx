@@ -16,7 +16,7 @@ from pathlib import Path
 import nidaqmx
 import numpy as np
 from nidaqmx.constants import (AcquisitionType, CurrentUnits, Edge, RTDType, TemperatureUnits,
-                               TerminalConfiguration, ThermocoupleType, ResistanceConfiguration,
+                               TerminalConfiguration, ThermocoupleType, LineGrouping, ResistanceConfiguration,
                                ExcitationSource)
 from nidaqmx.system import System
 
@@ -445,7 +445,8 @@ def _():
                         ("ndarray_bool", np.array([True, False])), ("scalar", True)):
         try:
             with nidaqmx.Task() as t:
-                t.do_channels.add_do_chan(f"{lines[0]}:{lines[1].split('/')[-1]}")
+                for line in lines[:2]:
+                    t.do_channels.add_do_chan(line, line_grouping=LineGrouping.CHAN_PER_LINE)
                 out[label] = t.write(data, auto_start=True)
         except Exception as e:
             out[label] = {"exception": type(e).__name__, "error_code": getattr(e, "error_code", None),
@@ -459,7 +460,8 @@ def _():
     if len(lines) < 2:
         return "fewer than two digital input lines"
     with nidaqmx.Task() as t:
-        t.di_channels.add_di_chan(f"{lines[0]}:{lines[1].split('/')[-1]}")
+        for line in lines[:2]:
+            t.di_channels.add_di_chan(line, line_grouping=LineGrouping.CHAN_PER_LINE)
         return shape_of(t.read())
 
 
@@ -553,6 +555,27 @@ def _():
         t.start()
         seen["done_received"] = done.wait(2.0)
     return seen
+
+
+@observe("digital_edge_start_trigger_on_digital_line")
+def _():
+    """Is a digital line (not a PFI terminal) accepted as the source of a digital edge start trigger?"""
+    line = first(d.di_lines.channel_names)
+    if line is None:
+        return "no digital input line"
+    out = {}
+    for label, source in (("line_name", line), ("terminal_name", "/" + line)):
+        try:
+            with nidaqmx.Task() as t:
+                t.ai_channels.add_ai_voltage_chan(f"{dev}/ai0")
+                t.timing.cfg_samp_clk_timing(1000.0, sample_mode=AcquisitionType.FINITE, samps_per_chan=5)
+                t.triggers.start_trigger.cfg_dig_edge_start_trig(source, Edge.RISING)
+                t.start()
+                out[label] = {"source": source, "started": True}
+        except Exception as e:
+            out[label] = {"source": source, "exception": type(e).__name__,
+                          "error_code": getattr(e, "error_code", None), "message": str(e)[:200]}
+    return out
 
 
 out = Path(__file__).with_name(f"contract_report_{dev}.json")
