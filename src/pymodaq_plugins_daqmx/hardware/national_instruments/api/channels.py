@@ -1,8 +1,9 @@
 """Immutable descriptions of the channels of a task."""
 from dataclasses import dataclass
 
-from nidaqmx.constants import (CurrentUnits, ExcitationSource, ResistanceConfiguration, RTDType,
-                               TemperatureUnits, TerminalConfiguration, ThermocoupleType, VoltageUnits)
+from nidaqmx.constants import (CountDirection, CurrentUnits, Edge, ExcitationSource, Level,
+                               ResistanceConfiguration, RTDType, TemperatureUnits, TerminalConfiguration,
+                               ThermocoupleType, VoltageUnits)
 
 
 def _check_range(min_val, max_val):
@@ -114,3 +115,36 @@ class AOCurrent:
     def add_to(self, task):
         task.ao_channels.add_ao_current_chan(self.name, min_val=self.min_val, max_val=self.max_val,
                                              units=CurrentUnits.AMPS)
+
+
+@dataclass(frozen=True)
+class CICountEdges:
+    """Counter input counting the edges of a signal, starting from ``initial_count``."""
+    name: str
+    edge: Edge = Edge.RISING
+    initial_count: int = 0
+    direction: CountDirection = CountDirection.COUNT_UP
+
+    def add_to(self, task):
+        task.ci_channels.add_ci_count_edges_chan(self.name, edge=self.edge, initial_count=self.initial_count,
+                                                 count_direction=self.direction)
+
+
+@dataclass(frozen=True)
+class COPulseFreq:
+    """Counter output generating a pulse train of the given frequency (Hz) and duty cycle (0 to 1, excluded)."""
+    name: str
+    frequency: float
+    duty_cycle: float = 0.5
+    idle_state: Level = Level.LOW
+    initial_delay: float = 0.
+
+    def __post_init__(self):
+        if not self.frequency > 0:
+            raise ValueError(f'frequency must be positive, got {self.frequency}')
+        if not 0 < self.duty_cycle < 1:
+            raise ValueError(f'duty_cycle must be between 0 and 1 (excluded), got {self.duty_cycle}')
+
+    def add_to(self, task):
+        task.co_channels.add_co_pulse_chan_freq(self.name, freq=self.frequency, duty_cycle=self.duty_cycle,
+                                                idle_state=self.idle_state, initial_delay=self.initial_delay)

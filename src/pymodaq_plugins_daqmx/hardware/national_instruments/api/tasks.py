@@ -92,3 +92,19 @@ class AnalogOutputTask(_Task):
                              f'got {array.shape}')
         # a single channel takes a plain list: a numpy array was refused by the driver on a one-channel task
         self._task.write(array[0].tolist() if nch == 1 else array, auto_start=False)
+
+
+class CounterInputTask(_Task):
+    def read_counter(self, samples=None):
+        """Read counter values as a float64 array shaped (counters, samples).
+
+        ``samples`` defaults to the number of samples of the clock, or 1 when the task has no clock.
+        """
+        if samples is None:
+            samples = getattr(self.config.timing, 'samples', None) or 1
+        data = self._task.read(number_of_samples_per_channel=samples)
+        return np.asarray(data, dtype=np.float64).reshape(len(self.config.channels), samples)
+
+
+class CounterOutputTask(_Task):
+    """Generates pulses: ``start()`` it, ``close()`` it to stop."""

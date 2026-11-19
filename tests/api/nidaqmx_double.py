@@ -11,6 +11,7 @@ import nidaqmx
 import pytest
 
 
+KNOWN_COUNTERS = {f"Dev2/ctr{c}" for c in range(4)}
 KNOWN_AO_CHANNELS = {f"Dev2/ao{c}" for c in range(4)}
 KNOWN_AI_CHANNELS = {f"Dev{d}/ai{c}" for d in (1, 2) for c in range(8)}
 
@@ -67,9 +68,41 @@ class _AOChannels:
         self._add('ao_current', physical_channel, min_val=min_val, max_val=max_val)
 
 
+class _CounterChannels:
+    def __init__(self, task):
+        self._task = task
+
+    def _add(self, kind, counter, **settings):
+        if counter not in KNOWN_COUNTERS:
+            raise nidaqmx.DaqError('Physical channel specified does not exist on this device.', -200170)
+        self._task.channels.append((kind, counter, settings))
+
+    def add_ci_count_edges_chan(self, counter, name_to_assign_to_channel="", edge=None, initial_count=0,
+                                count_direction=None):
+        self._add('ci_count_edges', counter, edge=edge, initial_count=initial_count,
+                  count_direction=count_direction)
+
+    def add_ci_semi_period_chan(self, counter, name_to_assign_to_channel="", min_val=0.0, max_val=1.0,
+                                units=None, custom_scale_name=None):
+        self._add('ci_semi_period', counter, min_val=min_val, max_val=max_val, units=units)
+
+    def add_co_pulse_chan_freq(self, counter, name_to_assign_to_channel="", units=None, idle_state=None,
+                               initial_delay=0.0, freq=1.0, duty_cycle=0.5):
+        self._add('co_pulse_freq', counter, freq=freq, duty_cycle=duty_cycle, idle_state=idle_state,
+                  initial_delay=initial_delay)
+
+
 class _Timing:
     def __init__(self, task):
         self._task = task
+
+    def cfg_implicit_timing(self, sample_mode=None, samps_per_chan=1000):
+        self._task.timing_calls.append(('implicit', sample_mode, samps_per_chan))
+
+    def cfg_change_detection_timing(self, rising_edge_chan="", falling_edge_chan="", sample_mode=None,
+                                    samps_per_chan=1000):
+        self._task.timing_calls.append(('change_detection', rising_edge_chan, falling_edge_chan,
+                                        sample_mode, samps_per_chan))
 
     def cfg_samp_clk_timing(self, rate, source="", active_edge=None, sample_mode=None, samps_per_chan=1000):
         self._task.timing_calls.append(('samp_clk', rate, dict(
@@ -104,6 +137,7 @@ class DoubleTask:
         self.callback_threads = []
         self.ai_channels = _Channels(self)
         self.ao_channels = _AOChannels(self)
+        self.ci_channels = self.co_channels = _CounterChannels(self)
         self.writes = []
         self.timing = _Timing(self)
         self.triggers = _Triggers(self)
