@@ -1,17 +1,14 @@
 """What the NI hardware of the computer offers: devices, channels, terminals, ranges, rates, triggers."""
-import nidaqmx.errors
-import nidaqmx.system
-from enum import Enum
 from typing import List
 
+import nidaqmx.errors
+import nidaqmx.system
 from nidaqmx.constants import TriggerUsage
+from pymodaq_utils.enums import StrEnum
 
 
-class ChannelKind(str, Enum):
-    """Kinds of channels of a device. Being strings, members compare equal to ``'ai'``, ``'ci'``...
-
-    (``enum.StrEnum`` needs Python 3.11, this package supports older versions.)
-    """
+class ChannelKind(StrEnum):
+    """Kinds of channels of a device. Members compare equal to their value: ``'ai'``, ``'ci'``..."""
     AI = 'ai'
     AO = 'ao'
     CI = 'ci'
@@ -53,7 +50,7 @@ class NIDAQSystem:
         try:
             kind = ChannelKind(kind)
         except ValueError:
-            raise ValueError(f'unknown kind {kind!r} of channel: use one of {[k.value for k in ChannelKind]}') from None
+            raise ValueError(f'unknown kind {kind!r} of channel: use one of {ChannelKind.values()}') from None
         return list(self._device_property(device, _CHANNEL_ATTRIBUTES[kind], lambda value: value.channel_names, []))
 
     def all_channels(self, kind: ChannelKind) -> List[str]:
