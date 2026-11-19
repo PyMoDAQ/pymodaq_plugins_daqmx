@@ -219,3 +219,107 @@ def driver(monkeypatch):
 
     monkeypatch.setattr(nidaqmx, 'Task', make)
     return created
+
+
+class _Names:
+    def __init__(self, names):
+        self.channel_names = list(names)
+        self.device_names = list(names)
+
+    def __iter__(self):
+        return iter(self.channel_names)
+
+
+def _flat(ranges):
+    return [value for pair in ranges for value in pair]
+
+
+class DoubleDevice:
+    """Values copied from the reports of a PCIe-6363 (``Dev2``) and of a PCI-6133 without analog output."""
+
+    def __init__(self, name, **properties):
+        self.name = name
+        self._properties = properties
+
+    def _get(self, key):
+        value = self._properties[key]
+        if isinstance(value, Exception):
+            raise value
+        return value
+
+    ai_physical_chans = property(lambda self: _Names(self._get('ai')))
+    ao_physical_chans = property(lambda self: _Names(self._get('ao')))
+    ci_physical_chans = property(lambda self: _Names(self._get('ci')))
+    co_physical_chans = property(lambda self: _Names(self._get('co')))
+    di_lines = property(lambda self: _Names(self._get('di')))
+    do_lines = property(lambda self: _Names(self._get('do')))
+    terminals = property(lambda self: self._get('terminals'))
+    ai_voltage_rngs = property(lambda self: _flat(self._get('ai_ranges')))
+    ao_voltage_rngs = property(lambda self: _flat(self._get('ao_ranges')))
+    ai_max_multi_chan_rate = property(lambda self: self._get('ai_max_multi'))
+    ai_max_single_chan_rate = property(lambda self: self._get('ai_max_single'))
+    ao_max_rate = property(lambda self: self._get('ao_max'))
+    ai_trig_usage = property(lambda self: self._get('ai_trig'))
+    di_trig_usage = property(lambda self: self._get('di_trig'))
+
+
+def _pcie_6363():
+    from nidaqmx.constants import TriggerUsage
+    start_pause_reference = [TriggerUsage.PAUSE, TriggerUsage.REFERENCE, TriggerUsage.START]
+    return DoubleDevice(
+        'Dev2', ai=[f'Dev2/ai{c}' for c in range(32)], ao=[f'Dev2/ao{c}' for c in range(4)],
+        ci=[f'Dev2/ctr{c}' for c in range(4)], co=[f'Dev2/ctr{c}' for c in range(4)] + ['Dev2/freqout'],
+        di=[f'Dev2/port0/line{c}' for c in range(4)], do=[f'Dev2/port0/line{c}' for c in range(4)],
+        terminals=[f'/Dev2/PFI{c}' for c in range(6)],
+        ai_ranges=[(-0.1, 0.1), (-0.2, 0.2), (-0.5, 0.5), (-1.0, 1.0), (-2.0, 2.0), (-5.0, 5.0), (-10.0, 10.0)],
+        ao_ranges=[(-5.0, 5.0), (-10.0, 10.0)], ai_max_multi=1000000.0, ai_max_single=2000000.0,
+        ao_max=2857142.8571428573, ai_trig=start_pause_reference, di_trig=start_pause_reference)
+
+
+def _pci_6133():
+    from nidaqmx.constants import TriggerUsage
+    return DoubleDevice(
+        'Dev1', ai=[f'Dev1/ai{c}' for c in range(8)], ao=[], ci=['Dev1/ctr0', 'Dev1/ctr1'],
+        co=['Dev1/ctr0', 'Dev1/ctr1', 'Dev1/freqout'], di=[f'Dev1/port0/line{c}' for c in range(4)],
+        do=[f'Dev1/port0/line{c}' for c in range(4)], terminals=[f'/Dev1/PFI{c}' for c in range(6)],
+        ai_ranges=[(-1.25, 1.25), (-2.5, 2.5), (-5.0, 5.0), (-10.0, 10.0)], ao_ranges=[],
+        ai_max_multi=2500000.0, ai_max_single=2500000.0,
+        ao_max=nidaqmx.DaqError('Device does not support this property.', -200197),
+        ai_trig=[TriggerUsage.PAUSE, TriggerUsage.REFERENCE, TriggerUsage.START], di_trig=[])
+
+
+class DoubleSystem:
+    """What ``nidaqmx.system.System`` gives: ``local()`` is the driver, which may be missing."""
+    installed_devices = None   # set by the fixture
+    driver_present = True
+
+    @classmethod
+    def local(cls):
+        if not cls.driver_present:
+            raise nidaqmx.errors.DaqNotFoundError(
+                'Could not find an installation of NI-DAQmx. Please ensure that NI-DAQmx is installed on this '
+                'machine or contact National Instruments for support.')
+        return cls()
+
+    @property
+    def devices(self):
+        return _DevicesCollection(self.installed_devices)
+
+
+class _DevicesCollection(_Names):
+    def __init__(self, devices):
+        super().__init__([device.name for device in devices])
+        self._devices = {device.name: device for device in devices}
+
+    def __getitem__(self, name):
+        return self._devices[name]
+
+
+@pytest.fixture
+def system_driver(monkeypatch):
+    """Replace ``nidaqmx.system.System`` by one with a PCI-6133 (Dev1) and a PCIe-6363 (Dev2)."""
+    import nidaqmx.system
+    DoubleSystem.installed_devices = [_pci_6133(), _pcie_6363()]
+    DoubleSystem.driver_present = True
+    monkeypatch.setattr(nidaqmx.system, 'System', DoubleSystem)
+    return DoubleSystem
