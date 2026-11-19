@@ -434,6 +434,127 @@ def _():
     return _write_one_channel(np.zeros((4, 1)))
 
 
+@observe("digital_write_several_lines")
+def _():
+    """write() on a task holding several digital output lines: accepted value shapes."""
+    lines = list(d.do_lines.channel_names)
+    if len(lines) < 2:
+        return "fewer than two digital output lines"
+    out = {}
+    for label, data in (("list_of_bool", [True, False]), ("list_of_list", [[True], [False]]),
+                        ("ndarray_bool", np.array([True, False])), ("scalar", True)):
+        try:
+            with nidaqmx.Task() as t:
+                t.do_channels.add_do_chan(f"{lines[0]}:{lines[1].split('/')[-1]}")
+                out[label] = t.write(data, auto_start=True)
+        except Exception as e:
+            out[label] = {"exception": type(e).__name__, "error_code": getattr(e, "error_code", None),
+                          "message": str(e)[:200]}
+    return out
+
+
+@observe("digital_read_several_lines")
+def _():
+    lines = list(d.di_lines.channel_names)
+    if len(lines) < 2:
+        return "fewer than two digital input lines"
+    with nidaqmx.Task() as t:
+        t.di_channels.add_di_chan(f"{lines[0]}:{lines[1].split('/')[-1]}")
+        return shape_of(t.read())
+
+
+@observe("counter_input_read_without_clock")
+def _():
+    """read() on a counter task with no sample clock: single sample and N samples."""
+    ctr = first(d.ci_physical_chans.channel_names)
+    if ctr is None:
+        return "no counter input"
+    out = {}
+    for label, kwargs in (("default", {}), ("one_sample", {"number_of_samples_per_channel": 1}),
+                          ("five_samples", {"number_of_samples_per_channel": 5})):
+        try:
+            with nidaqmx.Task() as t:
+                t.ci_channels.add_ci_count_edges_chan(ctr)
+                t.start()
+                out[label] = shape_of(t.read(timeout=0.5, **kwargs))
+        except Exception as e:
+            out[label] = {"exception": type(e).__name__, "error_code": getattr(e, "error_code", None),
+                          "message": str(e)[:200]}
+    return out
+
+
+def _callbacks_observation(add_channel, configure_timing):
+    """Register sample and done callbacks on a task, run it, report thread names and counts."""
+    seen = {"samples": [], "done": []}
+
+    def on_samples(task_handle, event_type, n, cb_data):
+        seen["samples"].append({"thread": threading.current_thread().name, "n": n})
+        return 0
+
+    def on_done(task_handle, status, cb_data):
+        seen["done"].append({"thread": threading.current_thread().name, "status": status})
+        return 0
+
+    done = threading.Event()
+    with nidaqmx.Task() as t:
+        add_channel(t)
+        configure_timing(t)
+        try:
+            t.register_every_n_samples_acquired_into_buffer_event(5, on_samples)
+        except Exception as e:
+            seen["register_samples_error"] = {"exception": type(e).__name__,
+                                              "error_code": getattr(e, "error_code", None)}
+        t.register_done_event(lambda h, s, c: (on_done(h, s, c), done.set(), 0)[-1])
+        t.start()
+        seen["done_received"] = done.wait(2.0)
+    seen["main_thread"] = threading.current_thread().name
+    return seen
+
+
+@observe("callbacks_counter_input_task")
+def _():
+    ctr = first(d.ci_physical_chans.channel_names)
+    pfi = first(t_ for t_ in d.terminals if "PFI" in t_)
+    if ctr is None or pfi is None:
+        return "no counter input or no PFI terminal"
+    return _callbacks_observation(
+        lambda t: t.ci_channels.add_ci_count_edges_chan(ctr),
+        lambda t: t.timing.cfg_samp_clk_timing(1000.0, source=pfi, sample_mode=AcquisitionType.FINITE,
+                                               samps_per_chan=10))
+
+
+@observe("callbacks_digital_input_task")
+def _():
+    line = first(d.di_lines.channel_names)
+    if line is None:
+        return "no digital input line"
+    return _callbacks_observation(
+        lambda t: t.di_channels.add_di_chan(line),
+        lambda t: t.timing.cfg_samp_clk_timing(1000.0, sample_mode=AcquisitionType.FINITE, samps_per_chan=10))
+
+
+@observe("callbacks_counter_output_task")
+def _():
+    ctr = first(c for c in d.co_physical_chans.channel_names if "ctr" in c)
+    if ctr is None:
+        return "no counter output"
+    seen = {"done": []}
+    done = threading.Event()
+
+    def on_done(h, s, c):
+        seen["done"].append({"thread": threading.current_thread().name, "status": s})
+        done.set()
+        return 0
+
+    with nidaqmx.Task() as t:
+        t.co_channels.add_co_pulse_chan_freq(ctr, freq=1000.0, duty_cycle=0.5)
+        t.timing.cfg_implicit_timing(sample_mode=AcquisitionType.FINITE, samps_per_chan=10)
+        t.register_done_event(on_done)
+        t.start()
+        seen["done_received"] = done.wait(2.0)
+    return seen
+
+
 out = Path(__file__).with_name(f"contract_report_{dev}.json")
 out.write_text(json.dumps(report, indent=2, default=str), encoding="utf-8")
 print(f"OK -> {out}")
