@@ -24,7 +24,7 @@ on Windows. Simulated devices follow the driver's rules, but not the real timing
 
 | Device | Product | What it brings |
 | --- | --- | --- |
-| `Dev1` | simulated card without analog output (model not recorded) | differential-only analog inputs; shows that an unsupported property raises `DaqError` -200197 |
+| `Dev1` | PCI-6133 (S Series) | 8 simultaneous AI (differential only, 1.25 to 10 V ranges, 2.5 MS/s), 2 counters, `freqout`, digital lines, no AO; an unsupported property raises `DaqError` -200197; the simulated card accepts voltage, current and thermocouple channels on `ai0` (not RTD: no internal excitation) |
 | `Dev2` | PCIe-6363 (X Series) | 32 AI (RSE and differential), 4 AO, 4 counters, `freqout`, digital lines, PFI terminals, start/pause/reference triggers |
 | `cDAQ1` | cDAQ-9174 chassis | no channel of its own, only timebases and trigger terminals |
 | `cDAQ1Mod1` | NI 9203 | current inputs (0 to 20 mA, -20 to 20 mA) |
@@ -32,5 +32,6 @@ on Windows. Simulated devices follow the driver's rules, but not the real timing
 | `cDAQ1Mod3` | NI 9217 | RTD inputs (3-wire, 1 mA internal excitation) |
 
 Not covered by any device above: the output side of a C Series module (NI 9263, 9401...), and any real
-hardware timing. The `reports/contract_report_Dev1.json` file was written by the first version of the
-script, so its `system_info` is limited to the AI side and shows the error of the unsupported property.
+hardware timing. Caution: a simulated card can be more permissive than the real one (the PCI-6133 accepts a
+current or thermocouple channel that the real card could not measure), so use the module reports to know which
+kind of channel a device accepts. All reports were recorded with the latest `contract_check.py`.
