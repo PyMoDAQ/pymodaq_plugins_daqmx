@@ -444,5 +444,121 @@
     ],
     "message": "Write cannot be performed, because the number of channels in the data does not match the number of channels in the task.\n\nWhen writing, supply data for all channels in the task. Alternatively, modify the task to contain the same number of channels as the data written.\n\nNumber of Channels in Task: 1\n",
     "error_code": -200524
+  },
+  "digital_write_several_lines": {
+    "list_of_bool": 1,
+    "list_of_list": 1,
+    "ndarray_bool": 1,
+    "scalar": {
+      "exception": "DaqError",
+      "error_code": -200524,
+      "message": "Write cannot be performed, because the number of channels in the data does not match the number of channels in the task.\n\nWhen writing, supply data for all channels in the task. Alternatively, modify "
+    }
+  },
+  "digital_read_several_lines": {
+    "type": "list",
+    "shape": [
+      2
+    ],
+    "dtype": "bool",
+    "first": [
+      false,
+      false
+    ]
+  },
+  "counter_input_read_without_clock": {
+    "default": {
+      "type": "float",
+      "shape": [],
+      "dtype": "float64",
+      "first": [
+        0.0
+      ]
+    },
+    "one_sample": {
+      "type": "list",
+      "shape": [
+        1
+      ],
+      "dtype": "float64",
+      "first": [
+        0.0
+      ]
+    },
+    "five_samples": {
+      "type": "list",
+      "shape": [
+        5
+      ],
+      "dtype": "float64",
+      "first": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
+  },
+  "callbacks_counter_input_task": {
+    "samples": [
+      {
+        "thread": "Dummy-4",
+        "n": 5
+      },
+      {
+        "thread": "Dummy-5",
+        "n": 5
+      }
+    ],
+    "done": [
+      {
+        "thread": "Dummy-6",
+        "status": 0
+      }
+    ],
+    "done_received": true,
+    "main_thread": "MainThread"
+  },
+  "callbacks_digital_input_task": {
+    "samples": [
+      {
+        "thread": "Dummy-7",
+        "n": 5
+      },
+      {
+        "thread": "Dummy-8",
+        "n": 5
+      }
+    ],
+    "done": [
+      {
+        "thread": "Dummy-9",
+        "status": 0
+      }
+    ],
+    "done_received": true,
+    "main_thread": "MainThread"
+  },
+  "callbacks_counter_output_task": {
+    "done": [
+      {
+        "thread": "Dummy-10",
+        "status": 0
+      }
+    ],
+    "done_received": true
+  },
+  "digital_edge_start_trigger_on_digital_line": {
+    "line_name": {
+      "source": "Dev2/port0/line0",
+      "exception": "DaqError",
+      "error_code": -89120,
+      "message": "Source terminal to be routed could not be found on the device.\n\nMake sure the terminal name is valid for the specified device. Refer to Measurement & Automation Explorer for valid terminal names.\n\nPro"
+    },
+    "terminal_name": {
+      "source": "/Dev2/port0/line0",
+      "exception": "DaqError",
+      "error_code": -89120,
+      "message": "Source terminal to be routed could not be found on the device.\n\nMake sure the terminal name is valid for the specified device. Refer to Measurement & Automation Explorer for valid terminal names.\n\nPro"
+    }
   }
 }
