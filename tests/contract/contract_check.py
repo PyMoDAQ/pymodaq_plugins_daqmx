@@ -1,0 +1,276 @@
+"""Relevé du comportement réel de nidaqmx sur un appareil simulé NI MAX.
+
+Usage (Windows, driver NI-DAQmx + appareil simulé créé dans NI MAX) :
+    pip install nidaqmx
+    python contract_check.py [NomAppareil]      # ex. Dev1 ; défaut = premier appareil
+
+Écrit contract_report.json à côté du script. Rien d'autre n'est modifié.
+Chaque observation est isolée : une erreur ne bloque pas les suivantes.
+"""
+import json
+import sys
+import threading
+import traceback
+from pathlib import Path
+
+import nidaqmx
+import numpy as np
+from nidaqmx.constants import AcquisitionType, Edge, TerminalConfiguration
+from nidaqmx.system import System
+
+report = {"nidaqmx_version": getattr(nidaqmx, "__version__", "?"), "python": sys.version}
+
+
+def observe(name):
+    def deco(fn):
+        try:
+            report[name] = fn()
+        except Exception as e:  # on relève aussi les erreurs : ce sont des données
+            report[name] = {"exception": type(e).__mro__[0].__name__,
+                            "bases": [c.__name__ for c in type(e).__mro__[1:4]],
+                            "message": str(e)[:300],
+                            "error_code": getattr(e, "error_code", None)}
+        return fn
+    return deco
+
+
+system = System.local()
+devices = list(system.devices.device_names)
+report["devices"] = devices
+dev = sys.argv[1] if len(sys.argv) > 1 else (devices[0] if devices else None)
+report["device_used"] = dev
+if dev is None:
+    sys.exit("Aucun appareil trouvé : crée un appareil simulé dans NI MAX.")
+d = system.devices[dev]
+
+
+@observe("system_info")
+def _():
+    return {
+        "product_type": d.product_type,
+        "is_simulated": d.is_simulated,
+        "ai_physical_chans": list(d.ai_physical_chans.channel_names),
+        "ao_physical_chans": list(d.ao_physical_chans.channel_names),
+        "ci_physical_chans": list(d.ci_physical_chans.channel_names),
+        "co_physical_chans": list(d.co_physical_chans.channel_names),
+        "di_lines": list(d.di_lines.channel_names)[:4],
+        "do_lines": list(d.do_lines.channel_names)[:4],
+        "terminals_sample": list(d.terminals)[:6],
+        "ai_voltage_rngs": [list(map(float, d.ai_voltage_rngs[i:i + 2])) for i in range(0, len(d.ai_voltage_rngs), 2)],
+        "ao_voltage_rngs": [list(map(float, d.ao_voltage_rngs[i:i + 2])) for i in range(0, len(d.ao_voltage_rngs), 2)],
+        "ai_max_multi_chan_rate": d.ai_max_multi_chan_rate,
+        "ai_max_single_chan_rate": d.ai_max_single_chan_rate,
+        "ao_max_rate": d.ao_max_rate,
+        "ai_trig_usage": [str(x) for x in d.ai_trig_usage],
+    }
+
+
+def shape_of(x):
+    a = np.asarray(x)
+    return {"type": type(x).__name__, "shape": list(a.shape), "dtype": str(a.dtype),
+            "first": a.ravel()[:3].tolist()}
+
+
+@observe("read_one_channel_finite_N_samples")
+def _():
+    with nidaqmx.Task() as t:
+        t.ai_channels.add_ai_voltage_chan(f"{dev}/ai0")
+        t.timing.cfg_samp_clk_timing(1000.0, sample_mode=AcquisitionType.FINITE, samps_per_chan=10)
+        return shape_of(t.read(number_of_samples_per_channel=10))
+
+
+@observe("read_one_channel_single_sample")
+def _():
+    with nidaqmx.Task() as t:
+        t.ai_channels.add_ai_voltage_chan(f"{dev}/ai0")
+        return shape_of(t.read())
+
+
+@observe("read_two_channels_finite_N_samples")
+def _():
+    with nidaqmx.Task() as t:
+        t.ai_channels.add_ai_voltage_chan(f"{dev}/ai0:1")
+        t.timing.cfg_samp_clk_timing(1000.0, sample_mode=AcquisitionType.FINITE, samps_per_chan=10)
+        return shape_of(t.read(number_of_samples_per_channel=10))
+
+
+@observe("read_two_channels_single_sample")
+def _():
+    with nidaqmx.Task() as t:
+        t.ai_channels.add_ai_voltage_chan(f"{dev}/ai0:1")
+        return shape_of(t.read())
+
+
+@observe("read_two_channels_all_available_default")
+def _():
+    with nidaqmx.Task() as t:
+        t.ai_channels.add_ai_voltage_chan(f"{dev}/ai0:1")
+        t.timing.cfg_samp_clk_timing(1000.0, sample_mode=AcquisitionType.FINITE, samps_per_chan=5)
+        t.start()
+        t.wait_until_done(timeout=5)
+        return shape_of(t.read(number_of_samples_per_channel=nidaqmx.constants.READ_ALL_AVAILABLE))
+
+
+@observe("read_timeout_error")
+def _():
+    with nidaqmx.Task() as t:
+        t.ai_channels.add_ai_voltage_chan(f"{dev}/ai0")
+        t.timing.cfg_samp_clk_timing(1.0, sample_mode=AcquisitionType.FINITE, samps_per_chan=100)
+        return t.read(number_of_samples_per_channel=100, timeout=0.2)
+
+
+@observe("unknown_device_error")
+def _():
+    with nidaqmx.Task() as t:
+        t.ai_channels.add_ai_voltage_chan("NoSuchDev/ai0")
+
+
+@observe("unknown_channel_error")
+def _():
+    with nidaqmx.Task() as t:
+        t.ai_channels.add_ai_voltage_chan(f"{dev}/ai9999")
+
+
+@observe("invalid_range_error")
+def _():
+    with nidaqmx.Task() as t:
+        t.ai_channels.add_ai_voltage_chan(f"{dev}/ai0", min_val=-1000.0, max_val=1000.0)
+
+
+@observe("invalid_rate_error")
+def _():
+    with nidaqmx.Task() as t:
+        t.ai_channels.add_ai_voltage_chan(f"{dev}/ai0")
+        t.timing.cfg_samp_clk_timing(1e12, sample_mode=AcquisitionType.FINITE, samps_per_chan=10)
+        t.start()
+
+
+@observe("bad_trigger_source_error")
+def _():
+    with nidaqmx.Task() as t:
+        t.ai_channels.add_ai_voltage_chan(f"{dev}/ai0")
+        t.timing.cfg_samp_clk_timing(1000.0, sample_mode=AcquisitionType.FINITE, samps_per_chan=10)
+        t.triggers.start_trigger.cfg_dig_edge_start_trig("/NoSuchDev/PFI0", Edge.RISING)
+        t.start()
+
+
+@observe("callbacks_finite_task")
+def _():
+    events = {"samples": [], "done": []}
+    got_done = threading.Event()
+    with nidaqmx.Task() as t:
+        t.ai_channels.add_ai_voltage_chan(f"{dev}/ai0")
+        t.timing.cfg_samp_clk_timing(1000.0, sample_mode=AcquisitionType.FINITE, samps_per_chan=100)
+
+        def on_samples(task_handle, event_type, n, cb_data):
+            events["samples"].append({"thread": threading.current_thread().name, "n": n,
+                                      "event_type": str(event_type), "cb_data": cb_data})
+            task.read(number_of_samples_per_channel=n)
+            return 0
+
+        def on_done(task_handle, status, cb_data):
+            events["done"].append({"thread": threading.current_thread().name, "status": status})
+            got_done.set()
+            return 0
+
+        task = t
+        t.register_every_n_samples_acquired_into_buffer_event(50, on_samples)
+        t.register_done_event(on_done)
+        t.start()
+        got_done.wait(5)
+        events["done_received"] = got_done.is_set()
+        events["main_thread"] = threading.current_thread().name
+        return events
+
+
+@observe("start_stop_restart")
+def _():
+    with nidaqmx.Task() as t:
+        t.ai_channels.add_ai_voltage_chan(f"{dev}/ai0")
+        t.timing.cfg_samp_clk_timing(1000.0, sample_mode=AcquisitionType.FINITE, samps_per_chan=10)
+        out = {}
+        t.start(); t.wait_until_done(5); t.stop()
+        out["is_task_done_after_stop"] = t.is_task_done()
+        t.start(); t.wait_until_done(5); t.stop()
+        out["second_start_ok"] = True
+        t.start()
+        try:
+            t.start()
+        except Exception as e:
+            out["double_start"] = {"exception": type(e).__name__, "code": getattr(e, "error_code", None)}
+        return out
+
+
+@observe("close_then_use_error")
+def _():
+    t = nidaqmx.Task()
+    t.ai_channels.add_ai_voltage_chan(f"{dev}/ai0")
+    t.close()
+    return t.read()
+
+
+@observe("write_scalar_and_array_ao")
+def _():
+    out = {}
+    with nidaqmx.Task() as t:
+        t.ao_channels.add_ao_voltage_chan(f"{dev}/ao0")
+        out["scalar_return"] = t.write(0.5, auto_start=True)
+        t.stop()
+    with nidaqmx.Task() as t:
+        t.ao_channels.add_ao_voltage_chan(f"{dev}/ao0:1")
+        t.timing.cfg_samp_clk_timing(1000.0, sample_mode=AcquisitionType.FINITE, samps_per_chan=4)
+        out["2d_array_return"] = t.write(np.zeros((2, 4)), auto_start=False)
+    with nidaqmx.Task() as t:
+        t.ao_channels.add_ao_voltage_chan(f"{dev}/ao0")
+        t.timing.cfg_samp_clk_timing(1000.0, sample_mode=AcquisitionType.FINITE, samps_per_chan=4)
+        out["1d_list_return"] = t.write([0.0, 0.1, 0.2, 0.3], auto_start=False)
+    return out
+
+
+@observe("write_wrong_shape_error")
+def _():
+    with nidaqmx.Task() as t:
+        t.ao_channels.add_ao_voltage_chan(f"{dev}/ao0:1")
+        t.write([0.1, 0.2, 0.3], auto_start=False)
+
+
+@observe("counter_input_read")
+def _():
+    ctrs = list(d.ci_physical_chans.channel_names)
+    if not ctrs:
+        return "pas de compteur sur cet appareil"
+    with nidaqmx.Task() as t:
+        t.ci_channels.add_ci_count_edges_chan(ctrs[0])
+        t.start()
+        return shape_of(t.read())
+
+
+@observe("digital_read_write")
+def _():
+    out = {}
+    lines = list(d.di_lines.channel_names)
+    olines = list(d.do_lines.channel_names)
+    if lines:
+        with nidaqmx.Task() as t:
+            t.di_channels.add_di_chan(lines[0])
+            out["di_single"] = shape_of(t.read())
+    if olines:
+        with nidaqmx.Task() as t:
+            t.do_channels.add_do_chan(olines[0])
+            out["do_write_return"] = t.write(True)
+    return out
+
+
+@observe("read_after_wait_until_done_with_nan_check")
+def _():
+    with nidaqmx.Task() as t:
+        t.ai_channels.add_ai_voltage_chan(f"{dev}/ai0", terminal_config=TerminalConfiguration.RSE)
+        return shape_of(t.read(number_of_samples_per_channel=3))
+
+
+out = Path(__file__).with_name("contract_report.json")
+out.write_text(json.dumps(report, indent=2, default=str), encoding="utf-8")
+print(f"OK -> {out}")
+for k, v in report.items():
+    flag = "EXC" if isinstance(v, dict) and "exception" in v else "ok "
+    print(f"[{flag}] {k}")
