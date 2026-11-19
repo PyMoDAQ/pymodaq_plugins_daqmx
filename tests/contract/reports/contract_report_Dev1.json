@@ -1,0 +1,217 @@
+{
+  "nidaqmx_version": "1.7.0",
+  "python": "3.13.13 | packaged by conda-forge | (main, Apr  8 2026, 01:56:49) [MSC v.1944 64 bit (AMD64)]",
+  "devices": [
+    "Dev1"
+  ],
+  "device_used": "Dev1",
+  "system_info": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Device does not support this property.\n\nDevice: Dev1\nProperty: DAQmx_Dev_AO_MaxRate\n\nStatus Code: -200197",
+    "error_code": -200197
+  },
+  "read_one_channel_finite_N_samples": {
+    "type": "list",
+    "shape": [
+      10
+    ],
+    "dtype": "float64",
+    "first": [
+      -0.15016481504089854,
+      2.869612989866927,
+      4.520205103162007
+    ]
+  },
+  "read_one_channel_single_sample": {
+    "type": "float",
+    "shape": [],
+    "dtype": "float64",
+    "first": [
+      -0.07508240752044927
+    ]
+  },
+  "read_two_channels_finite_N_samples": {
+    "type": "list",
+    "shape": [
+      2,
+      10
+    ],
+    "dtype": "float64",
+    "first": [
+      -0.09217433768770601,
+      2.8757172506409474,
+      4.567207911121963
+    ]
+  },
+  "read_two_channels_single_sample": {
+    "type": "list",
+    "shape": [
+      2
+    ],
+    "dtype": "float64",
+    "first": [
+      -0.07508240752044927,
+      0.4321816628006348
+    ]
+  },
+  "read_two_channels_all_available_default": {
+    "type": "list",
+    "shape": [
+      2,
+      5
+    ],
+    "dtype": "float64",
+    "first": [
+      -0.045171529727749966,
+      4.708826761079233,
+      2.752411183005738
+    ]
+  },
+  "read_timeout_error": {
+    "exception": "DaqReadError",
+    "bases": [
+      "DaqError",
+      "Error",
+      "Exception"
+    ],
+    "message": "Some or all of the samples requested have not yet been acquired.\n\nTo wait for the samples to become available use a longer read timeout or read later in your program. To make the samples available sooner, increase the sample rate. If your task uses a start trigger, make sure that your start trigger ",
+    "error_code": -200284
+  },
+  "unknown_device_error": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Device identifier is invalid.\n\nDevice Specified: NoSuchDev\nSuggested Device(s): Dev1\n\nTask Name: _unnamedTask<6>\nStatus Code: -200220",
+    "error_code": -200220
+  },
+  "unknown_channel_error": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Physical channel specified does not exist on this device.\n\nRefer to the documentation for channels available on this device.\n\nDevice: Dev1\nPhysical Channel Name: ai9999\n\nTask Name: _unnamedTask<7>\n\nStatus Code: -200170",
+    "error_code": -200170
+  },
+  "invalid_range_error": null,
+  "invalid_rate_error": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Requested value is not a supported value for this property. The property value may be invalid because it conflicts with another property.\n\nProperty: DAQmx_SampClk_Rate\nRequested Value:  1.0e12\nMaximum Value:  10.0e6\nMinimum Value:  22.250739e-309\n\nTask Name: _unnamedTask<9>\n\nStatus Code: -200077",
+    "error_code": -200077
+  },
+  "bad_trigger_source_error": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "No device by the given name was found.\n\nDevice Specified: NoSuchDev\n\nTask Name: _unnamedTask<A>\n\nStatus Code: -88717",
+    "error_code": -88717
+  },
+  "callbacks_finite_task": {
+    "samples": [
+      {
+        "thread": "Dummy-1",
+        "n": 50,
+        "event_type": "1",
+        "cb_data": null
+      },
+      {
+        "thread": "Dummy-2",
+        "n": 50,
+        "event_type": "1",
+        "cb_data": null
+      }
+    ],
+    "done": [
+      {
+        "thread": "Dummy-3",
+        "status": 0
+      }
+    ],
+    "done_received": true,
+    "main_thread": "MainThread"
+  },
+  "start_stop_restart": {
+    "is_task_done_after_stop": true,
+    "second_start_ok": true,
+    "double_start": {
+      "exception": "DaqError",
+      "code": -200479
+    }
+  },
+  "close_then_use_error": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Task specified is invalid or does not exist.\nStatus Code: -200088",
+    "error_code": -200088
+  },
+  "write_scalar_and_array_ao": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Physical channel specified does not exist on this device.\n\nRefer to the documentation for channels available on this device.\n\nDevice: Dev1\nPhysical Channel Name: ao0\n\nTask Name: _unnamedTask<E>\n\nStatus Code: -200170",
+    "error_code": -200170
+  },
+  "write_wrong_shape_error": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Physical channel specified does not exist on this device.\n\nRefer to the documentation for channels available on this device.\n\nDevice: Dev1\nPhysical Channel Name: ao0\n\nTask Name: _unnamedTask<F>\n\nStatus Code: -200170",
+    "error_code": -200170
+  },
+  "counter_input_read": {
+    "type": "float",
+    "shape": [],
+    "dtype": "float64",
+    "first": [
+      0.0
+    ]
+  },
+  "digital_read_write": {
+    "di_single": {
+      "type": "bool",
+      "shape": [],
+      "dtype": "bool",
+      "first": [
+        false
+      ]
+    },
+    "do_write_return": 1
+  },
+  "read_after_wait_until_done_with_nan_check": {
+    "exception": "DaqError",
+    "bases": [
+      "Error",
+      "Exception",
+      "BaseException"
+    ],
+    "message": "Requested value is not a supported value for this property. The property value may be invalid because it conflicts with another property.\n\nProperty: DAQmx_AI_TermCfg\nRequested Value: DAQmx_Val_RSE\nPossible Values: DAQmx_Val_Diff\nChannel Name: Dev1/ai0\n\nTask Name: _unnamedTask<13>\n\nStatus Code: -2000",
+    "error_code": -200077
+  }
+}
