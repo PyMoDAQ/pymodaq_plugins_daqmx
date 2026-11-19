@@ -313,6 +313,127 @@ def _():
         return shape_of(t.read(number_of_samples_per_channel=3))
 
 
+def first(names):
+    names = list(names)
+    return names[0] if names else None
+
+
+@observe("read_explicit_one_sample_shapes")
+def _():
+    """Shape of read(number_of_samples_per_channel=1): list or scalar, one or two channels."""
+    out = {}
+    for n in (1, 2):
+        with nidaqmx.Task() as t:
+            t.ai_channels.add_ai_voltage_chan(f"{dev}/ai0:{n - 1}")
+            t.timing.cfg_samp_clk_timing(1000.0, sample_mode=AcquisitionType.FINITE, samps_per_chan=5)
+            out[f"{n}_channel"] = shape_of(t.read(number_of_samples_per_channel=1))
+    return out
+
+
+@observe("external_sample_clock_source")
+def _():
+    pfi = first(t_ for t_ in d.terminals if "PFI" in t_)
+    if pfi is None:
+        return "no PFI terminal"
+    with nidaqmx.Task() as t:
+        t.ai_channels.add_ai_voltage_chan(f"{dev}/ai0")
+        t.timing.cfg_samp_clk_timing(1000.0, source=pfi, active_edge=Edge.RISING,
+                                     sample_mode=AcquisitionType.FINITE, samps_per_chan=5)
+        t.start()
+        return {"source": pfi, "started": True}
+
+
+@observe("digital_edge_start_trigger_valid_source")
+def _():
+    pfi = first(t_ for t_ in d.terminals if "PFI" in t_)
+    if pfi is None:
+        return "no PFI terminal"
+    with nidaqmx.Task() as t:
+        t.ai_channels.add_ai_voltage_chan(f"{dev}/ai0")
+        t.timing.cfg_samp_clk_timing(1000.0, sample_mode=AcquisitionType.FINITE, samps_per_chan=5)
+        t.triggers.start_trigger.cfg_dig_edge_start_trig(pfi, Edge.RISING)
+        t.start()
+        return {"source": pfi, "started": True}
+
+
+@observe("analog_edge_start_trigger")
+def _():
+    with nidaqmx.Task() as t:
+        t.ai_channels.add_ai_voltage_chan(f"{dev}/ai0")
+        t.timing.cfg_samp_clk_timing(1000.0, sample_mode=AcquisitionType.FINITE, samps_per_chan=5)
+        t.triggers.start_trigger.cfg_anlg_edge_start_trig(f"{dev}/ai0", trigger_level=1.0)
+        t.start()
+        return {"started": True}
+
+
+@observe("change_detection_timing_digital_input")
+def _():
+    line = first(d.di_lines.channel_names)
+    if line is None:
+        return "no digital input line"
+    with nidaqmx.Task() as t:
+        t.di_channels.add_di_chan(line)
+        t.timing.cfg_change_detection_timing(rising_edge_chan=line, falling_edge_chan=line,
+                                             sample_mode=AcquisitionType.CONTINUOUS, samps_per_chan=10)
+        t.start()
+        return {"line": line, "started": True}
+
+
+@observe("counter_output_pulse_frequency")
+def _():
+    ctr = first(c for c in d.co_physical_chans.channel_names if "ctr" in c)
+    if ctr is None:
+        return "no counter output"
+    with nidaqmx.Task() as t:
+        t.co_channels.add_co_pulse_chan_freq(ctr, freq=1000.0, duty_cycle=0.5)
+        t.timing.cfg_implicit_timing(sample_mode=AcquisitionType.CONTINUOUS)
+        t.start()
+        running = not t.is_task_done()
+        t.stop()
+        return {"counter": ctr, "running_after_start": running}
+
+
+@observe("counter_input_count_edges_with_clock")
+def _():
+    ctr = first(d.ci_physical_chans.channel_names)
+    pfi = first(t_ for t_ in d.terminals if "PFI" in t_)
+    if ctr is None or pfi is None:
+        return "no counter input or no PFI terminal"
+    with nidaqmx.Task() as t:
+        t.ci_channels.add_ci_count_edges_chan(ctr)
+        t.timing.cfg_samp_clk_timing(1000.0, source=pfi, sample_mode=AcquisitionType.FINITE, samps_per_chan=5)
+        t.start()
+        return shape_of(t.read(number_of_samples_per_channel=1, timeout=0.5))
+
+
+def _write_one_channel(data):
+    with nidaqmx.Task() as t:
+        t.ao_channels.add_ao_voltage_chan(f"{dev}/ao0")
+        t.timing.cfg_samp_clk_timing(1000.0, sample_mode=AcquisitionType.FINITE, samps_per_chan=4)
+        return t.write(data, auto_start=False)
+
+
+# one observation per shape: the first one to fail must not hide the others
+@observe("ao_one_channel_write_python_list")
+def _():
+    return _write_one_channel([0.0, 0.1, 0.2, 0.3])
+
+
+@observe("ao_one_channel_write_numpy_1d")
+def _():
+    return _write_one_channel(np.zeros(4))
+
+
+@observe("ao_one_channel_write_numpy_2d_1xN")
+def _():
+    return _write_one_channel(np.zeros((1, 4)))
+
+
+@observe("ao_one_channel_write_numpy_2d_Nx1_transposed")
+def _():
+    return _write_one_channel(np.zeros((4, 1)))
+
+
 out = Path(__file__).with_name(f"contract_report_{dev}.json")
 out.write_text(json.dumps(report, indent=2, default=str), encoding="utf-8")
 print(f"OK -> {out}")
