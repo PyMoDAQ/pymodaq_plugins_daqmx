@@ -49,3 +49,18 @@ def test_without_a_trigger_the_task_starts_immediately(driver):
     task, nidaqmx_task = open_task(driver, timing=ClockSettings(rate=1000., samples=4))
 
     assert nidaqmx_task.trigger_calls == []
+
+
+def test_the_pulses_of_a_counter_output_are_a_terminal_usable_as_a_clock_source():
+    from pymodaq_plugins_daqmx.hardware.national_instruments.api import counter_output_terminal
+
+    # spelled like the terminal that the driver accepted on a PCIe-6363 (contract_report_Dev2.json)
+    assert counter_output_terminal('Dev2/ctr1') == '/Dev2/Ctr1InternalOutput'
+    assert counter_output_terminal('cDAQ1Mod1/ctr0') == '/cDAQ1Mod1/Ctr0InternalOutput'
+
+
+def test_only_a_counter_has_a_terminal_of_pulses():
+    from pymodaq_plugins_daqmx.hardware.national_instruments.api import counter_output_terminal
+
+    with pytest.raises(ValueError, match='counter'):
+        counter_output_terminal('Dev2/ao0')

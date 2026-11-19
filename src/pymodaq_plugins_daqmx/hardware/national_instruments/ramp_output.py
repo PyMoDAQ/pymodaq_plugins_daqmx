@@ -3,8 +3,9 @@ import time
 
 import numpy as np
 
-from pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni import (
-    NIDAQmx, AOChannel, ClockCounter, ClockSettings, AcquisitionType)
+from pymodaq_plugins_daqmx.hardware.national_instruments.api import (
+    AOVoltage, AnalogOutputTask, COPulseFreq, ClockSettings, CounterOutputTask, ImplicitTiming, TaskConfig,
+    counter_output_terminal)
 
 
 class RampOutputController:
@@ -15,16 +16,16 @@ class RampOutputController:
     """
 
     def __init__(self):
-        self.clock = NIDAQmx()
-        self.analog = NIDAQmx()
-        self.axes: dict[str, AOChannel] = {}
+        self.clock: CounterOutputTask = None  # the tasks of the running ramp, replaced at each ramp
+        self.analog: AnalogOutputTask = None
+        self.axes: dict[str, AOVoltage] = {}
         self.final: dict[str, float] = {}  # voltage reached at the end of the last ramp, for each axis
         self.clock_channel = ''
         self._ramp = None  # (start time, step time, {axis: values}) of the running ramp
         self._time = time.monotonic
 
     def configure_axis(self, axis: str, channel: str, vmin: float, vmax: float):
-        self.axes[axis] = AOChannel(name=channel, value_min=vmin, value_max=vmax)
+        self.axes[axis] = AOVoltage(channel, min_val=vmin, max_val=vmax)
         self.final.setdefault(axis, 0.)
 
     def voltage(self, axis: str) -> float:
@@ -73,24 +74,24 @@ class RampOutputController:
         voltages = values[axis]
         task_channels = [self.axes[ax] for ax in names]
         data = np.array([values[ax] for ax in names])
+        self._release()  # the outputs are free for the tasks of this ramp
         if len(voltages) == 1:  # no timing needed for one value
-            self.analog.update_task(task_channels, ClockSettings(Nsamples=1))
-            self.analog.task.write(data[:, 0].tolist() if len(names) > 1 else float(data[0, 0]), auto_start=True)
+            self.analog = AnalogOutputTask(TaskConfig(channels=task_channels))
+            self.analog.write_levels(data[:, 0])
             self.final.update({ax: float(vals[-1]) for ax, vals in values.items()})
             self._ramp = None
             return
         frequency = 1 / step_time
-        clock = ClockCounter(clock_frequency=frequency, name=self.clock_channel)
-        self.clock.update_task([clock], ClockSettings(Nsamples=1))
-        self.clock.task.timing.cfg_implicit_timing(sample_mode=AcquisitionType.FINITE,
-                                                   samps_per_chan=len(voltages) + 1)
-        self.analog.update_task(task_channels, ClockSettings(Nsamples=1))
-        self.analog.task.timing.cfg_samp_clk_timing(frequency, source='/' + self.clock_channel + 'InternalOutput',
-                                                    sample_mode=AcquisitionType.FINITE,
-                                                    samps_per_chan=len(voltages))
-        self.analog.task.write(data.tolist() if len(names) > 1 else data[0].tolist(), auto_start=False)
-        self.analog.task.start()
-        self.clock.task.start()
+        self.clock = CounterOutputTask(TaskConfig(
+            channels=[COPulseFreq(self.clock_channel, frequency=frequency)],
+            timing=ImplicitTiming(samples=len(voltages) + 1)))
+        self.analog = AnalogOutputTask(TaskConfig(
+            channels=task_channels,
+            timing=ClockSettings(rate=frequency, samples=len(voltages),
+                                 source=counter_output_terminal(self.clock_channel))))
+        self.analog.write_analog(data)
+        self.analog.start()
+        self.clock.start()
         self._ramp = (self._time(), step_time, values)
         self.final.update({ax: float(vals[-1]) for ax, vals in values.items()})
 
@@ -100,10 +101,17 @@ class RampOutputController:
             for ax in self.axes:
                 self.final[ax] = self.voltage(ax)
             self._ramp = None
-        self.clock.stop()
-        self.analog.stop()
+        for task in (self.clock, self.analog):
+            if task is not None:
+                task.stop()
+
+    def _release(self):
+        """Close the tasks of the last ramp. They stay open after a ramp, which keeps the outputs where they are."""
+        for task in (self.clock, self.analog):
+            if task is not None:
+                task.close()
+        self.clock = self.analog = None
 
     def close(self):
         self.stop()
-        self.clock.close()
-        self.analog.close()
+        self._release()

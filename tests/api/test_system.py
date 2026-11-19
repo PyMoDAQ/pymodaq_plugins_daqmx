@@ -5,7 +5,7 @@ pytest.importorskip('nidaqmx')
 
 from nidaqmx_double import system_driver, _pcie_6363  # noqa: F401  (pytest fixture)
 
-from pymodaq_plugins_daqmx.hardware.national_instruments.api import NIDAQSystem
+from pymodaq_plugins_daqmx.hardware.national_instruments.api import ChannelKind, NIDAQSystem
 
 
 def test_lists_the_devices_as_plain_strings(system_driver):
@@ -81,3 +81,20 @@ def test_the_view_of_the_hardware_is_kept_until_refreshed(system_driver):
     assert system.devices() == ['Dev1', 'Dev2']
     system.refresh()
     assert system.devices() == ['Dev1', 'Dev2', 'Dev3']
+
+
+def test_lists_the_channels_of_all_the_devices_by_kind(system_driver):
+    system = NIDAQSystem()
+
+    channels = system.all_channels('ai')
+
+    assert channels[0] == 'Dev1/ai0' and channels[7] == 'Dev1/ai7'
+    assert channels[8] == 'Dev2/ai0' and len(channels) == 8 + 32
+    assert system.all_channels('ao') == [f'Dev2/ao{c}' for c in range(4)]
+    assert system.all_channels(ChannelKind.AO) == system.all_channels('ao')
+
+
+def test_all_channels_is_empty_without_the_driver(system_driver):
+    system_driver.driver_present = False
+
+    assert NIDAQSystem().all_channels('ai') == []

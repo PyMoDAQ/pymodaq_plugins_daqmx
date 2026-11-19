@@ -7,12 +7,14 @@ from pymodaq.utils.daq_utils import ThreadCommand
 from pymodaq.utils.logger import set_logger, get_module_name
 from pymodaq_data import DataToExport
 
-from pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni import (
-    NIDAQmx, ClockSettings, AIChannel, ChannelType, UsageTypeAI, TerminalConfiguration)
+from nidaqmx.constants import TerminalConfiguration
+
+from pymodaq_plugins_daqmx.hardware.national_instruments.api import (
+    AIVoltage, AnalogInputTask, ChannelKind, ClockSettings, NIDAQSystem, TaskConfig)
 
 logger = set_logger(get_module_name(__file__))
 
-AI_CHANNELS = NIDAQmx.get_NIDAQ_channels(source_type=ChannelType.ANALOG_INPUT)
+AI_CHANNELS = NIDAQSystem().all_channels(ChannelKind.AI)
 
 
 def default_channel(index: int) -> str:
@@ -38,8 +40,8 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
     data_name = 'NI AI'
 
     def ini_attributes(self):
-        self.controller: NIDAQmx = None
-        self.channels_ai: list[AIChannel] = []
+        self.controller: AnalogInputTask = None  # one task for the channels and the clock of this plugin
+        self.channel_labels: list[str] = []
         self.live = False
         self.Naverage = 1
 
@@ -47,10 +49,6 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
         raise NotImplementedError
 
     def ini_detector(self, controller=None):
-        if self.is_master:
-            self.controller = NIDAQmx()
-        else:
-            self.controller = controller
         self.update_tasks()
         return 'Analog input ready', True
 
@@ -59,25 +57,21 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
             self.update_tasks()
 
     def update_tasks(self):
-        self.channels_ai = [AIChannel(name=name, source=ChannelType.ANALOG_INPUT,
-                                      analog_type=UsageTypeAI.VOLTAGE, value_min=-10., value_max=10.,
-                                      termination=TerminalConfiguration.DIFF)
-                            for name in self.channel_names()]
-        clock = ClockSettings(frequency=self.settings['frequency'], Nsamples=self.settings['Nsamples'],
-                              repetition=False)
-        self.controller.update_task(self.channels_ai, clock)
+        """Replace the task by one that follows the settings."""
+        self.close()
+        self.channel_labels = self.channel_names()
+        channels = [AIVoltage(name, min_val=-10., max_val=10., terminal_config=TerminalConfiguration.DIFF)
+                    for name in self.channel_labels]
+        clock = ClockSettings(rate=self.settings['frequency'], samples=self.settings['Nsamples'])
+        self.controller = AnalogInputTask(TaskConfig(channels=channels, timing=clock))
 
     def read_samples(self) -> np.ndarray:
         """Run one finite acquisition and return an array of shape (nchannels, Nsamples)."""
-        nsamples = self.settings['Nsamples']
-        timeout = nsamples / self.settings['frequency'] + 5.
-        self.controller.task.start()
+        self.controller.start()
         try:
-            raw = self.controller.task.read(number_of_samples_per_channel=nsamples, timeout=timeout)
+            return self.controller.read_analog()
         finally:
-            self.controller.task.stop()
-        data = np.asarray(raw, dtype=float)
-        return data.reshape(len(self.channels_ai), nsamples)
+            self.controller.stop()
 
     def grab_data(self, Naverage=1, **kwargs):
         if 'live' in kwargs:
@@ -95,7 +89,7 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
             axes = [Axis('time', 's', data=np.arange(data.shape[1]) / self.settings['frequency'], index=0)]
         self.dte_signal.emit(DataToExport(self.data_name, data=[
             DataFromPlugins(name=self.data_name, data=[row for row in data], dim=f'Data{display}',
-                            labels=[ch.name for ch in self.channels_ai], axes=axes)]))
+                            labels=self.channel_labels, axes=axes)]))
 
     def stop(self):
         try:
@@ -104,5 +98,6 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
             logger.debug('The task could not be stopped', exc_info=True)
 
     def close(self):
-        if self.is_master and self.controller is not None:
+        if self.controller is not None:
             self.controller.close()
+            self.controller = None

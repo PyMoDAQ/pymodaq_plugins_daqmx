@@ -145,12 +145,17 @@ class _Triggers:
 class DoubleTask:
     """What ``nidaqmx.Task`` does, without driver nor hardware."""
 
+    edges_per_sample = 0  # edges a counter input sees between two samples; tests set it with monkeypatch
+
     def __init__(self, new_task_name=""):
         self.channels = []
         self.timing_calls = []
         self.trigger_calls = []
         self.closed = False
         self.started = False
+        self.starts = 0
+        self.stops = 0
+        self.read_timeouts = []
         self.callback_threads = []
         self.ai_channels = _Channels(self)
         self.ao_channels = _AOChannels(self)
@@ -162,8 +167,13 @@ class DoubleTask:
 
     def read(self, number_of_samples_per_channel=None, timeout=10.0):
         n = number_of_samples_per_channel
+        self.read_timeouts.append(timeout)
         nch = len(self.channels)
         # values are chosen so that channel c, sample s reads c + s / 10
+        if self.channels and self.channels[0][0] == 'ci_count_edges' and self.edges_per_sample:
+            # an invented signal (the simulated devices count nothing): sample s holds the edges counted so far
+            rows = [[self.edges_per_sample * (s + 1) for s in range(n)] for c in range(nch)]
+            return rows[0] if nch == 1 else rows
         if self.channels and self.channels[0][0] == 'di':
             # digital lines read booleans: line c, sample s is high when c + s is even
             rows = [[(c + s) % 2 == 0 for s in range(n)] for c in range(nch)]
@@ -218,9 +228,11 @@ class DoubleTask:
 
     def start(self):
         self.started = True
+        self.starts += 1
 
     def stop(self):
-        pass
+        self.stops += 1
+        self.started = False
 
     def close(self):
         self.closed = True

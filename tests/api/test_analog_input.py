@@ -60,3 +60,26 @@ def test_a_driver_error_reaches_the_caller_and_the_task_is_released(driver):
     assert error.value.error_code == -200170
     assert [task.closed for task in driver] == [True]
 
+
+
+def test_a_finite_task_can_be_stopped_then_started_again(driver):
+    config = TaskConfig(channels=[AIVoltage('Dev1/ai0')], timing=ClockSettings(rate=1000., samples=4))
+
+    with AnalogInputTask(config) as task:
+        task.start()
+        task.read_analog()
+        task.stop()
+        assert not driver[0].started
+        task.start()
+        assert driver[0].started
+
+
+def test_a_read_waits_for_the_whole_acquisition_by_default(driver):
+    config = TaskConfig(channels=[AIVoltage('Dev1/ai0')], timing=ClockSettings(rate=2., samples=40))
+
+    with AnalogInputTask(config) as task:
+        task.read_analog()
+        task.read_analog(timeout=3.)
+
+    assert driver[0].read_timeouts[0] >= 20.  # 40 samples at 2 Hz
+    assert driver[0].read_timeouts[1] == 3.
