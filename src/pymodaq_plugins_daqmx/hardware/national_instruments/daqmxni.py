@@ -1,6 +1,6 @@
 import traceback
 import numpy as np
-from pymodaq.utils.logger import set_logger, get_module_name
+from pymodaq_utils.logger import set_logger, get_module_name
 from nidaqmx.constants import AcquisitionType, VoltageUnits, CurrentUnits, CurrentShuntResistorLocation, \
     TemperatureUnits, CJCSource, CountDirection, Level, FrequencyUnits, TimeUnits, LineGrouping, UsageTypeAI, \
     UsageTypeAO, UsageTypeCI, UsageTypeCO, Edge, TerminalConfiguration, ThermocoupleType, ChannelType, \
