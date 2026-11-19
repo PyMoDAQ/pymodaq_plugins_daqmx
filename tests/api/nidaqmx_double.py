@@ -13,6 +13,7 @@ import pytest
 
 KNOWN_COUNTERS = {f"Dev2/ctr{c}" for c in range(4)}
 KNOWN_AO_CHANNELS = {f"Dev2/ao{c}" for c in range(4)}
+KNOWN_LINES = {f"Dev2/port0/line{c}" for c in range(8)}
 KNOWN_AI_CHANNELS = {f"Dev{d}/ai{c}" for d in (1, 2) for c in range(8)}
 
 
@@ -92,6 +93,22 @@ class _CounterChannels:
                   initial_delay=initial_delay)
 
 
+class _DigitalChannels:
+    def __init__(self, task):
+        self._task = task
+
+    def _add(self, kind, lines, line_grouping):
+        if lines not in KNOWN_LINES:
+            raise nidaqmx.DaqError('Physical channel specified does not exist on this device.', -200170)
+        self._task.channels.append((kind, lines, dict(line_grouping=line_grouping)))
+
+    def add_di_chan(self, lines, name_to_assign_to_lines="", line_grouping=None):
+        self._add('di', lines, line_grouping)
+
+    def add_do_chan(self, lines, name_to_assign_to_lines="", line_grouping=None):
+        self._add('do', lines, line_grouping)
+
+
 class _Timing:
     def __init__(self, task):
         self._task = task
@@ -137,6 +154,7 @@ class DoubleTask:
         self.callback_threads = []
         self.ai_channels = _Channels(self)
         self.ao_channels = _AOChannels(self)
+        self.di_channels = self.do_channels = _DigitalChannels(self)
         self.ci_channels = self.co_channels = _CounterChannels(self)
         self.writes = []
         self.timing = _Timing(self)
@@ -146,12 +164,19 @@ class DoubleTask:
         n = number_of_samples_per_channel
         nch = len(self.channels)
         # values are chosen so that channel c, sample s reads c + s / 10
+        if self.channels and self.channels[0][0] == 'di':
+            # digital lines read booleans: line c, sample s is high when c + s is even
+            rows = [[(c + s) % 2 == 0 for s in range(n)] for c in range(nch)]
+            return rows[0] if nch == 1 else rows
         rows = [[c + s / 10 for s in range(n)] for c in range(nch)]
         return rows[0] if nch == 1 else rows
 
     def write(self, data, auto_start=False, timeout=10.0):
         """Like nidaqmx: the data must hold one row per channel; returns the samples written per channel."""
         import numpy as np
+        if self.channels and self.channels[0][0] == 'do':
+            self.writes.append((data, auto_start))
+            return 1  # recorded: write returns the number of samples written
         array = np.asarray(data, dtype=float)
         nch = len(self.channels)
         if nch == 1 and array.ndim == 2:

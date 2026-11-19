@@ -108,3 +108,34 @@ class CounterInputTask(_Task):
 
 class CounterOutputTask(_Task):
     """Generates pulses: ``start()`` it, ``close()`` it to stop."""
+
+
+class DigitalTask(_Task):
+    """Reads digital input lines or drives digital output lines (not both in one task)."""
+
+    def __init__(self, config):
+        from .channels import DigitalIn, DigitalOut
+        kinds = {type(channel) for channel in config.channels}
+        if kinds - {DigitalIn, DigitalOut}:
+            raise ValueError('a DigitalTask takes DigitalIn or DigitalOut channels only')
+        if len(kinds) > 1:
+            raise ValueError('a DigitalTask cannot mix inputs and outputs: use one task for each')
+        super().__init__(config)
+
+    def read_digital(self, samples=1):
+        """Read the levels as a boolean array shaped (lines, samples)."""
+        data = self._task.read(number_of_samples_per_channel=samples)
+        return np.asarray(data, dtype=np.bool_).reshape(len(self.config.channels), samples)
+
+    def write_digital(self, levels):
+        """Drive the lines now: a bool for a single line, else one bool per line."""
+        nch = len(self.config.channels)
+        if np.ndim(levels) == 0:
+            if nch != 1:
+                raise ValueError(f'the task has {nch} lines: give one level for each')
+            self._task.write(bool(levels), auto_start=True)
+            return
+        levels = [bool(level) for level in levels]
+        if len(levels) != nch:
+            raise ValueError(f'the task has {nch} lines, got {len(levels)} levels')
+        self._task.write(levels, auto_start=True)

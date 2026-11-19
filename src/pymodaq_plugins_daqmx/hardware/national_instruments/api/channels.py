@@ -1,7 +1,7 @@
 """Immutable descriptions of the channels of a task."""
 from dataclasses import dataclass
 
-from nidaqmx.constants import (CountDirection, CurrentUnits, Edge, ExcitationSource, Level,
+from nidaqmx.constants import (CountDirection, CurrentUnits, Edge, ExcitationSource, Level, LineGrouping,
                                ResistanceConfiguration, RTDType, TemperatureUnits, TerminalConfiguration,
                                ThermocoupleType, VoltageUnits)
 
@@ -148,3 +148,32 @@ class COPulseFreq:
     def add_to(self, task):
         task.co_channels.add_co_pulse_chan_freq(self.name, freq=self.frequency, duty_cycle=self.duty_cycle,
                                                 idle_state=self.idle_state, initial_delay=self.initial_delay)
+
+
+def _check_one_line(name):
+    if ':' in name or ',' in name:
+        raise ValueError(f'a digital channel is one line, got {name!r}: give one channel per line')
+
+
+@dataclass(frozen=True)
+class DigitalIn:
+    """Digital input on one line such as ``Dev1/port0/line0``."""
+    name: str
+
+    def __post_init__(self):
+        _check_one_line(self.name)
+
+    def add_to(self, task):
+        task.di_channels.add_di_chan(self.name, line_grouping=LineGrouping.CHAN_PER_LINE)
+
+
+@dataclass(frozen=True)
+class DigitalOut:
+    """Digital output on one line such as ``Dev1/port0/line3``."""
+    name: str
+
+    def __post_init__(self):
+        _check_one_line(self.name)
+
+    def add_to(self, task):
+        task.do_channels.add_do_chan(self.name, line_grouping=LineGrouping.CHAN_PER_LINE)
