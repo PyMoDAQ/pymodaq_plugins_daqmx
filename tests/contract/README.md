@@ -3,7 +3,8 @@
 `contract_check.py` records how the real `nidaqmx` package behaves on a NI MAX simulated device
 (shapes and dtypes returned by `task.read()`, errors raised for invalid devices, channels, ranges,
 rates or triggers, callbacks on a finite task, start/stop/restart, analog and digital writes, counters,
-and which kind of analog input channel a module accepts).
+which kind of analog input channel a module accepts, external clock and start triggers, change detection,
+counter output and counter input with a clock).
 The reports are used to model the fake `nidaqmx` module of the unit tests (`tests/api/nidaqmx_double.py`),
 which run without hardware or driver.
 
