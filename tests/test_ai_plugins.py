@@ -15,7 +15,8 @@ from nidaqmx_double import driver  # noqa: F401  (pytest fixture)
 
 class TestAI:
     def test_ini_configures_one_channel_task(self, qapp, driver):
-        plugin = make_detector(DAQ_0DViewer_DAQmxAI, ai_channel='Dev1/ai1', frequency=500, Nsamples=10)
+        plugin = make_detector(DAQ_0DViewer_DAQmxAI, ai_channel='Dev1/ai1', frequency=500)
+        plugin.grab_data(Naverage=10)
         assert plugin.initialized
         task = driver[-1]
         kind, name, settings = task.channels[0]
@@ -26,9 +27,11 @@ class TestAI:
         assert rate == 500 and kwargs['samps_per_chan'] == 10
         plugin.close()
 
-    def test_0d_is_the_mean_of_the_samples(self, qapp, driver):
-        plugin = make_detector(DAQ_0DViewer_DAQmxAI, ai_channel='Dev1/ai0', Nsamples=10)
-        dte = grab_and_wait(plugin)
+    def test_0d_is_the_mean_of_as_many_samples_as_the_averaging_of_the_viewer(self, qapp, driver):
+        plugin = make_detector(DAQ_0DViewer_DAQmxAI, ai_channel='Dev1/ai0')
+        dte = grab_and_wait(plugin, naverage=10)
+        assert driver[-1].timing_calls[0][2]['samps_per_chan'] == 10
+        assert len(driver[-1].read_timeouts) == 1  # one acquisition, not ten
         assert dte[0].dim == 'Data0D'
         assert dte[0].labels == ['Dev1/ai0']
         assert float(dte[0].data[0][0]) == pytest.approx(0.45)  # the double reads s / 10 for sample s
@@ -44,21 +47,33 @@ class TestAI:
         assert dte[0].axes[0].get_data()[1] == pytest.approx(0.01)
         plugin.close()
 
-    def test_hardware_averaging_reads_n_times(self, qapp, driver):
+    def test_1d_averages_naverage_traces(self, qapp, driver):
         plugin = make_detector(DAQ_0DViewer_DAQmxAI, ai_channel='Dev1/ai0', Nsamples=5)
+        plugin.settings.child('display').setValue('1D')
         plugin.grab_data(Naverage=3)
         assert len(driver[-1].read_timeouts) == 3
+        assert driver[-1].timing_calls[0][2]['samps_per_chan'] == 5
+        plugin.close()
+
+    def test_nsamples_is_only_shown_for_a_trace(self, qapp, driver):
+        plugin = make_detector(DAQ_0DViewer_DAQmxAI, ai_channel='Dev1/ai0')
+        nsamples = plugin.settings.child('Nsamples')
+        assert not nsamples.opts['visible']
+        display = plugin.settings.child('display')
+        display.setValue('1D')
+        plugin.commit_settings(display)
+        assert nsamples.opts['visible']
         plugin.close()
 
     def test_each_grab_stops_the_task_so_that_it_can_run_again(self, qapp, driver):
-        plugin = make_detector(DAQ_0DViewer_DAQmxAI, ai_channel='Dev1/ai0', Nsamples=5)
+        plugin = make_detector(DAQ_0DViewer_DAQmxAI, ai_channel='Dev1/ai0')
         plugin.grab_data()
         plugin.grab_data()
         assert driver[-1].stops == 2 and not driver[-1].started
         plugin.close()
 
     def test_changing_a_setting_replaces_the_task(self, qapp, driver):
-        plugin = make_detector(DAQ_0DViewer_DAQmxAI, ai_channel='Dev1/ai0', Nsamples=5, frequency=100)
+        plugin = make_detector(DAQ_0DViewer_DAQmxAI, ai_channel='Dev1/ai0', frequency=100)
         param = plugin.settings.child('frequency')
         param.setValue(200)
         plugin.commit_settings(param)  # what the Dashboard does when the user edits a setting
@@ -86,11 +101,11 @@ class TestDualAI:
 class TestLive:
     def test_each_block_of_samples_is_emitted_as_a_data_without_further_grab_calls(self, qapp, qtbot, driver):
         from nidaqmx.constants import AcquisitionType
-        plugin = make_detector(DAQ_0DViewer_DAQmxAI, ai_channel='Dev1/ai0', Nsamples=10, frequency=100)
+        plugin = make_detector(DAQ_0DViewer_DAQmxAI, ai_channel='Dev1/ai0', frequency=100)
         emitted = []
         plugin.dte_signal.connect(emitted.append)
 
-        plugin.grab_data(Naverage=1, live=True)
+        plugin.grab_data(Naverage=10, live=True)
         live_task = driver[-1]
         assert live_task.timing_calls[0][2]['sample_mode'] == AcquisitionType.CONTINUOUS
         for _ in range(2):
@@ -118,9 +133,10 @@ class TestLive:
         plugin.stop()
         plugin.close()
 
-    def test_the_data_is_the_mean_of_the_last_naverage_blocks(self, qapp, qtbot, driver):
+    def test_1d_live_emits_the_mean_of_the_last_naverage_traces(self, qapp, qtbot, driver):
         import numpy as np
         plugin = make_detector(DAQ_0DViewer_DAQmxAI, ai_channel='Dev1/ai0', Nsamples=4)
+        plugin.settings.child('display').setValue('1D')
         plugin.grab_data(Naverage=2, live=True)
         live_task = driver[-1]
         blocks = iter([np.full((1, 4), 1.), np.full((1, 4), 3.), np.full((1, 4), 5.)])
@@ -131,12 +147,12 @@ class TestLive:
                 live_task.fire_samples()
             means.append(float(blocker.args[0][0].data[0][0]))
 
-        assert means == [1., 2., 4.]  # the first block alone, then (1+3)/2, then (3+5)/2
+        assert means == [1., 2., 4.]  # the first trace alone, then (1+3)/2, then (3+5)/2
         plugin.stop()
         plugin.close()
 
     def test_stopping_the_live_gives_back_the_task_of_the_snaps(self, qapp, driver):
-        plugin = make_detector(DAQ_0DViewer_DAQmxAI, ai_channel='Dev1/ai0', Nsamples=5)
+        plugin = make_detector(DAQ_0DViewer_DAQmxAI, ai_channel='Dev1/ai0')
         plugin.grab_data(live=True)
         live_task = driver[-1]
 
@@ -149,7 +165,7 @@ class TestLive:
         plugin.close()
 
     def test_no_data_is_emitted_after_the_stop(self, qapp, qtbot, driver):
-        plugin = make_detector(DAQ_0DViewer_DAQmxAI, ai_channel='Dev1/ai0', Nsamples=5)
+        plugin = make_detector(DAQ_0DViewer_DAQmxAI, ai_channel='Dev1/ai0')
         emitted = []
         plugin.dte_signal.connect(emitted.append)
         plugin.grab_data(live=True)

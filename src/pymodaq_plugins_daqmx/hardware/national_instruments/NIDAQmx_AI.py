@@ -28,7 +28,10 @@ def default_channel(index: int) -> str:
 
 
 class DAQ_Viewer_AIBase(DAQ_Viewer_base):
-    """Acquire `Nsamples` points at `frequency` on one or several analog inputs, as 0D (mean) or 1D data.
+    """Acquire points at `frequency` on one or several analog inputs, as 0D (mean) or 1D data.
+
+    In 0D, the Naverage of the viewer is the number of points averaged by the acquisition (`Nsamples` is hidden).
+    In 1D, `Nsamples` is the length of the trace and Naverage the number of traces averaged.
 
     Subclasses declare in `params` one list parameter per channel and give their names in `channel_names`.
     """
@@ -39,7 +42,7 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
         {'title': 'Nsamples:', 'name': 'Nsamples', 'type': 'int', 'value': 100, 'default': 100, 'min': 1},
     ]
     hardware_averaging = True
-    live_mode_available = True  # with live=True: one continuous task, one data per block of Nsamples
+    live_mode_available = True  # with live=True: one continuous task, one data per block of samples
     data_name = 'NI AI'
 
     def ini_attributes(self):
@@ -53,12 +56,23 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
         raise NotImplementedError
 
     def ini_detector(self, controller=None):
+        self.settings.child('Nsamples').setOpts(visible=self.settings['display'] == '1D')
         self.update_tasks()
         return 'Analog input ready', True
 
     def commit_settings(self, param):
+        if param.name() == 'display':
+            self.settings.child('Nsamples').setOpts(visible=param.value() == '1D')
         if self.controller is not None:
-            self.update_tasks()
+            self.update_tasks(streaming=self._bridge is not None)
+
+    def samples_per_block(self) -> int:
+        """Points of one acquisition: the averaging of the viewer in 0D, the length of the trace in 1D."""
+        return self.Naverage if self.settings['display'] == '0D' else self.settings['Nsamples']
+
+    def traces_to_average(self) -> int:
+        """Number of acquisitions averaged by the plugin: in 0D, the averaging is done within the acquisition."""
+        return 1 if self.settings['display'] == '0D' else self.Naverage
 
     def update_tasks(self, streaming=False):
         """Replace the task by one that follows the settings: finite for a snap, continuous for the live mode."""
@@ -67,7 +81,7 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
         channels = [AIVoltage(name, min_val=-10., max_val=10., terminal_config=TerminalConfiguration.DIFF)
                     for name in self.channel_labels]
         clock = ClockSettings(rate=self.settings['frequency'],
-                              samples=None if streaming else self.settings['Nsamples'])
+                              samples=None if streaming else self.samples_per_block())
         self.controller = AnalogInputTask(TaskConfig(channels=channels, timing=clock))
 
     def read_samples(self) -> np.ndarray:
@@ -83,18 +97,20 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
         self.Naverage = Naverage
         if live:
             self.start_live()
-        else:
-            total = sum(self.read_samples() for _ in range(Naverage)) / Naverage
-            self.emit_data(total)
+            return
+        if self.controller.config.timing.samples != self.samples_per_block():
+            self.update_tasks()  # the 0D acquisition follows the Naverage of the viewer
+        traces = self.traces_to_average()
+        self.emit_data(sum(self.read_samples() for _ in range(traces)) / traces)
 
     def start_live(self):
-        """Acquire continuously: each block of Nsamples is emitted as a data (mean of the last Naverage blocks)."""
+        """Acquire continuously: each block of Nsamples is emitted as a data (1D: mean of the last Naverage traces)."""
         self.stop_live()
         self.update_tasks(streaming=True)  # a stopped task still reserves its channels: no snap task in parallel
-        self._recent_blocks = deque(maxlen=self.Naverage)
+        self._recent_blocks = deque(maxlen=self.traces_to_average())
         self._bridge = QtTaskBridge(self.controller)
         self._bridge.samples_ready.connect(self._emit_block)
-        self.controller.start(notify_every=self.settings['Nsamples'])
+        self.controller.start(notify_every=self.samples_per_block())
 
     def stop_live(self):
         if self._bridge is not None:
