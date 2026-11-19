@@ -1,11 +1,25 @@
 """What the NI hardware of the computer offers: devices, channels, terminals, ranges, rates, triggers."""
+from typing import List
+
 import nidaqmx.errors
 import nidaqmx.system
 from nidaqmx.constants import TriggerUsage
+from pymodaq_utils.enums import StrEnum
 
-_CHANNEL_KINDS = {
-    'ai': 'ai_physical_chans', 'ao': 'ao_physical_chans', 'ci': 'ci_physical_chans',
-    'co': 'co_physical_chans', 'di': 'di_lines', 'do': 'do_lines',
+
+class ChannelKind(StrEnum):
+    """Kinds of channels of a device. Members compare equal to their value: ``'ai'``, ``'ci'``..."""
+    AI = 'ai'
+    AO = 'ao'
+    CI = 'ci'
+    CO = 'co'
+    DI = 'di'  # lines
+    DO = 'do'  # lines
+
+
+_CHANNEL_ATTRIBUTES = {
+    ChannelKind.AI: 'ai_physical_chans', ChannelKind.AO: 'ao_physical_chans', ChannelKind.CI: 'ci_physical_chans',
+    ChannelKind.CO: 'co_physical_chans', ChannelKind.DI: 'di_lines', ChannelKind.DO: 'do_lines',
 }
 _UNSUPPORTED_PROPERTY = -200197
 
@@ -30,13 +44,16 @@ class NIDAQSystem:
         """Names of the devices, such as ``['Dev1', 'Dev2']``; empty without driver."""
         return list(self._remember('devices', self._read_devices))
 
-    def channels(self, device, kind):
-        """Names of the channels of ``device`` of the given ``kind``: ai, ao, ci, co, di (lines) or do (lines)."""
-        if kind not in _CHANNEL_KINDS:
-            raise ValueError(f'unknown kind {kind!r} of channel: use one of {sorted(_CHANNEL_KINDS)}')
-        return list(self._device_property(device, _CHANNEL_KINDS[kind], lambda value: value.channel_names, []))
+    def channels(self, device: str, kind: ChannelKind) -> List[str]:
+        """Names of the channels of ``device`` (such as ``'Dev1'``) of the given ``kind`` (a `ChannelKind` or its
+        value: ai, ao, ci, co, di (lines) or do (lines))."""
+        try:
+            kind = ChannelKind(kind)
+        except ValueError:
+            raise ValueError(f'unknown kind {kind!r} of channel: use one of {ChannelKind.values()}') from None
+        return list(self._device_property(device, _CHANNEL_ATTRIBUTES[kind], lambda value: value.channel_names, []))
 
-    def all_channels(self, kind):
+    def all_channels(self, kind: ChannelKind) -> List[str]:
         """Names of the channels of the given ``kind`` on all the devices, device after device."""
         return [channel for device in self.devices() for channel in self.channels(device, kind)]
 
