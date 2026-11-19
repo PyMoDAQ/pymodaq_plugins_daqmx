@@ -16,4 +16,4 @@ class DAQ_0DViewer_DAQmxAI(DAQ_Viewer_AIBase):
 
 
 if __name__ == '__main__':
-    main(__file__)
+    main(__file__, init=False)
