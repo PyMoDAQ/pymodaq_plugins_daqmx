@@ -1,14 +1,13 @@
 """Acquire 100 samples and be told as each block of 10 is ready."""
 
 from pymodaq_plugins_daqmx.hardware.national_instruments.api import (
-    AIVoltage, AnalogInputTask, ClockSettings, TaskConfig)
+    AIVoltage, AnalogInputTask, ClockSettings, TaskConfig, TaskListener)
 
 
-class Recorder(AnalogInputTask):
-    """Override the hooks: the driver calls them from threads of its own, not from yours."""
+class Recorder(TaskListener):
+    """What a task tells: the driver calls these from threads of its own, not from yours."""
 
-    def __init__(self, config):
-        super().__init__(config)
+    def __init__(self):
         self.blocks = []
         self.status = None
 
@@ -21,7 +20,9 @@ class Recorder(AnalogInputTask):
 
 def main():
     config = TaskConfig(channels=[AIVoltage('Dev1/ai0')], timing=ClockSettings(rate=1000., samples=100))
-    with Recorder(config) as task:
+    recorder = Recorder()
+    with AnalogInputTask(config) as task:
+        task.add_listener(recorder)
         task.start(notify_every=10)  # one block of 10 samples at a time
-        # ... wait, for example with a threading.Event set from on_done, then use task.blocks
-    return task
+        # ... wait, for example with a threading.Event set from on_done, then use recorder.blocks
+    return recorder

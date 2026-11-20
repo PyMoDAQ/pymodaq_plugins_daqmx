@@ -16,7 +16,10 @@ Tasks
 .. autoclass:: pymodaq_plugins_daqmx.hardware.national_instruments.api.TaskConfig
 
 .. autoclass:: pymodaq_plugins_daqmx.hardware.national_instruments.api.AnalogInputTask
-   :members: read_analog, start, stop, close, on_samples_ready, on_done
+   :members: read_analog, start, stop, close, add_listener, remove_listener
+
+.. autoclass:: pymodaq_plugins_daqmx.hardware.national_instruments.api.TaskListener
+   :members:
 
 .. autoclass:: pymodaq_plugins_daqmx.hardware.national_instruments.api.AnalogOutputTask
    :members: write_analog, write_levels, start, stop, close

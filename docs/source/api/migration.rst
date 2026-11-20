@@ -81,7 +81,7 @@ What replaces what
    * - ``controller.task.write(...)``
      - ``write_analog()``, ``write_levels()``, ``write_digital()``
    * - ``register_callback(callback, event, nsamples)``
-     - ``on_done`` and ``on_samples_ready`` hooks, ``start(notify_every=n)``
+     - ``TaskListener`` (``on_done``, ``on_samples_ready``), ``start(notify_every=n)``
    * - ``NIDAQmx.get_NIDAQ_devices()``, ``get_NIDAQ_channels(source_type)``
      - ``NIDAQSystem().devices()``, ``.channels(device, kind)``, ``.all_channels(kind)``
    * - ``getAIMaxSingleRate``, ``getAIMaxMultiRate``, ``getAOMaxRate``

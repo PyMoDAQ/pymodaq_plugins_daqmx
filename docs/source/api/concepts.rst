@@ -65,11 +65,22 @@ clock, ``/Dev2/PFI0`` an external signal, and ``counter_output_terminal('Dev2/ct
 Callbacks and threads
 ---------------------
 
-``start(notify_every=n)`` on an analog input task calls ``on_samples_ready(data)`` for each block of ``n`` samples per
-channel, and ``on_done(status)`` is called when the task ends (``status`` is 0 on success). **The driver calls these
-from threads of its own**, one per call, and does not guarantee any order between the two. Keep them short and hand
-the data over (a queue, a Qt signal); never touch a widget from them. The task keeps the callbacks alive for you: the
-driver only holds them weakly.
+A task tells its *listeners* what happens. Derive from ``TaskListener``, reimplement what you need and register the
+object with ``task.add_listener``: ``on_samples_ready(data)`` is called for each block of ``n`` samples per channel when
+the task was started with ``start(notify_every=n)`` (analog input only for now), and ``on_done(status)`` when the task
+ends (``status`` is 0 on success, else a driver error code). A closed task forgets its listeners.
+
+**The driver calls these from threads of its own**, one per call, and does not guarantee any order between the two.
+Keep them short and hand the data over (a queue, an event); never touch a widget from them. The task keeps the
+callbacks alive for you: the driver only holds them weakly.
+
+A ``ClockSettings`` without ``samples`` is a *continuous* acquisition: the task runs until it is stopped and you get
+its data only through the listeners (``read_analog`` raises an error, as there is no end to wait for).
+
+In a PyMoDAQ plugin, do not touch the plugin from the listener: use ``QtTaskBridge``
+(``pymodaq_plugins_daqmx.hardware.national_instruments.qt_task_bridge``). It is a listener that relays each event, as a
+Qt signal (``samples_ready``, ``done``), to the thread that created it, which is the plugin thread when it is created
+in a plugin method. Call its ``close()`` before closing the task.
 
 Other kinds of task do not notify about samples for now.
 

@@ -12,11 +12,15 @@ from nidaqmx_double import driver, system_driver  # noqa: F401  (pytest fixtures
 EXAMPLES = Path(__file__).parent.parent / 'docs' / 'source' / 'examples'
 
 
-def run(name, **kwargs):
+def load(name):
     spec = importlib.util.spec_from_file_location(f'example_{name}', EXAMPLES / f'{name}.py')
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    return module.main(**kwargs)
+    return module
+
+
+def run(name, **kwargs):
+    return load(name).main(**kwargs)
 
 
 def test_discover_hardware(system_driver):
@@ -52,5 +56,18 @@ def test_triggered_acquisition(driver, system_driver):
 
 
 def test_samples_ready(driver):
-    task = run('samples_ready')
+    recorder = run('samples_ready')
     assert driver[-1].closed
+
+
+def test_the_listener_of_the_example_is_told_by_the_driver(driver):
+    example = load('samples_ready')
+    config = example.TaskConfig(channels=[example.AIVoltage('Dev1/ai0')],
+                                timing=example.ClockSettings(rate=1000., samples=100))
+    recorder = example.Recorder()
+    with example.AnalogInputTask(config) as task:
+        task.add_listener(recorder)
+        task.start(notify_every=10)
+        driver[-1].fire_samples()
+        driver[-1].fire_done(0)
+    assert recorder.blocks[0].shape == (1, 10) and recorder.status == 0
