@@ -21,10 +21,7 @@ class Recorder(AnalogInputTask):
 
 def main():
     config = TaskConfig(channels=[AIVoltage('Dev1/ai0')], timing=ClockSettings(rate=1000., samples=100))
-    task = Recorder(config)
-    try:
+    with Recorder(config) as task:
         task.start(notify_every=10)  # one block of 10 samples at a time
         # ... wait, for example with a threading.Event set from on_done, then use task.blocks
-    finally:
-        task.close()
     return task

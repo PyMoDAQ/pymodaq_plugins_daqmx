@@ -5,18 +5,15 @@ from pymodaq_plugins_daqmx.hardware.national_instruments.api import (
 
 
 def main(frequency=100.):
-    clock = CounterOutputTask(TaskConfig(channels=[COPulseFreq('Dev2/ctr1', frequency=frequency)],
-                                         timing=ImplicitTiming()))  # pulses until stopped
-    counter = CounterInputTask(TaskConfig(
+    clock_config = TaskConfig(channels=[COPulseFreq('Dev2/ctr1', frequency=frequency)],
+                              timing=ImplicitTiming())  # pulses until stopped
+    counter_config = TaskConfig(
         channels=[CICountEdges('Dev2/ctr0')],
-        timing=ClockSettings(rate=frequency, samples=1, source=counter_output_terminal('Dev2/ctr1'))))
-    try:
+        timing=ClockSettings(rate=frequency, samples=1, source=counter_output_terminal('Dev2/ctr1')))
+    with CounterOutputTask(clock_config) as clock, CounterInputTask(counter_config) as counter:
         counter.start()  # armed first: it waits for the clock
         clock.start()
         counts = counter.read_counter()[0, 0]  # edges since the start, at the first tick
-    finally:
-        clock.close()
-        counter.close()
     return counts * frequency  # counts per second
 
 
