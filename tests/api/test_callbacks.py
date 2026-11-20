@@ -10,7 +10,7 @@ pytest.importorskip('nidaqmx')
 from nidaqmx_double import driver  # noqa: F401  (pytest fixture)
 
 from pymodaq_plugins_daqmx.hardware.national_instruments.api import (
-    AIVoltage, AnalogInputTask, ClockSettings, TaskConfig)
+    AIVoltage, AnalogInputTask, ClockSettings, TaskConfig, TaskListener)
 
 
 class Recorder(AnalogInputTask):
@@ -105,3 +105,62 @@ def test_a_run_without_blocks_after_a_run_with_blocks_stops_the_notifications(dr
     task.start()
 
     assert nidaqmx_task._every_n is None
+
+
+class Listener(TaskListener):
+    def __init__(self):
+        self.blocks, self.done, self.threads = [], [], []
+
+    def on_samples_ready(self, data):
+        self.blocks.append(data)
+        self.threads.append(threading.current_thread().name)
+
+    def on_done(self, status):
+        self.done.append(status)
+
+
+def make_plain(driver):
+    config = TaskConfig(channels=[AIVoltage('Dev1/ai0')], timing=ClockSettings(rate=1000., samples=4))
+    return AnalogInputTask(config), driver[-1]
+
+
+def test_a_listener_is_told_about_the_blocks_and_the_end_of_the_task(driver):
+    task, nidaqmx_task = make_plain(driver)
+    listener = Listener()
+    task.add_listener(listener)
+
+    task.start(notify_every=2)
+    nidaqmx_task.fire_samples()
+    nidaqmx_task.fire_done(0)
+
+    assert len(listener.blocks) == 1 and listener.blocks[0].shape == (1, 2)
+    assert listener.done == [0]
+    assert listener.threads == ['driver']
+
+
+def test_several_listeners_are_all_told_and_a_removed_one_is_not(driver):
+    task, nidaqmx_task = make_plain(driver)
+    first, second = Listener(), Listener()
+    task.add_listener(first)
+    task.add_listener(second)
+    task.remove_listener(first)
+
+    task.start()
+    nidaqmx_task.fire_done(0)
+
+    assert first.done == [] and second.done == [0]
+
+
+def test_a_closed_task_does_not_keep_its_listeners(driver):
+    import gc
+    import weakref
+    task, _ = make_plain(driver)
+    listener = Listener()
+    reference = weakref.ref(listener)
+    task.add_listener(listener)
+
+    task.close()
+    del listener
+    gc.collect()
+
+    assert reference() is None  # the closed task does not hold the listener any longer

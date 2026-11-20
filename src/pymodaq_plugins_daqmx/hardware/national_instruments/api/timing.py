@@ -7,24 +7,30 @@ from nidaqmx.constants import AcquisitionType, Edge
 
 @dataclass(frozen=True)
 class ClockSettings:
-    """Acquire ``samples`` samples per channel at ``rate`` Hz.
+    """Acquire ``samples`` samples per channel at ``rate`` Hz, or until stopped if ``samples`` is None.
 
     ``source`` is a terminal such as ``/Dev1/PFI1`` to use an external clock; empty means the onboard clock.
+    A continuous acquisition (no ``samples``) is read through ``on_samples_ready`` (``start(notify_every=n)``),
+    with a driver buffer holding at least one second of data.
     """
     rate: float
-    samples: int
+    samples: Optional[int] = None
     source: str = ''
     edge: Edge = Edge.RISING
 
     def __post_init__(self):
         if not self.rate > 0:
             raise ValueError(f'rate must be positive, got {self.rate}')
-        if not self.samples >= 1:
+        if self.samples is not None and not self.samples >= 1:
             raise ValueError(f'samples must be at least 1, got {self.samples}')
 
     def apply_to(self, task):
+        if self.samples is None:
+            mode, per_channel = AcquisitionType.CONTINUOUS, max(1000, int(self.rate))
+        else:
+            mode, per_channel = AcquisitionType.FINITE, self.samples
         task.timing.cfg_samp_clk_timing(self.rate, source=self.source, active_edge=self.edge,
-                                        sample_mode=AcquisitionType.FINITE, samps_per_chan=self.samples)
+                                        sample_mode=mode, samps_per_chan=per_channel)
 
 
 @dataclass(frozen=True)
