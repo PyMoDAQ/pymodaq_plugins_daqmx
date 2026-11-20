@@ -2,12 +2,12 @@
 from nidaqmx.constants import Edge
 
 from pymodaq_plugins_daqmx.hardware.national_instruments.api import (
-    AIVoltage, AnalogInputTask, ClockSettings, DigitalEdgeTrigger, NIDAQSystem, TaskConfig)
+    AIVoltage, AnalogInputTask, ChannelKind, ClockSettings, DigitalEdgeTrigger, NIDAQSystem, TaskConfig)
 
 
 def main(device='Dev2'):
     system = NIDAQSystem()
-    if not system.supports_start_trigger(device, 'ai'):
+    if not system.supports_start_trigger(device, ChannelKind.AI):
         raise RuntimeError(f'{device} cannot wait for a start trigger')
     pfi = next(terminal for terminal in system.terminals(device) if 'PFI' in terminal)  # e.g. /Dev2/PFI0
     config = TaskConfig(channels=[AIVoltage(f'{device}/ai0')],

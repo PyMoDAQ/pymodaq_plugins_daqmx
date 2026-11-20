@@ -23,11 +23,11 @@ def test_without_the_driver_there_is_simply_no_device(system_driver):
 def test_lists_the_channels_of_a_device_by_kind(system_driver):
     system = NIDAQSystem()
 
-    assert system.channels('Dev2', 'ai')[:2] == ['Dev2/ai0', 'Dev2/ai1']
-    assert len(system.channels('Dev2', 'ai')) == 32
-    assert system.channels('Dev2', 'co')[-1] == 'Dev2/freqout'
-    assert system.channels('Dev2', 'do')[0] == 'Dev2/port0/line0'
-    assert system.channels('Dev1', 'ao') == []
+    assert system.channels('Dev2', ChannelKind.AI)[:2] == ['Dev2/ai0', 'Dev2/ai1']
+    assert len(system.channels('Dev2', ChannelKind.AI)) == 32
+    assert system.channels('Dev2', ChannelKind.CO)[-1] == 'Dev2/freqout'
+    assert system.channels('Dev2', ChannelKind.DO)[0] == 'Dev2/port0/line0'
+    assert system.channels('Dev1', ChannelKind.AO) == []
 
 
 def test_asking_for_an_unknown_kind_of_channel_is_an_error(system_driver):
@@ -60,9 +60,9 @@ def test_maximum_rates_and_the_lack_of_one(system_driver):
 def test_tells_whether_a_device_can_be_started_by_a_trigger(system_driver):
     system = NIDAQSystem()
 
-    assert system.supports_start_trigger('Dev2', 'ai') is True
-    assert system.supports_start_trigger('Dev2', 'di') is True
-    assert system.supports_start_trigger('Dev1', 'di') is False
+    assert system.supports_start_trigger('Dev2', ChannelKind.AI) is True
+    assert system.supports_start_trigger('Dev2', ChannelKind.DI) is True
+    assert system.supports_start_trigger('Dev1', ChannelKind.DI) is False
 
 
 def test_an_unknown_device_is_an_error_naming_the_known_ones(system_driver):
@@ -86,15 +86,15 @@ def test_the_view_of_the_hardware_is_kept_until_refreshed(system_driver):
 def test_lists_the_channels_of_all_the_devices_by_kind(system_driver):
     system = NIDAQSystem()
 
-    channels = system.all_channels('ai')
+    channels = system.all_channels(ChannelKind.AI)
 
     assert channels[0] == 'Dev1/ai0' and channels[7] == 'Dev1/ai7'
     assert channels[8] == 'Dev2/ai0' and len(channels) == 8 + 32
-    assert system.all_channels('ao') == [f'Dev2/ao{c}' for c in range(4)]
-    assert system.all_channels(ChannelKind.AO) == system.all_channels('ao')
+    assert system.all_channels(ChannelKind.AO) == [f'Dev2/ao{c}' for c in range(4)]
+    assert system.all_channels(ChannelKind.AO) == system.all_channels('ao')  # a plain string still works
 
 
 def test_all_channels_is_empty_without_the_driver(system_driver):
     system_driver.driver_present = False
 
-    assert NIDAQSystem().all_channels('ai') == []
+    assert NIDAQSystem().all_channels(ChannelKind.AI) == []

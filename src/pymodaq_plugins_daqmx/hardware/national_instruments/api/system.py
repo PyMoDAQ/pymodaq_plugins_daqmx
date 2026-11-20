@@ -79,9 +79,9 @@ class NIDAQSystem:
         return self._device_property(device, 'ao_max_rate', float, None)
 
     def supports_start_trigger(self, device, kind):
-        """Whether a ``kind`` ('ai' or 'di') task on ``device`` can wait for a start trigger."""
-        if kind not in ('ai', 'di'):
-            raise ValueError(f"unknown kind {kind!r}: triggers are supported by 'ai' and 'di' tasks")
+        """Whether a ``kind`` (``ChannelKind.AI`` or ``ChannelKind.DI``) task on ``device`` can wait for a start trigger."""
+        if kind not in (ChannelKind.AI, ChannelKind.DI):
+            raise ValueError(f"unknown kind {kind!r}: triggers are supported by AI and DI tasks")
         usage = self._device_property(device, f'{kind}_trig_usage', list, [])
         return TriggerUsage.START in usage
 
