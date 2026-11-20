@@ -68,7 +68,7 @@ What replaces what
    * - ``DIChannel``, ``DOChannel``
      - ``DigitalIn``, ``DigitalOut`` (one line each: use one channel per line)
    * - ``ClockSettings(frequency, Nsamples, source, edge, repetition)``
-     - ``ClockSettings(rate, samples, source, edge)``; no continuous mode yet (``repetition`` has no equivalent)
+     - ``ClockSettings(rate, samples, source, edge)``; ``repetition=True`` becomes ``samples=None`` (continuous)
    * - ``ChangeDetectionSettings(rising_channel, falling_channel, Nsamples)``
      - ``ChangeDetectionSettings(rising_lines, falling_lines, samples)``
    * - ``TriggerSettings(trig_source, enable, edge, level)``
@@ -81,13 +81,16 @@ What replaces what
    * - ``controller.task.write(...)``
      - ``write_analog()``, ``write_levels()``, ``write_digital()``
    * - ``register_callback(callback, event, nsamples)``
-     - ``TaskListener`` (``on_done``, ``on_samples_ready``), ``start(notify_every=n)``
+     - ``TaskListener`` (``on_done``, ``on_samples_ready``) given to ``add_listener``, ``start(notify_every=n)``;
+       in a plugin, ``QtTaskBridge`` (see below)
    * - ``NIDAQmx.get_NIDAQ_devices()``, ``get_NIDAQ_channels(source_type)``
      - ``NIDAQSystem().devices()``, ``.channels(device, kind)``, ``.all_channels(kind)``
    * - ``getAIMaxSingleRate``, ``getAIMaxMultiRate``, ``getAOMaxRate``
      - ``ai_max_rate(device, multi_channel)``, ``ao_max_rate(device)``
    * - ``getAIVoltageRange``, ``getAOVoltageRange``
      - ``ai_voltage_ranges``, ``ao_voltage_ranges`` (lists of ``(min, max)``)
+   * - ``getTriggeringSources``
+     - ``terminals(device)``
    * - ``isAnalogTriggeringSupported``, ``isDigitalTriggeringSupported``
      - ``supports_start_trigger(device, 'ai')`` or ``'di'``
    * - ``stop()``, ``start()``, ``close()``
@@ -97,7 +100,8 @@ Without equivalent for now
 --------------------------
 
 * ``isTaskDone`` and ``waitTaskDone``: use ``on_done``.
-* The ``repetition`` of a clock (continuous acquisition): the API only describes finite acquisitions for now.
+* ``getAICurrentRange`` and ``getAOCurrentRange`` (current ranges), ``DAQmxGetErrorString`` (use
+  ``nidaqmx.constants`` / ``DAQmxErrors`` with ``DaqError.error_code``) and ``readCounter`` (use ``read_counter``).
 * ``configuration_sequence`` and the ``config_daqmx.toml`` file: they belong to the generic plugins, not to the API,
   and are ported with them.
 
@@ -108,3 +112,46 @@ Things that behave differently
 * Driver errors are ``nidaqmx.DaqError`` with an ``error_code``; nothing is turned into an ``IOError``.
 * Several plugins do not share a controller any more: each one builds its own task. A multi-axes actuator that needs
   to share something (the clock of the ramp output) shares its own object.
+* A configuration never changes: to change a channel, a rate or a trigger, close the task and build another one. A
+  stopped task keeps its channels reserved (driver error -50103), so a second task on the same channels cannot be
+  created before the first is closed.
+* One task is one subsystem (analog in, analog out, digital, counters). The old object let you try to mix them and
+  failed in the driver; the typed tasks make it impossible. Mixing is done with several tasks synchronised by a shared
+  clock or trigger, and ``TaskGroup`` to start and stop them in the right order.
+* ``read_analog`` on a continuous task is an error: data comes through the listeners.
+* Driver callbacks run on threads of the driver, in no guaranteed order.
+
+Porting your own code, step by step
+-----------------------------------
+
+1. **Describe** each channel with the class of its kind (table above). Put the arguments that were set after
+   creation (``channel.value_min = ...``) in the constructor.
+2. **Describe** the timing (``ClockSettings``, ``ChangeDetectionSettings`` or ``ImplicitTiming``) and the trigger
+   (``None`` if there is none), and gather everything in a ``TaskConfig``.
+3. **Create** the typed task from the config (``with AnalogInputTask(config) as task:`` closes it for you). Replace
+   every ``controller.task.<something>`` by the verb of the task (``read_analog``...). The ``nidaqmx.Task`` is no
+   longer part of the interface.
+4. **Replace the callbacks** by a ``TaskListener``. Do not touch widgets from it: it is called from a driver thread.
+5. **Replace** ``update_task`` on a live object by closing the task and building the new one. Code that changed a
+   setting when the user edited it (``commit_settings``) rebuilds the config and the task.
+6. **Test** with the ``driver`` fixtures of this repository (``tests/nidaqmx_double.py``) or a simulated device of
+   NI MAX, then on hardware.
+
+In a PyMoDAQ plugin
+-------------------
+
+* The controller of the plugin is the task (or a ``TaskGroup``, or a small object that holds several tasks), not a
+  ``NIDAQmx``.
+* Create a ``QtTaskBridge`` in ``ini_detector``, register it with ``add_listener`` and connect its ``samples_ready``
+  and ``done`` signals to slots of the plugin. Close it before the task, in ``close``.
+* A viewer that streams (``live_mode_available = True``) uses a continuous task (``ClockSettings(rate)`` without
+  ``samples``) apart from the task used for single grabs: the AI plugins of this package are an example.
+* A plugin used as a slave receives the task from the master (``is_master`` is ``False``): it must not close it.
+
+State of the package
+--------------------
+
+The AI, counter and ramp-output plugins already use the new API. The generic plugins (``NIDAQmx`` viewers and
+actuator, which read ``config_daqmx.toml``) still use the old module ``daqmxni.py`` and are ported next, together with
+the removal of the old module: until then, both may be found in the same checkout, but nothing new should be built on
+``daqmxni.py``.
