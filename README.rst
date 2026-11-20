@@ -76,11 +76,13 @@ Documentation
 Refer to the `documentation <https://pymodaq.github.io/pymodaq_plugins_daqmx/>`_ to use this plugin or discover its
 functionalities.
 
-Build your own plugin
-=====================
+Build your own plugin, or script
+================================
 
-The ``NIDAQmx`` object (``hardware/national_instruments/daqmxni.py``) wraps the ``nidaqmx`` package: it describes
-channels (``AIChannel``, ``AOChannel``, ``CIChannel``, ``ClockCounter``...), builds the task and gives access to it.
+The package has a Python API to describe and run NI-DAQmx tasks (``AIVoltage``, ``ClockSettings``,
+``AnalogInputTask``...), which imports neither Qt nor PyMoDAQ: use it in a plugin, an extension or a plain script.
+See the `Python API <https://pymodaq.github.io/pymodaq_plugins_daqmx/api/index.html>`_ section of the documentation
+(concepts, examples, reference, and how to move from the previous ``NIDAQmx`` object).
 ``DAQmxAI`` (``NIDAQmx_AI.py``), ``DAQmx_Counter`` and ``NIDAQmx_RampOutput`` (``ramp_output.py``) are small examples
 of plugins built on it.
 
