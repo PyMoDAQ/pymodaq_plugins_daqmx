@@ -33,6 +33,9 @@ Tasks
 .. autoclass:: pymodaq_plugins_daqmx.hardware.national_instruments.api.DigitalTask
    :members: read_digital, write_digital, start, stop, close
 
+.. autoclass:: pymodaq_plugins_daqmx.hardware.national_instruments.api.TaskGroup
+   :members: start, stop, close
+
 Channels
 --------
 
