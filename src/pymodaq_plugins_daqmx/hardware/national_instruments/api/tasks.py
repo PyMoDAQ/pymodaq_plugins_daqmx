@@ -118,6 +118,8 @@ class _Task:
         self._task.stop()
 
     def close(self):
+        """Release the task for good. A closed task cannot run again: it forgets its listeners."""
+        self._listeners.clear()
         self._task.close()
 
     def __enter__(self):

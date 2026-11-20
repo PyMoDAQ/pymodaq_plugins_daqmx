@@ -149,3 +149,18 @@ def test_several_listeners_are_all_told_and_a_removed_one_is_not(driver):
     nidaqmx_task.fire_done(0)
 
     assert first.done == [] and second.done == [0]
+
+
+def test_a_closed_task_does_not_keep_its_listeners(driver):
+    import gc
+    import weakref
+    task, _ = make_plain(driver)
+    listener = Listener()
+    reference = weakref.ref(listener)
+    task.add_listener(listener)
+
+    task.close()
+    del listener
+    gc.collect()
+
+    assert reference() is None  # the closed task does not hold the listener any longer
