@@ -1,4 +1,4 @@
-"""Qt adapter of the tasks of the API: the notifications of the driver, as Qt signals on the Qt thread."""
+"""Qt adapter of the tasks of the API: the notifications of the driver, as Qt signals on the thread of the bridge."""
 from typing import Optional
 
 import numpy as np
@@ -9,8 +9,10 @@ class QtTaskBridge(QtCore.QObject):
     """Wraps a task of the API and re-emits what the driver notifies, on the thread of the bridge.
 
     The driver calls back from threads of its own. Qt widgets and the PyMoDAQ plugin machinery must only be
-    touched from the Qt thread: connect to the signals of this bridge instead of overriding the hooks of the task.
-    Create the bridge in the Qt (main) thread.
+    touched from the thread they live in (the plugin thread for a plugin): connect to the signals of this bridge
+    instead of overriding the hooks of the task. The signals are emitted from the thread the bridge lives in,
+    that is the thread that created it and runs an event loop: create it where its receivers live, for a plugin
+    in the plugin methods (``ini_detector``, ``grab_data``...).
     """
     samples_ready = QtCore.Signal(object)  # np.ndarray shaped (channels, samples)
 
