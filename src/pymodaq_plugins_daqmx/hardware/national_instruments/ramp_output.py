@@ -5,7 +5,7 @@ import numpy as np
 
 from pymodaq_plugins_daqmx.hardware.national_instruments.api import (
     AOVoltage, AnalogOutputTask, COPulseFreq, ClockSettings, CounterOutputTask, ImplicitTiming, TaskConfig,
-    counter_output_terminal)
+    TaskGroup, counter_output_terminal)
 
 
 class RampOutputController:
@@ -18,6 +18,7 @@ class RampOutputController:
     def __init__(self):
         self.clock: CounterOutputTask = None  # the tasks of the running ramp, replaced at each ramp
         self.analog: AnalogOutputTask = None
+        self.group: TaskGroup = None  # the analog outputs, armed first, and the clock that times them
         self.axes: dict[str, AOVoltage] = {}
         self.final: dict[str, float] = {}  # voltage reached at the end of the last ramp, for each axis
         self.clock_channel = ''
@@ -90,8 +91,8 @@ class RampOutputController:
             timing=ClockSettings(rate=frequency, samples=len(voltages),
                                  source=counter_output_terminal(self.clock_channel))))
         self.analog.write_analog(data)
-        self.analog.start()
-        self.clock.start()
+        self.group = TaskGroup(self.analog, self.clock)
+        self.group.start()
         self._ramp = (self._time(), step_time, values)
         self.final.update({ax: float(vals[-1]) for ax, vals in values.items()})
 
@@ -101,16 +102,18 @@ class RampOutputController:
             for ax in self.axes:
                 self.final[ax] = self.voltage(ax)
             self._ramp = None
-        for task in (self.clock, self.analog):
-            if task is not None:
-                task.stop()
+        if self.group is not None:
+            self.group.stop()
+        elif self.analog is not None:
+            self.analog.stop()
 
     def _release(self):
         """Close the tasks of the last ramp. They stay open after a ramp, which keeps the outputs where they are."""
-        for task in (self.clock, self.analog):
-            if task is not None:
-                task.close()
-        self.clock = self.analog = None
+        if self.group is not None:
+            self.group.close()
+        elif self.analog is not None:
+            self.analog.close()
+        self.clock = self.analog = self.group = None
 
     def close(self):
         self.stop()

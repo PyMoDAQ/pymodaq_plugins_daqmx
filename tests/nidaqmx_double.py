@@ -235,15 +235,23 @@ class DoubleTask:
     def fire_done(self, status=0):
         return self._call_from_driver_thread(self._done, 1234, status, None)
 
+    log = []  # (what happened, first channel) for all the tasks, to check the order of the calls between tasks
+
+    def _log(self, what):
+        DoubleTask.log.append((what, self.channels[0][1] if self.channels else ''))
+
     def start(self):
+        self._log('start')
         self.started = True
         self.starts += 1
 
     def stop(self):
+        self._log('stop')
         self.stops += 1
         self.started = False
 
     def close(self):
+        self._log('close')
         self.closed = True
 
     def __enter__(self):
@@ -257,6 +265,7 @@ class DoubleTask:
 def driver(monkeypatch):
     """Replace the driver boundary: ``nidaqmx.Task`` becomes a ``DoubleTask``."""
     created = []
+    DoubleTask.log = []
 
     def make(*args, **kwargs):
         task = DoubleTask(*args, **kwargs)
