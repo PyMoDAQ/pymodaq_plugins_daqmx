@@ -62,6 +62,17 @@ clock, ``/Dev2/PFI0`` an external signal, and ``counter_output_terminal('Dev2/ct
 (see the ``counter_rate`` example). A digital line such as ``Dev2/port0/line0`` cannot be used as a trigger source
 (the driver refuses it): use a PFI terminal.
 
+Several tasks together
+----------------------
+
+A task cannot mix subsystems (analog in, analog out, digital, counters). To acquire and generate at the same time,
+use one task per subsystem and synchronise them with a shared clock or trigger (``ClockSettings.source``,
+``DigitalEdgeTrigger``). ``TaskGroup(*tasks)`` runs them as one: ``start()`` starts the tasks in the order given (put
+first those that wait for a signal, last the one that produces it), ``stop()`` and ``close()`` work in the reverse
+order. If a task cannot start, the ones already started are stopped before the error is raised; ``close()`` closes
+every task even if one fails, then raises the first error. A group is also a context manager that closes itself.
+See the ``counter_rate`` example.
+
 Callbacks and threads
 ---------------------
 
