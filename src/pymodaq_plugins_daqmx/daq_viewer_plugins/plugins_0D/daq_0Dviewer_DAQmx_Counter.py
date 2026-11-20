@@ -12,7 +12,7 @@ from nidaqmx.constants import Edge
 
 from pymodaq_plugins_daqmx.hardware.national_instruments.api import (
     CICountEdges, COPulseFreq, ChannelKind, ClockSettings, CounterInputTask, CounterOutputTask, ImplicitTiming, NIDAQSystem,
-    TaskConfig, counter_output_terminal)
+    TaskConfig, TaskGroup, counter_output_terminal)
 
 logger = set_logger(get_module_name(__file__))
 
@@ -29,8 +29,8 @@ class CounterControllers:
     clock: CounterOutputTask
     counter: CounterInputTask
 
-    def __iter__(self):
-        return iter((self.clock, self.counter))
+    def __post_init__(self):
+        self.group = TaskGroup(self.counter, self.clock)  # the counter is armed first: it waits for the clock
 
 
 class DAQ_0DViewer_DAQmx_Counter(DAQ_Viewer_base):
@@ -88,29 +88,25 @@ class DAQ_0DViewer_DAQmx_Counter(DAQ_Viewer_base):
 
     def count_once(self) -> int:
         """Number of edges during one counting time."""
-        counter, clock = self.controller.counter, self.controller.clock
-        counter.start()  # armed first: it waits for the clock
-        clock.start()
+        group = self.controller.group
+        group.start()
         try:
-            return int(counter.read_counter(samples=1)[0, 0])
+            return int(self.controller.counter.read_counter(samples=1)[0, 0])
         finally:
-            clock.stop()
-            counter.stop()
+            group.stop()
 
     def stop(self):
         if self.controller is not None:
-            for ctrl in self.controller:
-                try:
-                    ctrl.stop()
-                except Exception:
-                    logger.debug('The task could not be stopped', exc_info=True)
+            try:
+                self.controller.group.stop()
+            except Exception:
+                logger.debug('The tasks could not be stopped', exc_info=True)
         self.emit_status(ThreadCommand('Update_Status', ['Acquisition stopped.']))
 
     def close(self):
         if self.controller is not None:
-            for ctrl in self.controller:
-                ctrl.close()
-            self.controller = None
+            group, self.controller = self.controller.group, None
+            group.close()
 
 
 if __name__ == '__main__':

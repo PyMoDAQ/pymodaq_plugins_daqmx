@@ -240,3 +240,50 @@ class DigitalTask(_Task):
         if len(levels) != nch:
             raise ValueError(f'the task has {nch} lines, got {len(levels)} levels')
         self._task.write(levels, auto_start=True)
+
+
+class TaskGroup:
+    """Tasks that run together, such as a task waiting for a clock and the counter that generates it.
+
+    One task cannot mix subsystems (analog in, analog out, digital, counters): to acquire and generate at the same
+    time, use one task per subsystem, synchronised by a shared clock or trigger (``ClockSettings.source``,
+    ``DigitalEdgeTrigger``). The group starts them in the order given, so put first the tasks that wait for a signal
+    and last the one that produces it, and stops and closes them in the reverse order.
+
+    If a task cannot start, the ones already started are stopped and the error is raised. All the tasks are closed
+    even if one of them cannot be, then the first error is raised.
+    """
+
+    def __init__(self, *tasks: _Task):
+        self.tasks = tasks
+
+    def start(self):
+        started = []
+        try:
+            for task in self.tasks:
+                task.start()
+                started.append(task)
+        except Exception:
+            for task in reversed(started):
+                task.stop()
+            raise
+
+    def stop(self):
+        for task in reversed(self.tasks):
+            task.stop()
+
+    def close(self):
+        errors = []
+        for task in reversed(self.tasks):
+            try:
+                task.close()
+            except Exception as error:
+                errors.append(error)
+        if errors:
+            raise errors[0]
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        self.close()
