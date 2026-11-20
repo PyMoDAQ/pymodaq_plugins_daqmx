@@ -7,6 +7,27 @@ import numpy as np
 from .config import TaskConfig
 
 
+class TaskListener:
+    """What a task can tell: derive from it and register the object with ``task.add_listener``.
+
+    Both methods are called from driver threads, never from the thread that started the task, one thread per call
+    and without any order between them. Do only what is thread-safe here, or hand the event over to the thread
+    that should handle it (see ``QtTaskBridge``).
+    """
+
+    def on_samples_ready(self, data: np.ndarray):
+        """A block of samples shaped (channels, samples); only if the task was started with ``notify_every=n``.
+
+        To be reimplemented: the default does nothing.
+        """
+
+    def on_done(self, status: int):
+        """The task is done. ``status`` is 0 on success, else a driver error code.
+
+        To be reimplemented: the default does nothing.
+        """
+
+
 class _Task:
     """What every typed task shares: a ``nidaqmx.Task`` built from a config, released on error and on close."""
     needs_timing = False
@@ -15,6 +36,7 @@ class _Task:
         if self.needs_timing and config.timing is None:
             raise ValueError(f'{type(self).__name__} needs a timing in its configuration')
         self.config: TaskConfig = config
+        self._listeners: List[TaskListener] = []
         self._callbacks: List[Callable] = []  # the driver does not keep the callbacks it is given: the task must
         self._done_registered = False
         self._samples_interval: Optional[int] = None  # block size of the registered samples event, if any
@@ -30,11 +52,20 @@ class _Task:
             self._task.close()
             raise
 
+    def add_listener(self, listener: TaskListener):
+        """Tell ``listener`` (a `TaskListener`) about the blocks of samples and the end of the task."""
+        self._listeners.append(listener)
+
+    def remove_listener(self, listener: TaskListener):
+        self._listeners.remove(listener)
+
     def on_done(self, status: int):
-        """Called from a driver thread when the task is done. ``status`` is 0 on success. Override it."""
+        """Called from a driver thread when the task is done. ``status`` is 0 on success. Override it, or better,
+        register a `TaskListener`."""
 
     def on_samples_ready(self, data: np.ndarray):
-        """Called from a driver thread with each block of samples shaped (channels, samples). Override it.
+        """Called from a driver thread with each block of samples shaped (channels, samples). Override it, or
+        better, register a `TaskListener`.
 
         Called only if the task was started with ``start(notify_every=n)``: each block of n samples per channel is
         read in the driver callback registered by ``_register_samples_event`` (analog input tasks only for now,
@@ -60,6 +91,8 @@ class _Task:
         # that we never use, the public hook is ``on_done``
         def done(task_handle, status, callback_data):
             self.on_done(status)
+            for listener in list(self._listeners):
+                listener.on_done(status)
             return 0
 
         self._callbacks.append(done)
@@ -85,6 +118,8 @@ class _Task:
         self._task.stop()
 
     def close(self):
+        """Release the task for good. A closed task cannot run again: it forgets its listeners."""
+        self._listeners.clear()
         self._task.close()
 
     def __enter__(self):
@@ -103,6 +138,9 @@ class AnalogInputTask(_Task):
         ``timeout`` (s) is how long to wait for the samples: by default the duration of the acquisition plus 5 s.
         """
         samples = self.config.timing.samples
+        if samples is None:
+            raise ValueError('a continuous acquisition cannot be read in one go: use start(notify_every=n) '
+                             'and on_samples_ready')
         if timeout is None:
             timeout = samples / self.config.timing.rate + 5.
         data = self._task.read(number_of_samples_per_channel=samples, timeout=timeout)
@@ -112,7 +150,10 @@ class AnalogInputTask(_Task):
         # same driver signature as ``done``; the public hook is ``on_samples_ready``
         def samples_acquired(task_handle, event_type, number_of_samples, callback_data):
             data = self._task.read(number_of_samples_per_channel=number_of_samples)
-            self.on_samples_ready(np.asarray(data, dtype=np.float64).reshape(len(self.config.channels), -1))
+            block = np.asarray(data, dtype=np.float64).reshape(len(self.config.channels), -1)
+            self.on_samples_ready(block)
+            for listener in list(self._listeners):
+                listener.on_samples_ready(block)
             return 0
 
         self._callbacks.append(samples_acquired)
