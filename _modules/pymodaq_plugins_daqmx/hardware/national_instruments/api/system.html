@@ -1,0 +1,262 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pymodaq_plugins_daqmx.hardware.national_instruments.api.system &mdash; pymodaq_plugins_daqmx 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            pymodaq_plugins_daqmx
+              <img src="../../../../../_static/splash.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../user_guide.html">User guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/index.html">Python API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../nidaqmx.html">The NIDAQmx object (being replaced)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../nidaqmx.html#the-nidaqmx-object">The NIDAQmx object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../library.html">Library Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../creating_plugin.html">Creating a plugin for your specific needs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">pymodaq_plugins_daqmx</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pymodaq_plugins_daqmx.hardware.national_instruments.api.system</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pymodaq_plugins_daqmx.hardware.national_instruments.api.system</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;What the NI hardware of the computer offers: devices, channels, terminals, ranges, rates, triggers.&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">nidaqmx.errors</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">nidaqmx.system</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">nidaqmx.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">TriggerUsage</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pymodaq_utils.enums</span><span class="w"> </span><span class="kn">import</span> <span class="n">StrEnum</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ChannelKind</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Kinds of channels of a device. Members compare equal to their value: ``&#39;ai&#39;``, ``&#39;ci&#39;``...&quot;&quot;&quot;</span>
+    <span class="n">AI</span> <span class="o">=</span> <span class="s1">&#39;ai&#39;</span>
+    <span class="n">AO</span> <span class="o">=</span> <span class="s1">&#39;ao&#39;</span>
+    <span class="n">CI</span> <span class="o">=</span> <span class="s1">&#39;ci&#39;</span>
+    <span class="n">CO</span> <span class="o">=</span> <span class="s1">&#39;co&#39;</span>
+    <span class="n">DI</span> <span class="o">=</span> <span class="s1">&#39;di&#39;</span>  <span class="c1"># lines</span>
+    <span class="n">DO</span> <span class="o">=</span> <span class="s1">&#39;do&#39;</span>  <span class="c1"># lines</span>
+
+
+<span class="n">_CHANNEL_ATTRIBUTES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">ChannelKind</span><span class="o">.</span><span class="n">AI</span><span class="p">:</span> <span class="s1">&#39;ai_physical_chans&#39;</span><span class="p">,</span> <span class="n">ChannelKind</span><span class="o">.</span><span class="n">AO</span><span class="p">:</span> <span class="s1">&#39;ao_physical_chans&#39;</span><span class="p">,</span> <span class="n">ChannelKind</span><span class="o">.</span><span class="n">CI</span><span class="p">:</span> <span class="s1">&#39;ci_physical_chans&#39;</span><span class="p">,</span>
+    <span class="n">ChannelKind</span><span class="o">.</span><span class="n">CO</span><span class="p">:</span> <span class="s1">&#39;co_physical_chans&#39;</span><span class="p">,</span> <span class="n">ChannelKind</span><span class="o">.</span><span class="n">DI</span><span class="p">:</span> <span class="s1">&#39;di_lines&#39;</span><span class="p">,</span> <span class="n">ChannelKind</span><span class="o">.</span><span class="n">DO</span><span class="p">:</span> <span class="s1">&#39;do_lines&#39;</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="n">_UNSUPPORTED_PROPERTY</span> <span class="o">=</span> <span class="o">-</span><span class="mi">200197</span>
+
+
+<div class="viewcode-block" id="NIDAQSystem">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.NIDAQSystem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NIDAQSystem</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A view of the NI hardware, read from the driver once and kept until ``refresh()``.</span>
+
+<span class="sd">    Without the NI-DAQmx driver there is simply no device. Everything returned is made of plain strings,</span>
+<span class="sd">    numbers and tuples. A device or a kind of channel that does not exist is a ``ValueError``; a property the</span>
+<span class="sd">    device does not have (for instance the maximum rate of the analog outputs of a card without any) is</span>
+<span class="sd">    ``None`` or an empty list.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="NIDAQSystem.__init__">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.NIDAQSystem.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span> <span class="o">=</span> <span class="p">{}</span></div>
+
+
+<div class="viewcode-block" id="NIDAQSystem.refresh">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.NIDAQSystem.refresh">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">refresh</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Forget what was read: the next call asks the driver again (a card may have been plugged in).&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span> <span class="o">=</span> <span class="p">{}</span></div>
+
+
+<div class="viewcode-block" id="NIDAQSystem.devices">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.NIDAQSystem.devices">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">devices</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Names of the devices, such as ``[&#39;Dev1&#39;, &#39;Dev2&#39;]``; empty without driver.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_remember</span><span class="p">(</span><span class="s1">&#39;devices&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_devices</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="NIDAQSystem.channels">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.NIDAQSystem.channels">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">channels</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">kind</span><span class="p">:</span> <span class="n">ChannelKind</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Names of the channels of ``device`` (such as ``&#39;Dev1&#39;``) of the given ``kind`` (a `ChannelKind` or its</span>
+<span class="sd">        value: ai, ao, ci, co, di (lines) or do (lines)).&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">kind</span> <span class="o">=</span> <span class="n">ChannelKind</span><span class="p">(</span><span class="n">kind</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;unknown kind </span><span class="si">{</span><span class="n">kind</span><span class="si">!r}</span><span class="s1"> of channel: use one of </span><span class="si">{</span><span class="n">ChannelKind</span><span class="o">.</span><span class="n">values</span><span class="p">()</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_device_property</span><span class="p">(</span><span class="n">device</span><span class="p">,</span> <span class="n">_CHANNEL_ATTRIBUTES</span><span class="p">[</span><span class="n">kind</span><span class="p">],</span> <span class="k">lambda</span> <span class="n">value</span><span class="p">:</span> <span class="n">value</span><span class="o">.</span><span class="n">channel_names</span><span class="p">,</span> <span class="p">[]))</span></div>
+
+
+<div class="viewcode-block" id="NIDAQSystem.all_channels">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.NIDAQSystem.all_channels">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">all_channels</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kind</span><span class="p">:</span> <span class="n">ChannelKind</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Names of the channels of the given ``kind`` on all the devices, device after device.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">channel</span> <span class="k">for</span> <span class="n">device</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">devices</span><span class="p">()</span> <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">(</span><span class="n">device</span><span class="p">,</span> <span class="n">kind</span><span class="p">)]</span></div>
+
+
+<div class="viewcode-block" id="NIDAQSystem.terminals">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.NIDAQSystem.terminals">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">terminals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Terminals of ``device`` (``/Dev1/PFI0``...), usable as clock or trigger sources.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_device_property</span><span class="p">(</span><span class="n">device</span><span class="p">,</span> <span class="s1">&#39;terminals&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="p">[]))</span></div>
+
+
+<div class="viewcode-block" id="NIDAQSystem.ai_voltage_ranges">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.NIDAQSystem.ai_voltage_ranges">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ai_voltage_ranges</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Voltage ranges of the analog inputs as ``(min, max)`` pairs.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_device_property</span><span class="p">(</span><span class="n">device</span><span class="p">,</span> <span class="s1">&#39;ai_voltage_rngs&#39;</span><span class="p">,</span> <span class="n">_pairs</span><span class="p">,</span> <span class="p">[])</span></div>
+
+
+<div class="viewcode-block" id="NIDAQSystem.ao_voltage_ranges">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.NIDAQSystem.ao_voltage_ranges">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ao_voltage_ranges</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Voltage ranges of the analog outputs as ``(min, max)`` pairs.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_device_property</span><span class="p">(</span><span class="n">device</span><span class="p">,</span> <span class="s1">&#39;ao_voltage_rngs&#39;</span><span class="p">,</span> <span class="n">_pairs</span><span class="p">,</span> <span class="p">[])</span></div>
+
+
+<div class="viewcode-block" id="NIDAQSystem.ai_max_rate">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.NIDAQSystem.ai_max_rate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ai_max_rate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">multi_channel</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Maximum sampling rate (Hz) of the analog inputs, for several channels or for a single one.&quot;&quot;&quot;</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;ai_max_multi_chan_rate&#39;</span> <span class="k">if</span> <span class="n">multi_channel</span> <span class="k">else</span> <span class="s1">&#39;ai_max_single_chan_rate&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_device_property</span><span class="p">(</span><span class="n">device</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="NIDAQSystem.ao_max_rate">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.NIDAQSystem.ao_max_rate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ao_max_rate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Maximum update rate (Hz) of the analog outputs; ``None`` if the device has none.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_device_property</span><span class="p">(</span><span class="n">device</span><span class="p">,</span> <span class="s1">&#39;ao_max_rate&#39;</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="NIDAQSystem.supports_start_trigger">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.NIDAQSystem.supports_start_trigger">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">supports_start_trigger</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">kind</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Whether a ``kind`` (``ChannelKind.AI`` or ``ChannelKind.DI``) task on ``device`` can wait for a start trigger.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">kind</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="n">ChannelKind</span><span class="o">.</span><span class="n">AI</span><span class="p">,</span> <span class="n">ChannelKind</span><span class="o">.</span><span class="n">DI</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;unknown kind </span><span class="si">{</span><span class="n">kind</span><span class="si">!r}</span><span class="s2">: triggers are supported by AI and DI tasks&quot;</span><span class="p">)</span>
+        <span class="n">usage</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_device_property</span><span class="p">(</span><span class="n">device</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s1">_trig_usage&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">return</span> <span class="n">TriggerUsage</span><span class="o">.</span><span class="n">START</span> <span class="ow">in</span> <span class="n">usage</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_read_devices</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">nidaqmx</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">System</span><span class="o">.</span><span class="n">local</span><span class="p">()</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">device_names</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">nidaqmx</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">DaqNotFoundError</span><span class="p">:</span>  <span class="c1"># the NI-DAQmx driver is not installed</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_remember</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">read</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">read</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_device_property</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">convert</span><span class="p">,</span> <span class="n">when_unsupported</span><span class="p">):</span>
+        <span class="n">known</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">devices</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">device</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">known</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;unknown device </span><span class="si">{</span><span class="n">device</span><span class="si">!r}</span><span class="s1">: known devices are </span><span class="si">{</span><span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">known</span><span class="p">)</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s2">&quot;none&quot;</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">():</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">convert</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">nidaqmx</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">System</span><span class="o">.</span><span class="n">local</span><span class="p">()</span><span class="o">.</span><span class="n">devices</span><span class="p">[</span><span class="n">device</span><span class="p">],</span> <span class="n">name</span><span class="p">))</span>
+            <span class="k">except</span> <span class="n">nidaqmx</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">DaqError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">error</span><span class="o">.</span><span class="n">error_code</span> <span class="o">==</span> <span class="n">_UNSUPPORTED_PROPERTY</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">when_unsupported</span>
+                <span class="k">raise</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_remember</span><span class="p">((</span><span class="n">device</span><span class="p">,</span> <span class="n">name</span><span class="p">),</span> <span class="n">read</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_pairs</span><span class="p">(</span><span class="n">flat</span><span class="p">):</span>
+    <span class="n">flat</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">flat</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[(</span><span class="nb">float</span><span class="p">(</span><span class="n">flat</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">flat</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">flat</span><span class="p">),</span> <span class="mi">2</span><span class="p">)]</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Sébastien Weber, Aurore Finco, Sébastien Guerrero.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

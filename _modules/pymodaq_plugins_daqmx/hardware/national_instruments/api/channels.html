@@ -1,0 +1,318 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pymodaq_plugins_daqmx.hardware.national_instruments.api.channels &mdash; pymodaq_plugins_daqmx 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            pymodaq_plugins_daqmx
+              <img src="../../../../../_static/splash.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../user_guide.html">User guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/index.html">Python API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../nidaqmx.html">The NIDAQmx object (being replaced)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../nidaqmx.html#the-nidaqmx-object">The NIDAQmx object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../library.html">Library Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../creating_plugin.html">Creating a plugin for your specific needs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">pymodaq_plugins_daqmx</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pymodaq_plugins_daqmx.hardware.national_instruments.api.channels</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pymodaq_plugins_daqmx.hardware.national_instruments.api.channels</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Immutable descriptions of the channels of a task.&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">nidaqmx.constants</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span><span class="n">CountDirection</span><span class="p">,</span> <span class="n">CurrentUnits</span><span class="p">,</span> <span class="n">Edge</span><span class="p">,</span> <span class="n">ExcitationSource</span><span class="p">,</span> <span class="n">Level</span><span class="p">,</span> <span class="n">LineGrouping</span><span class="p">,</span>
+                               <span class="n">ResistanceConfiguration</span><span class="p">,</span> <span class="n">RTDType</span><span class="p">,</span> <span class="n">TemperatureUnits</span><span class="p">,</span> <span class="n">TerminalConfiguration</span><span class="p">,</span>
+                               <span class="n">ThermocoupleType</span><span class="p">,</span> <span class="n">VoltageUnits</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_range</span><span class="p">(</span><span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">min_val</span> <span class="o">&lt;</span> <span class="n">max_val</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;min_val (</span><span class="si">{</span><span class="n">min_val</span><span class="si">}</span><span class="s1">) must be lower than max_val (</span><span class="si">{</span><span class="n">max_val</span><span class="si">}</span><span class="s1">)&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="AIVoltage">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.AIVoltage">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AIVoltage</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Analog input measuring a voltage on a physical channel such as ``Dev1/ai0``.&quot;&quot;&quot;</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">min_val</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">10.</span>
+    <span class="n">max_val</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">10.</span>
+    <span class="n">terminal_config</span><span class="p">:</span> <span class="n">TerminalConfiguration</span> <span class="o">=</span> <span class="n">TerminalConfiguration</span><span class="o">.</span><span class="n">DEFAULT</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">_check_range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">min_val</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_val</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
+        <span class="n">task</span><span class="o">.</span><span class="n">ai_channels</span><span class="o">.</span><span class="n">add_ai_voltage_chan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">terminal_config</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">terminal_config</span><span class="p">,</span>
+                                             <span class="n">min_val</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">max_val</span><span class="p">,</span>
+                                             <span class="n">units</span><span class="o">=</span><span class="n">VoltageUnits</span><span class="o">.</span><span class="n">VOLTS</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="AICurrent">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.AICurrent">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AICurrent</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Analog input measuring a current, in amperes.&quot;&quot;&quot;</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">min_val</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.02</span>
+    <span class="n">max_val</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.02</span>
+    <span class="n">terminal_config</span><span class="p">:</span> <span class="n">TerminalConfiguration</span> <span class="o">=</span> <span class="n">TerminalConfiguration</span><span class="o">.</span><span class="n">DEFAULT</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">_check_range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">min_val</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_val</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
+        <span class="n">task</span><span class="o">.</span><span class="n">ai_channels</span><span class="o">.</span><span class="n">add_ai_current_chan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">terminal_config</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">terminal_config</span><span class="p">,</span>
+                                             <span class="n">min_val</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">max_val</span><span class="p">,</span>
+                                             <span class="n">units</span><span class="o">=</span><span class="n">CurrentUnits</span><span class="o">.</span><span class="n">AMPS</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="AIThermocouple">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.AIThermocouple">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AIThermocouple</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Analog input measuring a temperature with a thermocouple (no terminal configuration).&quot;&quot;&quot;</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">thermocouple_type</span><span class="p">:</span> <span class="n">ThermocoupleType</span> <span class="o">=</span> <span class="n">ThermocoupleType</span><span class="o">.</span><span class="n">K</span>
+    <span class="n">units</span><span class="p">:</span> <span class="n">TemperatureUnits</span> <span class="o">=</span> <span class="n">TemperatureUnits</span><span class="o">.</span><span class="n">DEG_C</span>
+    <span class="n">min_val</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.</span>
+    <span class="n">max_val</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">100.</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">_check_range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">min_val</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_val</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
+        <span class="n">task</span><span class="o">.</span><span class="n">ai_channels</span><span class="o">.</span><span class="n">add_ai_thrmcpl_chan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">min_val</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">max_val</span><span class="p">,</span>
+                                             <span class="n">units</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">units</span><span class="p">,</span> <span class="n">thermocouple_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">thermocouple_type</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="AIRtd">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.AIRtd">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AIRtd</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Analog input measuring a temperature with a resistance temperature detector.&quot;&quot;&quot;</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">rtd_type</span><span class="p">:</span> <span class="n">RTDType</span> <span class="o">=</span> <span class="n">RTDType</span><span class="o">.</span><span class="n">PT_3851</span>
+    <span class="n">resistance_config</span><span class="p">:</span> <span class="n">ResistanceConfiguration</span> <span class="o">=</span> <span class="n">ResistanceConfiguration</span><span class="o">.</span><span class="n">THREE_WIRE</span>
+    <span class="n">excitation_current</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0025</span>
+    <span class="n">r_0</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">100.</span>
+    <span class="n">units</span><span class="p">:</span> <span class="n">TemperatureUnits</span> <span class="o">=</span> <span class="n">TemperatureUnits</span><span class="o">.</span><span class="n">DEG_C</span>
+    <span class="n">min_val</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.</span>
+    <span class="n">max_val</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">100.</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">_check_range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">min_val</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_val</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">excitation_current</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;excitation_current must be positive, got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">excitation_current</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
+        <span class="n">task</span><span class="o">.</span><span class="n">ai_channels</span><span class="o">.</span><span class="n">add_ai_rtd_chan</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">min_val</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">max_val</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">units</span><span class="p">,</span>
+            <span class="n">rtd_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rtd_type</span><span class="p">,</span> <span class="n">resistance_config</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">resistance_config</span><span class="p">,</span>
+            <span class="n">current_excit_source</span><span class="o">=</span><span class="n">ExcitationSource</span><span class="o">.</span><span class="n">INTERNAL</span><span class="p">,</span> <span class="n">current_excit_val</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">excitation_current</span><span class="p">,</span>
+            <span class="n">r_0</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">r_0</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="AOVoltage">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.AOVoltage">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AOVoltage</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Analog output generating a voltage on a physical channel such as ``Dev2/ao0``.&quot;&quot;&quot;</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">min_val</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">10.</span>
+    <span class="n">max_val</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">10.</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">_check_range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">min_val</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_val</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
+        <span class="n">task</span><span class="o">.</span><span class="n">ao_channels</span><span class="o">.</span><span class="n">add_ao_voltage_chan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">min_val</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">max_val</span><span class="p">,</span>
+                                             <span class="n">units</span><span class="o">=</span><span class="n">VoltageUnits</span><span class="o">.</span><span class="n">VOLTS</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="AOCurrent">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.AOCurrent">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AOCurrent</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Analog output generating a current, in amperes.&quot;&quot;&quot;</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">min_val</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.</span>
+    <span class="n">max_val</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.02</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">_check_range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">min_val</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_val</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
+        <span class="n">task</span><span class="o">.</span><span class="n">ao_channels</span><span class="o">.</span><span class="n">add_ao_current_chan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">min_val</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">max_val</span><span class="p">,</span>
+                                             <span class="n">units</span><span class="o">=</span><span class="n">CurrentUnits</span><span class="o">.</span><span class="n">AMPS</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="CICountEdges">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.CICountEdges">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CICountEdges</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Counter input counting the edges of a signal, starting from ``initial_count``.&quot;&quot;&quot;</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">edge</span><span class="p">:</span> <span class="n">Edge</span> <span class="o">=</span> <span class="n">Edge</span><span class="o">.</span><span class="n">RISING</span>
+    <span class="n">initial_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">direction</span><span class="p">:</span> <span class="n">CountDirection</span> <span class="o">=</span> <span class="n">CountDirection</span><span class="o">.</span><span class="n">COUNT_UP</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
+        <span class="n">task</span><span class="o">.</span><span class="n">ci_channels</span><span class="o">.</span><span class="n">add_ci_count_edges_chan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">edge</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">edge</span><span class="p">,</span> <span class="n">initial_count</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_count</span><span class="p">,</span>
+                                                 <span class="n">count_direction</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">direction</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="COPulseFreq">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.COPulseFreq">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">COPulseFreq</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Counter output generating a pulse train of the given frequency (Hz) and duty cycle (0 to 1, excluded).&quot;&quot;&quot;</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">frequency</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">duty_cycle</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span>
+    <span class="n">idle_state</span><span class="p">:</span> <span class="n">Level</span> <span class="o">=</span> <span class="n">Level</span><span class="o">.</span><span class="n">LOW</span>
+    <span class="n">initial_delay</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">frequency</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;frequency must be positive, got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">frequency</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">duty_cycle</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;duty_cycle must be between 0 and 1 (excluded), got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">duty_cycle</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
+        <span class="n">task</span><span class="o">.</span><span class="n">co_channels</span><span class="o">.</span><span class="n">add_co_pulse_chan_freq</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">frequency</span><span class="p">,</span> <span class="n">duty_cycle</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">duty_cycle</span><span class="p">,</span>
+                                                <span class="n">idle_state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">idle_state</span><span class="p">,</span> <span class="n">initial_delay</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_delay</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_one_line</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="k">if</span> <span class="s1">&#39;:&#39;</span> <span class="ow">in</span> <span class="n">name</span> <span class="ow">or</span> <span class="s1">&#39;,&#39;</span> <span class="ow">in</span> <span class="n">name</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;a digital channel is one line, got </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s1">: give one channel per line&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="DigitalIn">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.DigitalIn">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DigitalIn</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Digital input on one line such as ``Dev1/port0/line0``.&quot;&quot;&quot;</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">_check_one_line</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
+        <span class="n">task</span><span class="o">.</span><span class="n">di_channels</span><span class="o">.</span><span class="n">add_di_chan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">line_grouping</span><span class="o">=</span><span class="n">LineGrouping</span><span class="o">.</span><span class="n">CHAN_PER_LINE</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="DigitalOut">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.DigitalOut">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DigitalOut</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Digital output on one line such as ``Dev1/port0/line3``.&quot;&quot;&quot;</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">_check_one_line</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
+        <span class="n">task</span><span class="o">.</span><span class="n">do_channels</span><span class="o">.</span><span class="n">add_do_chan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">line_grouping</span><span class="o">=</span><span class="n">LineGrouping</span><span class="o">.</span><span class="n">CHAN_PER_LINE</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Sébastien Weber, Aurore Finco, Sébastien Guerrero.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,196 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Python API &mdash; pymodaq_plugins_daqmx 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Concepts" href="concepts.html" />
+    <link rel="prev" title="Details about the implementation of the NIDAQmx_RampOutput move" href="../user_guide/ramp_output_details.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pymodaq_plugins_daqmx
+              <img src="../_static/splash.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide.html">User guide</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Python API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html">Concepts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference.html">Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="migration.html">Migrating from the previous objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#stability">Stability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#how-it-is-tested">How it is tested</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../nidaqmx.html">The NIDAQmx object (being replaced)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nidaqmx.html#the-nidaqmx-object">The NIDAQmx object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../library.html">Library Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../creating_plugin.html">Creating a plugin for your specific needs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pymodaq_plugins_daqmx</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Python API</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="python-api">
+<h1>Python API<a class="headerlink" href="#python-api" title="Link to this heading"></a></h1>
+<p>Besides the PyMoDAQ plugins, this package offers a Python API to describe and run NI-DAQmx tasks from any code: your
+own plugin, a PyMoDAQ extension, or a plain script. It lives in
+<code class="docutils literal notranslate"><span class="pre">pymodaq_plugins_daqmx.hardware.national_instruments.api</span></code>, wraps the <code class="docutils literal notranslate"><span class="pre">nidaqmx</span></code> package of National Instruments and
+<strong>imports neither Qt nor PyMoDAQ</strong>, so a script can use it without a graphical environment.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pymodaq_plugins_daqmx.hardware.national_instruments.api</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AIVoltage</span><span class="p">,</span> <span class="n">AnalogInputTask</span><span class="p">,</span> <span class="n">ClockSettings</span><span class="p">,</span> <span class="n">TaskConfig</span><span class="p">)</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="n">TaskConfig</span><span class="p">(</span><span class="n">channels</span><span class="o">=</span><span class="p">[</span><span class="n">AIVoltage</span><span class="p">(</span><span class="s1">&#39;Dev1/ai0&#39;</span><span class="p">),</span> <span class="n">AIVoltage</span><span class="p">(</span><span class="s1">&#39;Dev1/ai1&#39;</span><span class="p">)],</span>
+                    <span class="n">timing</span><span class="o">=</span><span class="n">ClockSettings</span><span class="p">(</span><span class="n">rate</span><span class="o">=</span><span class="mf">10_000.</span><span class="p">,</span> <span class="n">samples</span><span class="o">=</span><span class="mi">1000</span><span class="p">))</span>
+<span class="k">with</span> <span class="n">AnalogInputTask</span><span class="p">(</span><span class="n">config</span><span class="p">)</span> <span class="k">as</span> <span class="n">task</span><span class="p">:</span>
+    <span class="n">task</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">task</span><span class="o">.</span><span class="n">read_analog</span><span class="p">()</span>      <span class="c1"># float64 array shaped (2, 1000)</span>
+    <span class="n">task</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The idea in one sentence: <strong>describe</strong> the task with small immutable objects, <strong>hand</strong> the description to a typed
+task, then <code class="docutils literal notranslate"><span class="pre">start</span></code>, <code class="docutils literal notranslate"><span class="pre">read</span></code> or <code class="docutils literal notranslate"><span class="pre">write</span></code> and <code class="docutils literal notranslate"><span class="pre">close</span></code>.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="concepts.html">Concepts</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html#describe-then-run">Describe, then run</a></li>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html#what-comes-back">What comes back</a></li>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html#errors">Errors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html#hardware-discovery">Hardware discovery</a></li>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html#clocks-and-triggers">Clocks and triggers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html#several-tasks-together">Several tasks together</a></li>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html#callbacks-and-threads">Callbacks and threads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html#good-to-know">Good to know</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#discover-the-hardware">Discover the hardware</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#acquire-analog-inputs">Acquire analog inputs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#wait-for-a-trigger">Wait for a trigger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#generate-analog-outputs">Generate analog outputs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#count-pulses-with-a-clock">Count pulses with a clock</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#be-told-when-samples-are-ready">Be told when samples are ready</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reference.html">Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference.html#system">System</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference.html#tasks">Tasks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference.html#channels">Channels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference.html#timing-and-triggers">Timing and triggers</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="migration.html">Migrating from the previous objects</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="migration.html#before-and-after">Before and after</a></li>
+<li class="toctree-l2"><a class="reference internal" href="migration.html#what-replaces-what">What replaces what</a></li>
+<li class="toctree-l2"><a class="reference internal" href="migration.html#without-equivalent-for-now">Without equivalent for now</a></li>
+<li class="toctree-l2"><a class="reference internal" href="migration.html#things-that-behave-differently">Things that behave differently</a></li>
+<li class="toctree-l2"><a class="reference internal" href="migration.html#porting-your-own-code-step-by-step">Porting your own code, step by step</a></li>
+<li class="toctree-l2"><a class="reference internal" href="migration.html#in-a-pymodaq-plugin">In a PyMoDAQ plugin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="migration.html#state-of-the-package">State of the package</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<section id="stability">
+<h2>Stability<a class="headerlink" href="#stability" title="Link to this heading"></a></h2>
+<p>The names listed in <code class="docutils literal notranslate"><span class="pre">api.__all__</span></code> are the public API. They only change in a new major version of the plugin, and
+the changes are listed in the migration page. Anything else (the <code class="docutils literal notranslate"><span class="pre">_Task</span></code> base class, the modules themselves) is
+internal.</p>
+</section>
+<section id="how-it-is-tested">
+<h2>How it is tested<a class="headerlink" href="#how-it-is-tested" title="Link to this heading"></a></h2>
+<p>The tests replace the <code class="docutils literal notranslate"><span class="pre">nidaqmx</span></code> package by a double that behaves like the one recorded on NI MAX simulated devices
+by <code class="docutils literal notranslate"><span class="pre">tests/contract/contract_check.py</span></code> (shapes returned by <code class="docutils literal notranslate"><span class="pre">read</span></code>, error codes, callback threads…). The
+reports of the real driver are kept in <code class="docutils literal notranslate"><span class="pre">tests/contract/reports</span></code>. The examples of this documentation are run by the
+tests too. You can run the same script on your own hardware: its README says how.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../user_guide/ramp_output_details.html" class="btn btn-neutral float-left" title="Details about the implementation of the NIDAQmx_RampOutput move" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="concepts.html" class="btn btn-neutral float-right" title="Concepts" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Sébastien Weber, Aurore Finco, Sébastien Guerrero.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,262 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Welcome to pymodaq_plugins_daqmx’s documentation! &mdash; pymodaq_plugins_daqmx 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=fc837d61"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Introduction" href="introduction.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="#" class="icon icon-home">
+            pymodaq_plugins_daqmx
+              <img src="_static/splash.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide.html">User guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/index.html">Python API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nidaqmx.html">The NIDAQmx object (being replaced)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nidaqmx.html#the-nidaqmx-object">The NIDAQmx object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="library.html">Library Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="creating_plugin.html">Creating a plugin for your specific needs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">pymodaq_plugins_daqmx</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Welcome to pymodaq_plugins_daqmx’s documentation!</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="welcome-to-pymodaq-plugins-daqmx-s-documentation">
+<h1>Welcome to pymodaq_plugins_daqmx’s documentation!<a class="headerlink" href="#welcome-to-pymodaq-plugins-daqmx-s-documentation" title="Link to this heading"></a></h1>
+<p>This PyMoDAQ plugin is devoted to the National Instrument signal acquisition and generation using the NiDAQmx library. It contains generic objects which should be used as a basis to build actuators and viewers performing custom signal acquisition and generation.
+In addition, and they are also meant as examples, it provides ready-to-use plugins: analog input viewers (<code class="docutils literal notranslate"><span class="pre">DAQmxAI</span></code>, <code class="docutils literal notranslate"><span class="pre">DAQmxDualAI</span></code>), an edge counter (<code class="docutils literal notranslate"><span class="pre">DAQmx_Counter</span></code>) and an actuator driving a quantity through ramps on an analog output (<code class="docutils literal notranslate"><span class="pre">NIDAQmx_RampOutput</span></code>).</p>
+<p>This documentation is written as a tutorial to guide you when setting up your NI acquisition devices with PyMoDAQ.</p>
+<p><strong>Caution! The 0D and 1D Viewers DAQmx and the Move DAQmx deliver basic solutions. Write your own plugin for your specific needs.</strong></p>
+<p>This plugin is compatible with PymoDAQ 5.</p>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="introduction.html#installation">Installation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide.html">User guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/counter_use.html">0D viewer DAQmx_Counter</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/counter_use.html#configuration">Configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/counter_use.html#use">Use</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/ai_use.html">0D viewers DAQmxAI and DAQmxDualAI</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/ai_use.html#configuration">Configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/ai_use.html#use">Use</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/ramp_output_use.html">NIDAQmx_RampOutput move</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/ramp_output_use.html#configuration">Configuration</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="user_guide/ramp_output_use.html#several-axes">Several axes</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/ramp_output_use.html#use">Use</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/nidaqmx_viewer_use.html">NIDAQmx viewer</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/nidaqmx_viewer_use.html#global-configuration">Global Configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/nidaqmx_viewer_use.html#d-configuration">0D Configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/nidaqmx_viewer_use.html#id1">1D Configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/nidaqmx_viewer_use.html#channels-configuration">Channels Configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/nidaqmx_viewer_use.html#use">Use</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide.html#working-principle-of-the-plugins">Working principle of the plugins</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/counter_details.html">Details about the implementation of the 0D viewer DAQmx_Counter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/ramp_output_details.html">Details about the implementation of the NIDAQmx_RampOutput move</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="user_guide/ramp_output_details.html#the-controller">The controller</a></li>
+<li class="toctree-l4"><a class="reference internal" href="user_guide/ramp_output_details.html#reading-the-position">Reading the position</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/index.html">Python API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/concepts.html">Concepts</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api/concepts.html#describe-then-run">Describe, then run</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/concepts.html#what-comes-back">What comes back</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/concepts.html#errors">Errors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/concepts.html#hardware-discovery">Hardware discovery</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/concepts.html#clocks-and-triggers">Clocks and triggers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/concepts.html#several-tasks-together">Several tasks together</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/concepts.html#callbacks-and-threads">Callbacks and threads</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/concepts.html#good-to-know">Good to know</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api/examples.html">Examples</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api/examples.html#discover-the-hardware">Discover the hardware</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/examples.html#acquire-analog-inputs">Acquire analog inputs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/examples.html#wait-for-a-trigger">Wait for a trigger</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/examples.html#generate-analog-outputs">Generate analog outputs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/examples.html#count-pulses-with-a-clock">Count pulses with a clock</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/examples.html#be-told-when-samples-are-ready">Be told when samples are ready</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api/reference.html">Reference</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api/reference.html#system">System</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.NIDAQSystem"><code class="docutils literal notranslate"><span class="pre">NIDAQSystem</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api/reference.html#tasks">Tasks</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.TaskConfig"><code class="docutils literal notranslate"><span class="pre">TaskConfig</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.AnalogInputTask"><code class="docutils literal notranslate"><span class="pre">AnalogInputTask</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.TaskListener"><code class="docutils literal notranslate"><span class="pre">TaskListener</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.AnalogOutputTask"><code class="docutils literal notranslate"><span class="pre">AnalogOutputTask</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.CounterInputTask"><code class="docutils literal notranslate"><span class="pre">CounterInputTask</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.CounterOutputTask"><code class="docutils literal notranslate"><span class="pre">CounterOutputTask</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.DigitalTask"><code class="docutils literal notranslate"><span class="pre">DigitalTask</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.TaskGroup"><code class="docutils literal notranslate"><span class="pre">TaskGroup</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api/reference.html#channels">Channels</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.AIVoltage"><code class="docutils literal notranslate"><span class="pre">AIVoltage</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.AICurrent"><code class="docutils literal notranslate"><span class="pre">AICurrent</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.AIThermocouple"><code class="docutils literal notranslate"><span class="pre">AIThermocouple</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.AIRtd"><code class="docutils literal notranslate"><span class="pre">AIRtd</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.AOVoltage"><code class="docutils literal notranslate"><span class="pre">AOVoltage</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.AOCurrent"><code class="docutils literal notranslate"><span class="pre">AOCurrent</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.CICountEdges"><code class="docutils literal notranslate"><span class="pre">CICountEdges</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.COPulseFreq"><code class="docutils literal notranslate"><span class="pre">COPulseFreq</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.DigitalIn"><code class="docutils literal notranslate"><span class="pre">DigitalIn</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.DigitalOut"><code class="docutils literal notranslate"><span class="pre">DigitalOut</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api/reference.html#timing-and-triggers">Timing and triggers</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.ClockSettings"><code class="docutils literal notranslate"><span class="pre">ClockSettings</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.ImplicitTiming"><code class="docutils literal notranslate"><span class="pre">ImplicitTiming</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.ChangeDetectionSettings"><code class="docutils literal notranslate"><span class="pre">ChangeDetectionSettings</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.counter_output_terminal"><code class="docutils literal notranslate"><span class="pre">counter_output_terminal()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.DigitalEdgeTrigger"><code class="docutils literal notranslate"><span class="pre">DigitalEdgeTrigger</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.AnalogEdgeTrigger"><code class="docutils literal notranslate"><span class="pre">AnalogEdgeTrigger</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api/migration.html">Migrating from the previous objects</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api/migration.html#before-and-after">Before and after</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/migration.html#what-replaces-what">What replaces what</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/migration.html#without-equivalent-for-now">Without equivalent for now</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/migration.html#things-that-behave-differently">Things that behave differently</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/migration.html#porting-your-own-code-step-by-step">Porting your own code, step by step</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/migration.html#in-a-pymodaq-plugin">In a PyMoDAQ plugin</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/migration.html#state-of-the-package">State of the package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api/index.html#stability">Stability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/index.html#how-it-is-tested">How it is tested</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="nidaqmx.html">The NIDAQmx object (being replaced)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nidaqmx.html#the-nidaqmx-object">The NIDAQmx object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="library.html">Library Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="docstring/daq_move_plugins.html">daq_move_plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="docstring/daq_viewer_plugins.html">daq_viewer_plugins</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="docstring/daq_viewer_plugins.html#plugins-0d">plugins_0D</a></li>
+<li class="toctree-l3"><a class="reference internal" href="docstring/daq_viewer_plugins.html#plugins-1d">plugins_1D</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="docstring/hardware.html">hardware - National Instruments</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="docstring/hardware.html#nidaqmx-object">NIDAQmx object</a></li>
+<li class="toctree-l3"><a class="reference internal" href="docstring/hardware.html#nidaqmx-base-module">NIDAQmx Base module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="docstring/hardware.html#nidaqmx-actuator-module">NIDAQmx Actuator module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="docstring/hardware.html#nidaqmx-viewer-module">NIDAQmx Viewer module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="docstring/classdiag.html">Class Inheritance</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="creating_plugin.html">Creating a plugin for your specific needs</a></li>
+</ul>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="introduction.html" class="btn btn-neutral float-right" title="Introduction" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Sébastien Weber, Aurore Finco, Sébastien Guerrero.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
