@@ -16,10 +16,16 @@ class TaskListener:
     """
 
     def on_samples_ready(self, data: np.ndarray):
-        """A block of samples shaped (channels, samples); only if the task was started with ``notify_every=n``."""
+        """A block of samples shaped (channels, samples); only if the task was started with ``notify_every=n``.
+
+        To be reimplemented: the default does nothing.
+        """
 
     def on_done(self, status: int):
-        """The task is done. ``status`` is 0 on success, else a driver error code."""
+        """The task is done. ``status`` is 0 on success, else a driver error code.
+
+        To be reimplemented: the default does nothing.
+        """
 
 
 class _Task:
