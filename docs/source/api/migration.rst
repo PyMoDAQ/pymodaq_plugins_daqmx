@@ -92,7 +92,7 @@ What replaces what
    * - ``getTriggeringSources``
      - ``terminals(device)``
    * - ``isAnalogTriggeringSupported``, ``isDigitalTriggeringSupported``
-     - ``supports_start_trigger(device, 'ai')`` or ``'di'``
+     - ``supports_start_trigger(device, ChannelKind.AI)`` or ``ChannelKind.DI``
    * - ``stop()``, ``start()``, ``close()``
      - the same names on every task, which is also a context manager
 
