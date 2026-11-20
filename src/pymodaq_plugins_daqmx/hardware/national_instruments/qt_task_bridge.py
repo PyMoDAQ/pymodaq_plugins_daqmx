@@ -5,6 +5,7 @@ import numpy as np
 from qtpy import QtCore
 
 from .api import TaskListener
+from .api.tasks import _Task
 
 
 class QtTaskBridge(QtCore.QObject, TaskListener):
@@ -33,7 +34,7 @@ class QtTaskBridge(QtCore.QObject, TaskListener):
     _samples_from_driver = QtCore.Signal(object)
     _done_from_driver = QtCore.Signal(int)
 
-    def __init__(self, task, parent=None):
+    def __init__(self, task: _Task, parent: Optional[QtCore.QObject] = None) -> None:
         super().__init__(parent)
         self.task = task
         self._closed = False
@@ -43,27 +44,27 @@ class QtTaskBridge(QtCore.QObject, TaskListener):
         task.add_listener(self)
 
     # called from the driver threads (TaskListener): only hand the event over to the thread of the bridge
-    def on_samples_ready(self, data):
+    def on_samples_ready(self, data: np.ndarray) -> None:
         self._samples_from_driver.emit(data)
 
-    def on_done(self, status):
+    def on_done(self, status: int) -> None:
         self._done_from_driver.emit(status)
 
     # slots of the bridge itself (not the ``emit`` of a signal): Qt drops the calls queued for a bridge that is gone
     @QtCore.Slot(object)
-    def _relay_samples(self, data):
+    def _relay_samples(self, data: np.ndarray) -> None:
         if not self._closed:
             self.samples_ready.emit(data)
 
     @QtCore.Slot(int)
-    def _relay_done(self, status):
+    def _relay_done(self, status: int) -> None:
         if not self._closed:
             self.done.emit(status)
 
-    def close(self):
+    def close(self) -> None:
         """Stop listening to the task, and forget the events not yet delivered. The task itself is not closed."""
         self.task.remove_listener(self)
         self._closed = True
 
-    def start(self, notify_every: Optional[int] = None):
+    def start(self, notify_every: Optional[int] = None) -> None:
         self.task.start(notify_every=notify_every)

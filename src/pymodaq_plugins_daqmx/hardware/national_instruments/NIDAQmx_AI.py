@@ -1,4 +1,6 @@
 """Base class of the thin analog input viewers (AI and DualAI) built on top of the NIDAQmx wrapper."""
+from typing import List, Optional, Tuple
+
 import numpy as np
 
 from pymodaq.control_modules.viewer_utility_classes import DAQ_Viewer_base, comon_parameters
@@ -8,6 +10,7 @@ from pymodaq.utils.logger import set_logger, get_module_name
 from pymodaq_data import DataToExport
 
 from nidaqmx.constants import TerminalConfiguration
+from pyqtgraph.parametertree import Parameter
 
 from pymodaq_plugins_daqmx.hardware.national_instruments.api import (
     AIVoltage, AnalogInputTask, ChannelKind, ClockSettings, NIDAQSystem, TaskConfig)
@@ -44,16 +47,17 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
     data_name = 'NI AI'
 
     def ini_attributes(self):
-        self.controller = None  # an AnalogInputTask: one task for the channels and the clock of this plugin
-        self.channel_labels = []
-        self.live = False
-        self.Naverage = 1
-        self._bridge = None  # QtTaskBridge of the continuous task, while streaming
+        self.controller: Optional[AnalogInputTask] = None  # one task for the channels and the clock of this plugin
+        self.channel_labels: List[str] = []
+        self.live: bool = False
+        self.Naverage: int = 1
+        self._bridge: Optional[QtTaskBridge] = None  # relays the notifications of the continuous task, in live
+        self._traces: List[np.ndarray] = []  # the blocks of the series being averaged in live 1D
 
-    def channel_names(self) -> list[str]:
+    def channel_names(self) -> List[str]:
         raise NotImplementedError
 
-    def ini_detector(self, controller=None):
+    def ini_detector(self, controller: Optional[AnalogInputTask] = None) -> Tuple[str, bool]:
         self.settings.child('Nsamples').setOpts(visible=self.settings['display'] == '1D')
         if self.is_master:
             self.update_tasks()
@@ -62,7 +66,7 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
             self.channel_labels = self.channel_names()
         return 'Analog input ready', True
 
-    def commit_settings(self, param):
+    def commit_settings(self, param: Parameter) -> None:
         if param.name() == 'display':
             self.settings.child('Nsamples').setOpts(visible=param.value() == '1D')
         if self.controller is not None and self.is_master:
@@ -72,7 +76,7 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
         """Points of one acquisition: the averaging of the viewer in 0D, the length of the trace in 1D."""
         return self.Naverage if self.settings['display'] == '0D' else self.settings['Nsamples']
 
-    def update_tasks(self, streaming=False):
+    def update_tasks(self, streaming: bool = False) -> None:
         """Replace the task by one that follows the settings: finite for a snap, continuous for the live mode."""
         self.close()
         self.channel_labels = self.channel_names()
@@ -90,7 +94,7 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
         finally:
             self.controller.stop()
 
-    def grab_data(self, Naverage=1, live=False, **kwargs):
+    def grab_data(self, Naverage: int = 1, live: bool = False, **kwargs) -> None:
         self.live = live
         self.Naverage = Naverage
         if live:
@@ -103,7 +107,7 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
         else:
             self.emit_traces([self.read_samples() for _ in range(Naverage)])
 
-    def start_live(self):
+    def start_live(self) -> None:
         """Acquire continuously: 0D, one data per block of Naverage points; 1D, one data per Naverage traces."""
         self.stop_live()
         self.update_tasks(streaming=True)  # a stopped task still reserves its channels: no snap task in parallel
@@ -112,14 +116,14 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
         self._bridge.samples_ready.connect(self._on_block)
         self.controller.start(notify_every=self.samples_per_block())
 
-    def stop_live(self):
+    def stop_live(self) -> None:
         if self._bridge is not None:
             self._bridge.samples_ready.disconnect(self._on_block)
             self._bridge.close()  # before the task is closed (by update_tasks)
             self._bridge = None
             self.update_tasks()  # back to the task of the snaps
 
-    def _on_block(self, block: np.ndarray):
+    def _on_block(self, block: np.ndarray) -> None:
         if self.settings['display'] == '0D':
             self.emit_points(block)
             return
@@ -128,13 +132,13 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
             traces, self._traces = self._traces, []
             self.emit_traces(traces)
 
-    def emit_points(self, block: np.ndarray):
+    def emit_points(self, block: np.ndarray) -> None:
         """0D data: the mean of the points of the block (channels, points), with its standard error."""
         points = DataFromPlugins(name=self.data_name, data=[row for row in block], dim='Data1D',
                                  labels=self.channel_labels)
         self.dte_signal.emit(DataToExport(self.data_name, data=[points.mean_with_errors(axis=0)]))
 
-    def emit_traces(self, traces: list):
+    def emit_traces(self, traces: List[np.ndarray]) -> None:
         """1D data: the mean of the traces (each shaped (channels, points)), with its standard error."""
         times = np.arange(traces[0].shape[1]) / self.settings['frequency']
         if len(traces) == 1:  # nothing to average, so no error either
@@ -149,14 +153,14 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
                                axes=[acquisitions, Axis('time', 's', data=times, index=1)])
         self.dte_signal.emit(DataToExport(self.data_name, data=[data.mean_with_errors(axis=0)]))
 
-    def stop(self):
+    def stop(self) -> None:
         try:
             self.controller.stop()
         except Exception:
             logger.debug('The task could not be stopped', exc_info=True)
         self.stop_live()
 
-    def close(self):
+    def close(self) -> None:
         if self._bridge is not None:
             self._bridge.close()
             self._bridge = None
