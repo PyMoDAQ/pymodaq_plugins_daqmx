@@ -48,3 +48,18 @@ def test_the_end_of_the_task_arrives_as_a_signal_with_its_status_on_the_qt_threa
 
     assert blocker.args == [-200284]
     assert received == [(-200284, threading.main_thread())]
+
+
+def test_a_closed_bridge_emits_nothing_more(qapp, qtbot, driver):
+    bridge = QtTaskBridge(make_task())
+    received = []
+    bridge.samples_ready.connect(received.append)
+    bridge.done.connect(received.append)
+    bridge.start(notify_every=2)
+
+    bridge.close()  # to be called before closing the task: the task must not keep a reference to the bridge
+    driver[-1].fire_samples()
+    driver[-1].fire_done(0)
+    qtbot.wait(100)
+
+    assert received == []
