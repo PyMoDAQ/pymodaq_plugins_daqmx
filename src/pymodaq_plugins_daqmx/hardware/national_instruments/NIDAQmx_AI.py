@@ -111,6 +111,7 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
     def stop_live(self):
         if self._bridge is not None:
             self._bridge.samples_ready.disconnect(self._on_block)
+            self._bridge.close()  # before the task is closed (by update_tasks)
             self._bridge = None
             self.update_tasks()  # back to the task of the snaps
 
@@ -157,7 +158,9 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
         self.stop_live()
 
     def close(self):
-        self._bridge = None
+        if self._bridge is not None:
+            self._bridge.close()
+            self._bridge = None
         if self.controller is not None:
             self.controller.close()
             self.controller = None
