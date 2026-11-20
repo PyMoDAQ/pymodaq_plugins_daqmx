@@ -4,8 +4,10 @@ from typing import Optional
 import numpy as np
 from qtpy import QtCore
 
+from .api import TaskListener
 
-class QtTaskBridge(QtCore.QObject):
+
+class QtTaskBridge(QtCore.QObject, TaskListener):
     """Wraps a task of the API and re-emits what the driver notifies, on the thread of the bridge.
 
     The driver calls back from threads of its own. Qt widgets and the PyMoDAQ plugin machinery must only be
@@ -27,8 +29,14 @@ class QtTaskBridge(QtCore.QObject):
         # queued: whatever thread emits the private signals, the public ones are emitted from the bridge's thread
         self._samples_from_driver.connect(self._relay_samples, QtCore.Qt.QueuedConnection)
         self._done_from_driver.connect(self._relay_done, QtCore.Qt.QueuedConnection)
-        task.on_samples_ready = self._samples_from_driver.emit
-        task.on_done = self._done_from_driver.emit
+        task.add_listener(self)
+
+    # called from the driver threads (TaskListener): only hand the event over to the thread of the bridge
+    def on_samples_ready(self, data):
+        self._samples_from_driver.emit(data)
+
+    def on_done(self, status):
+        self._done_from_driver.emit(status)
 
     # slots of the bridge itself (not the ``emit`` of a signal): Qt drops the calls queued for a bridge that is gone
     @QtCore.Slot(object)

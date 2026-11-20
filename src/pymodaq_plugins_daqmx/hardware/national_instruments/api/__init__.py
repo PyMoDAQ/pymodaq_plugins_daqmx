@@ -5,7 +5,8 @@ It never imports Qt nor the PyMoDAQ GUI. See the documentation for the stability
 from .channels import AICurrent, AIRtd, AIThermocouple, AIVoltage, AOCurrent, AOVoltage, CICountEdges, COPulseFreq, DigitalIn, DigitalOut
 from .config import TaskConfig
 from .system import ChannelKind, NIDAQSystem
-from .tasks import AnalogInputTask, AnalogOutputTask, CounterInputTask, CounterOutputTask, DigitalTask
+from .tasks import (
+    AnalogInputTask, AnalogOutputTask, CounterInputTask, CounterOutputTask, DigitalTask, TaskListener)
 from .timing import ChangeDetectionSettings, ClockSettings, ImplicitTiming, counter_output_terminal
 from .triggers import AnalogEdgeTrigger, DigitalEdgeTrigger
 
@@ -14,5 +15,5 @@ __all__ = [
     'AnalogEdgeTrigger', 'AnalogInputTask', 'AnalogOutputTask',
     'CICountEdges', 'ChannelKind', 'COPulseFreq', 'ChangeDetectionSettings', 'ClockSettings',
     'CounterInputTask', 'CounterOutputTask', 'DigitalEdgeTrigger', 'DigitalIn', 'DigitalOut', 'DigitalTask', 'ImplicitTiming', 'NIDAQSystem',
-    'TaskConfig', 'counter_output_terminal',
+    'TaskConfig', 'TaskListener', 'counter_output_terminal',
 ]
