@@ -197,3 +197,18 @@ class TestLive:
 
         assert emitted == []
         plugin.close()
+
+
+class TestSlave:
+    def test_a_slave_uses_the_controller_of_its_master_and_does_not_close_it(self, qapp, driver):
+        master = make_detector(DAQ_0DViewer_DAQmxAI, ai_channel='Dev1/ai0')
+        shared = master.controller
+        created = len(driver)
+        slave = make_detector(DAQ_0DViewer_DAQmxAI, controller=shared, ai_channel='Dev1/ai0')  # the harness makes it a slave
+
+        assert slave.controller is shared
+        assert len(driver) == created  # no task of its own
+        slave.close()
+        assert not driver[0].closed
+        master.close()
+        assert driver[0].closed

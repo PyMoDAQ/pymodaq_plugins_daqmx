@@ -44,8 +44,8 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
     data_name = 'NI AI'
 
     def ini_attributes(self):
-        self.controller: AnalogInputTask = None  # one task for the channels and the clock of this plugin
-        self.channel_labels: list[str] = []
+        self.controller = None  # an AnalogInputTask: one task for the channels and the clock of this plugin
+        self.channel_labels = []
         self.live = False
         self.Naverage = 1
         self._bridge = None  # QtTaskBridge of the continuous task, while streaming
@@ -55,13 +55,17 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
 
     def ini_detector(self, controller=None):
         self.settings.child('Nsamples').setOpts(visible=self.settings['display'] == '1D')
-        self.update_tasks()
+        if self.is_master:
+            self.update_tasks()
+        else:  # a slave uses the task of its master, which owns it: it neither replaces nor closes it
+            self.controller = controller
+            self.channel_labels = self.channel_names()
         return 'Analog input ready', True
 
     def commit_settings(self, param):
         if param.name() == 'display':
             self.settings.child('Nsamples').setOpts(visible=param.value() == '1D')
-        if self.controller is not None:
+        if self.controller is not None and self.is_master:
             self.update_tasks(streaming=self._bridge is not None)
 
     def samples_per_block(self) -> int:
@@ -124,31 +128,26 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
             traces, self._traces = self._traces, []
             self.emit_traces(traces)
 
-    @staticmethod
-    def _standard_error(values: np.ndarray, axis: int, keepdims: bool = False):
-        """Standard error of the mean along ``axis``; None if there is a single value."""
-        n = values.shape[axis]
-        return values.std(axis=axis, ddof=1, keepdims=keepdims) / np.sqrt(n) if n > 1 else None
-
     def emit_points(self, block: np.ndarray):
         """0D data: the mean of the points of the block (channels, points), with its standard error."""
-        self.emit_data(block.mean(axis=1, keepdims=True), self._standard_error(block, axis=1, keepdims=True))
+        points = DataFromPlugins(name=self.data_name, data=[row for row in block], dim='Data1D',
+                                 labels=self.channel_labels)
+        self.dte_signal.emit(DataToExport(self.data_name, data=[points.mean_with_errors(axis=0)]))
 
     def emit_traces(self, traces: list):
         """1D data: the mean of the traces (each shaped (channels, points)), with its standard error."""
-        stack = np.stack(traces)
-        self.emit_data(stack.mean(axis=0), self._standard_error(stack, axis=0))
-
-    def emit_data(self, data: np.ndarray, errors: np.ndarray = None):
-        display = self.settings['display']
-        if display == '0D':
-            axes = []
-        else:
-            axes = [Axis('time', 's', data=np.arange(data.shape[1]) / self.settings['frequency'], index=0)]
-        self.dte_signal.emit(DataToExport(self.data_name, data=[
-            DataFromPlugins(name=self.data_name, data=[row for row in data], dim=f'Data{display}',
-                            labels=self.channel_labels, axes=axes,
-                            errors=None if errors is None else [row for row in errors])]))
+        times = np.arange(traces[0].shape[1]) / self.settings['frequency']
+        if len(traces) == 1:  # nothing to average, so no error either
+            data = DataFromPlugins(name=self.data_name, data=[row for row in traces[0]], dim='Data1D',
+                                   labels=self.channel_labels, axes=[Axis('time', 's', data=times, index=0)])
+            self.dte_signal.emit(DataToExport(self.data_name, data=[data]))
+            return
+        stack = np.stack(traces)  # (traces, channels, points): the traces are the first, navigation, axis
+        acquisitions = Axis('acquisition', data=np.arange(float(len(traces))), index=0)
+        data = DataFromPlugins(name=self.data_name, data=[stack[:, ch, :] for ch in range(stack.shape[1])],
+                               dim='DataND', nav_indexes=(0,), labels=self.channel_labels,
+                               axes=[acquisitions, Axis('time', 's', data=times, index=1)])
+        self.dte_signal.emit(DataToExport(self.data_name, data=[data.mean_with_errors(axis=0)]))
 
     def stop(self):
         try:
@@ -161,6 +160,6 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
         if self._bridge is not None:
             self._bridge.close()
             self._bridge = None
-        if self.controller is not None:
+        if self.controller is not None and self.is_master:
             self.controller.close()
             self.controller = None
