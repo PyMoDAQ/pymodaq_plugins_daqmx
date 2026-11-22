@@ -9,9 +9,9 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 import toml
-from nidaqmx.constants import TerminalConfiguration, ThermocoupleType
+from nidaqmx.constants import TerminalConfiguration, ThermocoupleType, UsageTypeAI
 
-from pymodaq_plugins_daqmx.hardware.national_instruments.api import AIThermocouple, AIVoltage
+from pymodaq_plugins_daqmx.hardware.national_instruments.api import AIThermocouple, AIVoltage, ChannelKind
 
 
 def system_folder() -> Path:
@@ -65,22 +65,22 @@ def _member(enum, entry: dict, key: str):
 
 
 def _ai_channel(name: str, entry: dict):
-    kind = _required(entry, 'analog_type')
+    kind = _member(UsageTypeAI, entry, 'analog_type')
     limits = dict(min_val=float(_required(entry, 'value_min')), max_val=float(_required(entry, 'value_max')))
-    if kind == 'VOLTAGE':
+    if kind == UsageTypeAI.VOLTAGE:
         return AIVoltage(name, terminal_config=_member(TerminalConfiguration, entry, 'termination'), **limits)
-    if kind == 'TEMPERATURE_THERMOCOUPLE':
+    if kind == UsageTypeAI.TEMPERATURE_THERMOCOUPLE:
         return AIThermocouple(name, thermocouple_type=_member(ThermocoupleType, entry, 'thermo_type'), **limits)
-    raise ValueError(f"analog_type {kind!r} is not supported, expected 'VOLTAGE' or 'TEMPERATURE_THERMOCOUPLE'")
+    raise ValueError(f"analog_type {kind.name!r} is not supported yet, expected 'VOLTAGE' or 'TEMPERATURE_THERMOCOUPLE'")
 
 
 def _ai_entry(channel, note: str = '') -> dict:
     entry = {'name': channel.name, 'source': 'ANALOG_INPUT'}
     if isinstance(channel, AIVoltage):
-        entry.update(analog_type='VOLTAGE', value_min=channel.min_val, value_max=channel.max_val,
+        entry.update(analog_type=UsageTypeAI.VOLTAGE.name, value_min=channel.min_val, value_max=channel.max_val,
                      termination=channel.terminal_config.name)
     else:
-        entry.update(analog_type='TEMPERATURE_THERMOCOUPLE', value_min=channel.min_val, value_max=channel.max_val,
+        entry.update(analog_type=UsageTypeAI.TEMPERATURE_THERMOCOUPLE.name, value_min=channel.min_val, value_max=channel.max_val,
                      thermo_type=channel.thermocouple_type.name)
     entry['info'] = note
     return entry
@@ -116,7 +116,7 @@ class ConfigFiles:
                 if not isinstance(module_entry, dict):
                     continue
                 module = _Module(module_entry['name'], module_entry.get('product', ''))
-                for key, entry in module_entry.get('ai', {}).items():
+                for key, entry in module_entry.get(ChannelKind.AI, {}).items():
                     try:
                         channel = _ai_channel(f"{module.name}/{key}", entry)
                     except (ValueError, TypeError) as error:
@@ -136,7 +136,7 @@ class ConfigFiles:
                 module_entry = device_entry[f'MODULE{index:02d}'] = {
                     'title': 'Module plugged in a NIDAQmx device', 'name': module.name, 'product': module.product}
                 if module.channels:
-                    module_entry['ai'] = {channel.name.split('/')[-1]: _ai_entry(channel, module.notes.get(channel.name, ''))
+                    module_entry[ChannelKind.AI.value] = {channel.name.split('/')[-1]: _ai_entry(channel, module.notes.get(channel.name, ''))
                                           for channel in module.channels}
         self.folder.mkdir(parents=True, exist_ok=True)
         self.path(suffix).write_text(toml.dumps(content))
