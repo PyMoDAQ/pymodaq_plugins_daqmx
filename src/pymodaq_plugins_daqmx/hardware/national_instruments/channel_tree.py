@@ -35,9 +35,12 @@ def _children(kind: ChannelKind, type_: str, channel=None, previous: dict = None
 
 
 def channel_params(kind: ChannelKind, channel) -> dict:
-    """The settings group (as a dictionary for ``Parameter.create``) of a channel of the API."""
-    return {'title': channel.name, 'name': channel.name, 'type': 'group',
-            'children': _children(kind, type_name(channel), channel)}
+    """The settings group (as a dictionary for ``Parameter.create``) of a channel of the API.
+
+    The title of the group is the name of the channel (``Dev1/ai0``); the name of the parameter has no ``/``.
+    """
+    return {'title': channel.name, 'name': channel.name.replace('/', '_'), 'type': 'group',
+            'children': _children(kind, type_name(channel), channel), 'removable': True, 'renamable': False}
 
 
 def channel_from_params(kind: ChannelKind, group):
@@ -49,9 +52,9 @@ def channel_from_params(kind: ChannelKind, group):
         value = group.child(field.name).value()
         values[field.name] = field.type[value] if _is_enum(field) else value
     try:
-        return cls(group.name(), **values)
+        return cls(group.opts['title'], **values)
     except ValueError as error:
-        raise ValueError(f'{group.name()}: {error}') from error
+        raise ValueError(f"{group.opts['title']}: {error}") from error
 
 
 def set_type(kind: ChannelKind, group, type_: str) -> None:

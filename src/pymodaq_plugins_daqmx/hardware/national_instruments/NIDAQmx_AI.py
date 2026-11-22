@@ -57,13 +57,18 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
     def channel_names(self) -> List[str]:
         raise NotImplementedError
 
+    def channels(self) -> list:
+        """The channels of the task, in the order of the data; by default analog voltages named by `channel_names`."""
+        return [AIVoltage(name, min_val=-10., max_val=10., terminal_config=TerminalConfiguration.DIFF)
+                for name in self.channel_names()]
+
     def ini_detector(self, controller: Optional[AnalogInputTask] = None) -> Tuple[str, bool]:
         self.settings.child('Nsamples').setOpts(visible=self.settings['display'] == '1D')
         if self.is_master:
             self.update_tasks()
         else:  # a slave uses the task of its master, which owns it: it neither replaces nor closes it
             self.controller = controller
-            self.channel_labels = self.channel_names()
+            self.channel_labels = [channel.name for channel in self.channels()]
         return 'Analog input ready', True
 
     def commit_settings(self, param: Parameter) -> None:
@@ -79,9 +84,8 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
     def update_tasks(self, streaming: bool = False) -> None:
         """Replace the task by one that follows the settings: finite for a snap, continuous for the live mode."""
         self.close()
-        self.channel_labels = self.channel_names()
-        channels = [AIVoltage(name, min_val=-10., max_val=10., terminal_config=TerminalConfiguration.DIFF)
-                    for name in self.channel_labels]
+        channels = self.channels()
+        self.channel_labels = [channel.name for channel in channels]
         clock = ClockSettings(rate=self.settings['frequency'],
                               samples=None if streaming else self.samples_per_block())
         self.controller = AnalogInputTask(TaskConfig(channels=channels, timing=clock))
@@ -100,8 +104,9 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
         if live:
             self.start_live()
             return
-        if self.controller.config.timing.samples != self.samples_per_block():
-            self.update_tasks()  # the 0D acquisition follows the Naverage of the viewer
+        if (self.controller.config.timing.samples != self.samples_per_block()
+                or list(self.controller.config.channels) != self.channels()):
+            self.update_tasks()  # follow the Naverage of the viewer in 0D, and the channels added or changed
         if self.settings['display'] == '0D':
             self.emit_points(self.read_samples())
         else:
