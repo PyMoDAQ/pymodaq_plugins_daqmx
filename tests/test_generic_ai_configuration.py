@@ -28,7 +28,7 @@ def folder(tmp_path, monkeypatch):
 
 
 def choose(plugin, name, value):
-    param = plugin.settings.child(name)
+    param = plugin.settings.child('config', name)
     param.setValue(value)
     plugin.commit_settings(param)
 
@@ -49,7 +49,7 @@ def press(plugin, *path):
 
 def test_the_menu_offers_a_manual_choice_and_the_files_of_the_folder(qapp, driver, system_driver, folder):
     plugin = make_detector(DAQ_0DViewer_NIDAQmx)
-    menu = plugin.settings.child('configuration')
+    menu = plugin.settings.child('config', 'configuration')
     assert menu.value() == '(manual)'
     assert menu.opts['limits'] == ['(manual)', 'default', 'lab']
     plugin.close()
@@ -62,7 +62,7 @@ def test_choosing_a_configuration_fills_the_channels_in_the_order_of_the_file_an
     choose(plugin, 'configuration', 'lab')
     assert [status.command for status in sent] == ['Update_Status']
     assert 'lab' in sent[0].attribute[0]
-    assert plugin.settings.child('module').opts['limits'] == ['cDAQ1Mod1', 'cDAQ1Mod2', 'cDAQ1Mod3', 'cDAQ1Mod4']
+    assert plugin.settings.child('config', 'module').opts['limits'] == ['cDAQ1Mod1', 'cDAQ1Mod2', 'cDAQ1Mod3', 'cDAQ1Mod4']
     choose(plugin, 'module', 'cDAQ1Mod3')
     group = plugin.settings.child('channels')
     assert [child.opts['title'] for child in group.children()] == ['cDAQ1Mod3/ai0', 'cDAQ1Mod3/ai5']
@@ -77,23 +77,21 @@ def test_saving_under_a_suffix_writes_the_channels_of_the_tree(qapp, driver, sys
     group = plugin.settings.child('channels')
     group.addNew('Dev2/ai3')
     group.addNew('Dev2/ai1')
-    plugin.settings.child('save', 'module').setValue('Dev2')
-    plugin.settings.child('save', 'suffix').setValue('mine')
-    sent = press(plugin, 'save', 'save')
+    plugin.settings.child('config', 'save').opts.update(module='Dev2', suffix='mine')
+    sent = press(plugin, 'config', 'save')
     assert [status.command for status in sent] == ['Update_Status']
-    assert plugin.settings['save', 'save'] == 'idle'  # the LED of the button
+    assert plugin.settings['config', 'save'] == 'idle'  # the LED of the button
     saved = ConfigFiles(folder).load('mine')
     assert [channel.name for channel in saved.channels('Dev2')] == ['Dev2/ai3', 'Dev2/ai1']
-    assert plugin.settings.child('configuration').opts['limits'] == ['(manual)', 'default', 'lab', 'mine']
+    assert plugin.settings.child('config', 'configuration').opts['limits'] == ['(manual)', 'default', 'lab', 'mine']
     plugin.close()
 
 
 def test_saving_into_an_existing_suffix_keeps_the_other_modules_of_the_file(qapp, driver, system_driver, folder):
     plugin = make_detector(DAQ_0DViewer_NIDAQmx)
     plugin.settings.child('channels').addNew('Dev2/ai3')
-    plugin.settings.child('save', 'module').setValue('Dev2')
-    plugin.settings.child('save', 'suffix').setValue('lab')
-    press(plugin, 'save', 'save')
+    plugin.settings.child('config', 'save').opts.update(module='Dev2', suffix='lab')
+    press(plugin, 'config', 'save')
     saved = ConfigFiles(folder).load('lab')
     assert [channel.name for channel in saved.channels('Dev2')] == ['Dev2/ai3']
     assert [channel.name for channel in saved.channels('cDAQ1Mod3')] == ['cDAQ1Mod3/ai0', 'cDAQ1Mod3/ai5']
@@ -115,11 +113,11 @@ def test_after_a_failed_load_the_menu_shows_the_configuration_really_loaded(qapp
     (folder / 'config_daqmx_broken.toml').write_text('version = 1\n[modules.M.ai.x]\ntype = "nothing"\n')
     plugin = make_detector(DAQ_0DViewer_NIDAQmx)
     choose(plugin, 'configuration', 'broken')
-    assert plugin.settings['configuration'] == '(manual)'  # nothing was loaded before
+    assert plugin.settings['config', 'configuration'] == '(manual)'  # nothing was loaded before
     choose(plugin, 'configuration', 'lab')
     choose(plugin, 'module', 'cDAQ1Mod3')
     choose(plugin, 'configuration', 'broken')
-    assert (plugin.settings['configuration'], plugin.settings['module']) == ('lab', 'cDAQ1Mod3')
+    assert (plugin.settings['config', 'configuration'], plugin.settings['config', 'module']) == ('lab', 'cDAQ1Mod3')
     assert [child.opts['title'] for child in plugin.settings.child('channels').children()] == [
         'cDAQ1Mod3/ai0', 'cDAQ1Mod3/ai5']  # and the channels are the ones of that module
     plugin.close()
@@ -129,7 +127,7 @@ def test_going_back_to_manual_keeps_the_channels_and_hides_the_module(qapp, driv
     plugin = make_detector(DAQ_0DViewer_NIDAQmx)
     choose(plugin, 'configuration', 'lab')
     choose(plugin, 'configuration', '(manual)')
-    assert not plugin.settings.child('module').opts['visible']
+    assert not plugin.settings.child('config', 'module').opts['visible']
     assert len(plugin.settings.child('channels').children()) == 2
     plugin.close()
 
@@ -138,15 +136,15 @@ def test_the_dialog_proposes_the_configuration_and_the_module_that_are_loaded(qa
     plugin = make_detector(DAQ_0DViewer_NIDAQmx)
     choose(plugin, 'configuration', 'lab')
     choose(plugin, 'module', 'cDAQ1Mod3')
-    assert (plugin.settings['save', 'suffix'], plugin.settings['save', 'module']) == ('lab', 'cDAQ1Mod3')
+    assert tuple(plugin.settings.child('config', 'save').opts[key] for key in ('suffix', 'module')) == ('lab', 'cDAQ1Mod3')
     plugin.close()
 
 
 def test_a_save_that_fails_puts_the_led_of_the_button_in_error(qapp, driver, system_driver, folder):
     plugin = make_detector(DAQ_0DViewer_NIDAQmx)
-    sent = press(plugin, 'save', 'save')  # no module given
+    sent = press(plugin, 'config', 'save')  # no module given
     assert [status.command for status in sent] == ['error']
-    assert plugin.settings['save', 'save'] == 'error'
+    assert plugin.settings['config', 'save'] == 'error'
     plugin.close()
 
 
@@ -155,15 +153,15 @@ def test_without_configuration_the_dialog_proposes_the_device_of_the_channels(qa
     group = plugin.settings.child('channels')
     group.addNew('Dev1/ai1')
     plugin.commit_settings(group.child('Dev1_ai1'))  # what the plugin does when the GUI adds a channel
-    assert plugin.settings['save', 'module'] == 'Dev1'
-    plugin.settings.child('save', 'module').setValue('mine')  # typed by the user: not replaced
+    assert plugin.settings.child('config', 'save').opts['module'] == 'Dev1'
+    plugin.settings.child('config', 'save').opts['module'] = 'mine'  # typed by the user: not replaced
     group.addNew('Dev2/ai0')
     plugin.commit_settings(group.child('Dev2_ai0'))
-    assert plugin.settings['save', 'module'] == 'mine'
+    assert plugin.settings.child('config', 'save').opts['module'] == 'mine'
     plugin.close()
 
 
 def test_the_led_of_the_save_button_starts_off(qapp, driver, system_driver, folder):
     plugin = make_detector(DAQ_0DViewer_NIDAQmx)
-    assert plugin.settings['save', 'save'] == 'off'
+    assert plugin.settings['config', 'save'] == 'off'
     plugin.close()

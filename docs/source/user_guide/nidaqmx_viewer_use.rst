@@ -51,6 +51,8 @@ because they exist only once the plugin has started. The way to restore them is 
 (:doc:`config_files`), which describes the channels of a setup: it is a form of state manager built into the plugin
 and dedicated to DAQmx.
 
+The three parameters below are in the ``NIDAQmx config`` group of the settings.
+
 * **Configuration**: a drop-down list with ``(manual)`` (the channels are the ones you add) and the configuration
   files of the folder, ``default`` being ``config_daqmx.toml``. As it is a plain parameter, the choice is saved by
   the state manager of the Dashboard, which sets the menu again, and so loads the same file. The list is read

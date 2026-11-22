@@ -12,7 +12,7 @@ from pymodaq_plugins_daqmx.hardware.national_instruments import save_button
 
 
 def make_tree(qtbot):
-    group = Parameter.create(name='save', type='group', children=save_button.save_params(suffix='lab', module='Mod1'))
+    group = Parameter.create(name='config', type='group', children=[save_button.save_param(suffix='lab', module='Mod1')])
     tree = ParameterTree()
     tree.setParameters(group, showTop=False)
     qtbot.addWidget(tree)
@@ -44,8 +44,8 @@ def test_a_click_asks_for_the_suffix_and_the_module_then_activates(qtbot, monkey
     activated = []
     group.child('save').sigActivated.connect(activated.append)
     click(tree, group)
-    assert asked == [('lab', 'Mod1')]  # pre-filled with the values of the group
-    assert (group['suffix'], group['module']) == ('mine', 'Mod2')
+    assert asked == [('lab', 'Mod1')]  # pre-filled with the options of the button
+    assert (group.child('save').opts['suffix'], group.child('save').opts['module']) == ('mine', 'Mod2')
     assert len(activated) == 1
 
 
@@ -55,4 +55,4 @@ def test_cancelling_the_dialog_does_nothing(qtbot, monkeypatch):
     activated = []
     group.child('save').sigActivated.connect(activated.append)
     click(tree, group)
-    assert activated == [] and (group['suffix'], group['module']) == ('lab', 'Mod1')
+    assert activated == [] and (group.child('save').opts['suffix'], group.child('save').opts['module']) == ('lab', 'Mod1')
