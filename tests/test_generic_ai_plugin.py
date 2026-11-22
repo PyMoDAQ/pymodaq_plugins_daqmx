@@ -51,3 +51,15 @@ def test_the_1d_generic_viewer_gives_the_trace_of_its_channels(qapp, driver, sys
     assert dte[0].dim == 'Data1D' and dte[0].data[0].shape == (10,)
     assert dte[0].labels == ['Dev2/ai3']
     plugin.close()
+
+
+def test_without_channel_the_plugin_initializes_without_task_and_acquires_once_a_channel_is_added(
+        qapp, driver, system_driver):
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    assert plugin.initialized and driver == []  # nothing to configure yet: no task
+    plugin.grab_data()  # no channel: a message, not an exception
+    assert driver == []
+    plugin.settings.child('channels').addNew('Dev2/ai3')
+    dte = grab_and_wait(plugin)
+    assert dte[0].labels == ['Dev2/ai3']
+    plugin.close()

@@ -86,6 +86,8 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
         self.close()
         channels = self.channels()
         self.channel_labels = [channel.name for channel in channels]
+        if not channels:  # a task needs a channel: it is built when the first one is added
+            return
         clock = ClockSettings(rate=self.settings['frequency'],
                               samples=None if streaming else self.samples_per_block())
         self.controller = AnalogInputTask(TaskConfig(channels=channels, timing=clock))
@@ -104,9 +106,12 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
         if live:
             self.start_live()
             return
-        if (self.controller.config.timing.samples != self.samples_per_block()
+        if (self.controller is None or self.controller.config.timing.samples != self.samples_per_block()
                 or list(self.controller.config.channels) != self.channels()):
             self.update_tasks()  # follow the Naverage of the viewer in 0D, and the channels added or changed
+        if self.controller is None:
+            self.emit_status(ThreadCommand('Update_Status', ['No channel to acquire: add one to the channels', 'log']))
+            return
         if self.settings['display'] == '0D':
             self.emit_points(self.read_samples())
         else:
@@ -116,6 +121,9 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
         """Acquire continuously: 0D, one data per block of Naverage points; 1D, one data per Naverage traces."""
         self.stop_live()
         self.update_tasks(streaming=True)  # a stopped task still reserves its channels: no snap task in parallel
+        if self.controller is None:
+            self.emit_status(ThreadCommand('Update_Status', ['No channel to acquire: add one to the channels', 'log']))
+            return
         self._traces = []
         self._bridge = QtTaskBridge(self.controller)
         self._bridge.samples_ready.connect(self._on_block)
