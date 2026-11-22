@@ -37,6 +37,13 @@ class TestAI:
         assert float(dte[0].data[0][0]) == pytest.approx(0.45)  # the double reads s / 10 for sample s
         plugin.close()
 
+    def test_0d_without_averaging_asks_the_driver_for_two_samples_and_keeps_one(self, qapp, driver):
+        plugin = make_detector(DAQ_0DViewer_DAQmxAI, ai_channel='Dev1/ai0')
+        dte = grab_and_wait(plugin, naverage=1)
+        assert driver[-1].timing_calls[0][2]['samps_per_chan'] == 2  # a clocked acquisition needs two samples
+        assert float(dte[0].data[0][0]) == pytest.approx(0.0)  # the first one, as the double reads s / 10
+        plugin.close()
+
     def test_1d_gives_the_trace_and_a_time_axis(self, qapp, driver):
         plugin = make_detector(DAQ_0DViewer_DAQmxAI, ai_channel='Dev1/ai0', Nsamples=10, frequency=100)
         plugin.settings.child('display').setValue('1D')

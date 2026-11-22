@@ -36,7 +36,9 @@ Settings
   trace as a function of time.
 * **Frequency Acq.**: the sampling rate, common to all the channels.
 * **Nsamples** (``1D`` only): the length of the trace. In ``0D`` the number of points averaged is the *Naverage* of the
-  viewer, and in ``1D`` *Naverage* is the number of traces averaged.
+  viewer, and in ``1D`` *Naverage* is the number of traces averaged. The driver needs at least two samples for a
+  clocked acquisition: *Nsamples* cannot be below 2, and with *Naverage* = 1 two samples are acquired and the first
+  one is kept.
 * **Channels**: the group described above. The parameters of a channel are the fields of its channel class of the
   API (``AIVoltage``, ``AICurrent``, ``AIThermocouple``, ``AIRtd``), with the same names; see :doc:`config_files`
   for the list.

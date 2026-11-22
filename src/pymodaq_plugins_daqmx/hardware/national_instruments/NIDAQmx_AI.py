@@ -18,6 +18,7 @@ from pymodaq_plugins_daqmx.hardware.national_instruments.qt_task_bridge import Q
 
 logger = set_logger(get_module_name(__file__))
 
+MIN_CLOCKED_SAMPLES = 2
 AI_CHANNELS = NIDAQSystem().all_channels(ChannelKind.AI)
 
 
@@ -40,7 +41,7 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
         {'title': 'Display type:', 'name': 'display', 'type': 'list', 'limits': ['0D', '1D'],
          'value': '0D'},
         {'title': 'Frequency Acq.:', 'name': 'frequency', 'type': 'int', 'value': 1000, 'min': 1},
-        {'title': 'Nsamples:', 'name': 'Nsamples', 'type': 'int', 'value': 100, 'default': 100, 'min': 1},
+        {'title': 'Nsamples:', 'name': 'Nsamples', 'type': 'int', 'value': 100, 'default': 100, 'min': 2},
     ]
     hardware_averaging = True
     live_mode_available = True  # with live=True: one continuous task, one data per block of samples
@@ -81,6 +82,10 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
         """Points of one acquisition: the averaging of the viewer in 0D, the length of the trace in 1D."""
         return self.Naverage if self.settings['display'] == '0D' else self.settings['Nsamples']
 
+    def task_samples(self) -> int:
+        """Samples requested by a finite task: at least 2, the least that the driver accepts with a sample clock."""
+        return max(self.samples_per_block(), MIN_CLOCKED_SAMPLES)
+
     def update_tasks(self, streaming: bool = False) -> None:
         """Replace the task by one that follows the settings: finite for a snap, continuous for the live mode."""
         self.close()
@@ -89,7 +94,7 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
         if not channels:  # a task needs a channel: it is built when the first one is added
             return
         clock = ClockSettings(rate=self.settings['frequency'],
-                              samples=None if streaming else self.samples_per_block())
+                              samples=None if streaming else self.task_samples())
         self.controller = AnalogInputTask(TaskConfig(channels=channels, timing=clock))
 
     def read_samples(self) -> np.ndarray:
@@ -106,14 +111,14 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
         if live:
             self.start_live()
             return
-        if (self.controller is None or self.controller.config.timing.samples != self.samples_per_block()
+        if (self.controller is None or self.controller.config.timing.samples != self.task_samples()
                 or list(self.controller.config.channels) != self.channels()):
             self.update_tasks()  # follow the Naverage of the viewer in 0D, and the channels added or changed
         if self.controller is None:
             self.emit_status(ThreadCommand('Update_Status', ['No channel to acquire: add one to the channels', 'log']))
             return
         if self.settings['display'] == '0D':
-            self.emit_points(self.read_samples())
+            self.emit_points(self.read_samples()[:, :self.Naverage])  # the surplus sample of Naverage=1 is dropped
         else:
             self.emit_traces([self.read_samples() for _ in range(Naverage)])
 
