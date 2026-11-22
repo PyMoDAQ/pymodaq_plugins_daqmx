@@ -76,3 +76,12 @@ def test_the_limits_set_by_the_plugin_are_sent_as_the_available_channels():
     group.sigOptionsChanged.connect(lambda param, opts: changes.append(dict(opts)))
     group.setLimits(['Dev1/ai0'])
     assert any(change.get('available') == ['Dev1/ai0'] for change in changes)
+
+
+def test_a_voltage_channel_is_added_with_the_widest_range_of_its_device(qtbot, monkeypatch):
+    from pymodaq_plugins_daqmx.hardware.national_instruments.api import NIDAQSystem
+    monkeypatch.setattr(NIDAQSystem, 'ai_voltage_ranges', lambda self, device: [(-0.078125, 0.078125)])
+    group = new_group('Dev1/ai0')
+    group.addNew('Dev1/ai0')
+    assert channels_of(group)[0].max_val == 0.078125
+    assert channels_of(group)[0].min_val == -0.078125

@@ -8,7 +8,7 @@ from typing import List
 
 from pymodaq_gui.parameter.pymodaq_ptypes import GroupParameter, registerParameterType
 
-from pymodaq_plugins_daqmx.hardware.national_instruments.api import ChannelKind
+from pymodaq_plugins_daqmx.hardware.national_instruments.api import AIVoltage, ChannelKind, NIDAQSystem
 from pymodaq_plugins_daqmx.hardware.national_instruments.channel_tree import channel_from_params, channel_params
 from pymodaq_plugins_daqmx.hardware.national_instruments.config_files import CHANNEL_TYPES
 
@@ -63,7 +63,20 @@ class ChannelGroup(GroupParameter):
         if typ is None or typ in self._used():
             return
         first_type = next(iter(CHANNEL_TYPES[self.kind].values()))
-        self.addChild(channel_params(self.kind, first_type(typ)))
+        self.addChild(channel_params(self.kind, self._default_channel(first_type, typ)))
+
+    def _default_channel(self, channel_type, name: str):
+        """The channel with the values of its type; a voltage input gets the widest range of its device, as a module
+        may not accept the usual \u00b110 V (the driver refuses it when the task starts)."""
+        if channel_type is AIVoltage:
+            try:
+                ranges = NIDAQSystem().ai_voltage_ranges(name.split('/')[0])
+            except ValueError:  # not a device of the system
+                ranges = []
+            if ranges:
+                low, high = max(ranges, key=lambda pair: pair[1] - pair[0])
+                return AIVoltage(name, min_val=low, max_val=high)
+        return channel_type(name)
 
 
 registerParameterType('ni_channels', ChannelGroup, override=True)
