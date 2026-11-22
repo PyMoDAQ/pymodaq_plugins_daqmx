@@ -39,7 +39,13 @@ Format
    One table for each module, named as in NI MAX (``cDAQ1Mod3``, or ``Dev1`` for a board). The name of a channel is
    its module and its key: ``[modules.cDAQ1Mod3.ai.ai0]`` is the channel ``cDAQ1Mod3/ai0``, so the module of a channel
    is the device its name starts with. ``product`` is the product
-   type of the module, informative.
+   type of the module, informative. ``frequency`` is optional: the sampling frequency of the module in Hz, a positive
+   integer. The generic viewer acquires each module with its own task, so each has its own frequency.
+
+``[trigger]``
+   Optional: what starts the task of every module. ``type`` is ``digital edge`` (``terminal``, such as
+   ``/cDAQ1/PFI0``, and ``edge``) or ``analog edge`` (``channel``, such as ``cDAQ1Mod3/ai0``, ``level`` in volts
+   and ``edge``). ``edge`` is ``rising`` (the default) or ``falling``. Without this table the tasks start at once.
 
 ``[modules.<name>.ai.<key>]``
    One table for each analog input channel. The channel is ``<module>/<key>`` (``cDAQ1Mod3/ai0``) and the order of

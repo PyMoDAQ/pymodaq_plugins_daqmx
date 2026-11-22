@@ -6,6 +6,7 @@ product = "cDAQ-9174"
 
 [modules.cDAQ1Mod1]
 product = "NI 9211"
+frequency = 10
 
 [modules.cDAQ1Mod1.ai.ai2]
 type = "thermocouple"
@@ -45,3 +46,8 @@ info = "Example of AI voltage channel"
 
 [modules.cDAQ1Mod4]
 product = "NI 9203"
+
+[trigger]
+type = "digital edge"
+terminal = "/cDAQ1/PFI0"
+edge = "rising"

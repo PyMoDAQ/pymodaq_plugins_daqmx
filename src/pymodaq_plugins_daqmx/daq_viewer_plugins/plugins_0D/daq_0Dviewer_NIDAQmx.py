@@ -63,7 +63,7 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         self.settings.child('trigger', 'channel').setLimits(system.all_channels(ChannelKind.AI))
         self.files = ConfigFiles()
         self.loaded = MANUAL  # the configuration whose channels are in the tree
-        self.in_file = []  # the channels of that configuration, to tell if the tree still is the file
+        self.in_file = ()  # what the file describes (see `snapshot`), to tell if the tree still is the file
         self.refresh_menu()
 
     def refresh_menu(self) -> None:
@@ -79,7 +79,7 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
             return
         if label == MANUAL:  # the channels stay as they are, to be edited by hand
             self.loaded = MANUAL
-            self.in_file = []
+            self.in_file = ()
             return
         try:
             self._load(label)
@@ -91,8 +91,13 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         configuration = self.files.load(_suffix(label))
         channels = [channel for module in configuration.modules for channel in configuration.channels(module)]
         self.settings.child('channels').setChannels(channels)
+        self.sync_frequencies()
+        for module in self.modules():  # a module that the file gives no frequency to goes back to the global one
+            frequency = configuration.frequency(module) or self.settings['frequency']
+            self.settings.child('frequencies', module).setValue(frequency)
+        self.set_trigger(configuration.trigger)
         self.loaded = label
-        self.in_file = channels
+        self.in_file = self.snapshot()
         self.settings.child('config', 'save').setOpts(suffix=label)  # what the dialog of the save button proposes
         self.notify(f'Configuration {label} loaded')
 
@@ -104,6 +109,7 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         existing file the description, the devices and the notes of the channels that stay are kept.
         """
         suffix = _suffix(button.opts['suffix'])
+        self.sync_frequencies()
         channels = self.channels()
         if not channels:
             raise ValueError('There is no channel to save')
@@ -115,9 +121,10 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
             del configuration.modules[module]
         for module, module_channels in by_module.items():
             configuration = configuration.with_channels(module, module_channels)
-        self.files.save(suffix, configuration)
+            configuration = configuration.with_frequency(module, self.settings['frequencies', module])
+        self.files.save(suffix, configuration.with_trigger(self.trigger_keys()))
         self.refresh_menu()
-        self.loaded, self.in_file = _label(suffix), channels  # the tree is that file now
+        self.loaded, self.in_file = _label(suffix), self.snapshot()  # the tree is that file now
         self.settings.child('config', 'configuration').setValue(self.loaded)
         self.notify(f'Channels saved in the configuration {_label(suffix)}')
 
@@ -159,6 +166,34 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
             return AnalogEdgeTrigger(settings['channel'], settings['level'], Slope[settings['edge'].upper()])
         return None
 
+    def trigger_keys(self) -> Optional[dict]:
+        """The start trigger of the tree as the keys of the ``[trigger]`` table of a file, or None."""
+        settings = self.settings.child('trigger')
+        if settings['type'] == 'digital edge':
+            return {'type': 'digital edge', 'terminal': settings['terminal'], 'edge': settings['edge']}
+        if settings['type'] == 'analog edge':
+            return {'type': 'analog edge', 'channel': settings['channel'], 'level': settings['level'],
+                    'edge': settings['edge']}
+        return None
+
+    def set_trigger(self, keys: Optional[dict]) -> None:
+        """Put the trigger of a file in the tree (no trigger if the file has none)."""
+        settings = self.settings.child('trigger')
+        keys = keys or {'type': 'none'}
+        settings.child('type').setValue(keys['type'])
+        for key in ('terminal', 'channel', 'level'):
+            if key in keys:
+                settings.child(key).setValue(keys[key])
+        settings.child('edge').setValue(keys.get('edge', 'rising'))
+        self.show_trigger()
+
+    def snapshot(self) -> tuple:
+        """What a configuration file describes in the tree: the channels, the frequency of each module and the
+        trigger."""
+        self.sync_frequencies()
+        frequencies = tuple((child.name(), child.value()) for child in self.settings.child('frequencies').children())
+        return tuple(self.channels()), frequencies, self.trigger_keys()
+
     def show_trigger(self) -> None:
         """Only the parameters of the chosen type of trigger are visible."""
         settings = self.settings.child('trigger')
@@ -178,19 +213,19 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
                 for module, channels in by_module.items()]
 
     def leave_configuration_if_modified(self) -> None:
-        """The menu goes back to ``(manual)`` as soon as the channels of the tree are not the ones of the file any more
-        (a value that cannot be a channel is a modification too), so that it never shows a configuration that is not
+        """The menu goes back to ``(manual)`` as soon as the tree is not what the file describes any more: its
+        channels, the frequencies of the modules or the trigger (a value that cannot be a channel is a modification too), so that it never shows a configuration that is not
         in the tree, and that choosing the file again reloads it."""
         if self.loaded == MANUAL:
             return
         try:
-            same = self.channels() == self.in_file
+            same = self.snapshot() == self.in_file
         except ValueError:
             same = False
         if not same:
-            self.notify(f'Channels modified: the configuration {self.loaded} is no longer the one of the tree')
+            self.notify(f'Settings modified: the configuration {self.loaded} is no longer the one of the tree')
             self.loaded = MANUAL
-            self.in_file = []
+            self.in_file = ()
             self.settings.child('config', 'configuration').setValue(MANUAL)
 
     def own(self, param: Parameter) -> Parameter:

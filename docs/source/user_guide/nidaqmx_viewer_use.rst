@@ -28,14 +28,25 @@ How to use it
 5. **Grab or start the live mode.** The task is built from the channels when the first one is available, and rebuilt
    at the next grab when the channels changed (in live mode, at the next start).
 
-The data follow the order of the channels in the group, and are labelled with their names.
+The channels are acquired by one task for each module (the device their name starts with, ``cDAQ1Mod1`` for
+``cDAQ1Mod1/ai0``), because the modules of a chassis cannot always share a clock (the delta-sigma modules such as the
+NI 9211 and NI 9217 cannot be timed with others). Each task gives its own data, named after its module, and the tasks
+start one after the other, without any alignment of their samples. A start trigger shared by the tasks (see below) is
+the way to align them when the hardware allows it.
+
+In each data the channels follow the order of the channels in the group, and are labelled with their names.
 
 Settings
 --------
 
 * **Display type**: ``0D`` gives the mean of the samples of each channel (with its standard error), ``1D`` gives the
   trace as a function of time.
-* **Frequency Acq.**: the sampling rate, common to all the channels.
+* **Frequency Acq.**: the sampling rate that a module starts with.
+* **Module frequencies**: one frequency for each module of the channels (they appear and disappear with the
+  channels), as a module can need a rate of its own. Each module is acquired at its frequency.
+* **Start trigger**: ``none`` (the tasks start at once), ``digital edge`` (a *Terminal* such as ``/Dev1/PFI0`` and
+  an *Edge*) or ``analog edge`` (a *Channel*, a *Level* in volts and an *Edge*). The trigger is shared by the task of
+  every module.
 * **Nsamples** (``1D`` only): the length of the trace. In ``0D`` the number of points averaged is the *Naverage* of the
   viewer, and in ``1D`` *Naverage* is the number of traces averaged. The driver needs at least two samples for a
   clocked acquisition: *Nsamples* cannot be below 2, and with *Naverage* = 1 two samples are acquired and the first
@@ -52,22 +63,24 @@ because they exist only once the plugin has started. The way to restore them is 
 (:doc:`config_files`), which describes the channels of a setup: it is a form of state manager built into the plugin
 and dedicated to DAQmx.
 
-The three parameters below are in the ``NIDAQmx config`` group of the settings.
+The parameters below are in the ``NIDAQmx config`` group of the settings.
 
 * **Configuration**: a drop-down list with ``(manual)`` (the channels are the ones you add) and the configuration
   files of the folder, ``default`` being ``config_daqmx.toml``. As it is a plain parameter, the choice is saved by
   the state manager of the Dashboard, which sets the menu again, and so loads the same file. The list is read
   when the plugin starts, and again after a save.
 * **Configuration** also loads the channels: choosing a file replaces the channels of the tree by the ones of the
-  file, in the order of the file (which is the order of the data). You can then add, remove or change channels as
+  file, in the order of the file (which is the order of the data), the frequency of each module and the start trigger
+  (none if the file has none). You can then add, remove or change channels as
   usual, also from several devices: the file is only read, never changed, unless you save. One file is one
   configuration: to work with another set of channels, save it under another suffix.
-* As soon as the channels of the tree are not the ones of the file any more (a channel added, removed or changed),
-  the menu goes back to ``(manual)``, so that it never shows a configuration that is not in the tree. To get the
+* As soon as the tree is not what the file describes any more (a channel added, removed or changed, a frequency or
+  the trigger modified), the menu goes back to ``(manual)``, so that it never shows a configuration that is not in the tree. To get the
   file back, choose it again in the menu.
 * **Save as...**: a button with a LED. A click opens a small dialog asking the *Suffix* of the file
   (``config_daqmx_<suffix>.toml``; ``default`` is the file without suffix), proposed with the configuration loaded.
-  The file then describes exactly the channels of the tree (those of an existing file that are not in the tree are
+  The file then describes exactly the channels of the tree, the frequency of each module and the start trigger
+  (those of an existing file that are not in the tree are
   removed). The format of the file groups the channels by module, so each channel is written in the module its name
   starts with (``Dev1`` for ``Dev1/ai1``, ``cDAQ1Mod3`` for ``cDAQ1Mod3/ai0``): channels of several devices can be
   mixed. Only the suffix is given, never a path: the file always goes to the folder of the configuration files. After a save the menu shows the file that was just written, which is what the tree now is. The LED of the button
