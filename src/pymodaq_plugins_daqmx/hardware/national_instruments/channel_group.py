@@ -45,6 +45,13 @@ class ChannelGroup(GroupParameter):
         self.opts['limits'] = list(limits)
         self._update_add_list()
 
+    def setChannels(self, channels) -> None:
+        """Replace the channels of the group by these channels of the API, in this order."""
+        for child in list(self.children()):
+            self.removeChild(child)
+        for channel in channels:
+            self.addChild(channel_params(self.kind, channel))
+
     def addNew(self, typ=None) -> None:
         """Add the channel named ``typ`` (``Dev1/ai0``), unless it is already in the group."""
         if typ is None or typ in self._used():
