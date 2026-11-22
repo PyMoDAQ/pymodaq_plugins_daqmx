@@ -126,6 +126,7 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         except ValueError:
             same = False
         if not same:
+            self.notify(f'Channels modified: the configuration {self.loaded} is no longer the one of the tree')
             self.loaded = MANUAL
             self.in_file = []
             self.settings.child('config', 'configuration').setValue(MANUAL)

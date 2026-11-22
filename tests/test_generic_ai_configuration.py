@@ -222,8 +222,10 @@ def test_the_menu_goes_back_to_manual_when_a_channel_is_removed_and_the_file_can
     assert menu(plugin) == 'lab'  # the tree is the file
     group = plugin.settings.child('channels')
     group.removeChild(group.child('cDAQ1Mod1_ai2'))
+    sent = capture(plugin)
     plugin.commit_settings(group)  # what the plugin does when the GUI removes a channel
     assert menu(plugin) == '(manual)'
+    assert [status.command for status in sent] == ['Update_Status']  # the modification is logged
     choose(plugin, 'configuration', 'lab')
     assert len(group.children()) == 4
     assert menu(plugin) == 'lab'
