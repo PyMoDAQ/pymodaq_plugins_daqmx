@@ -61,10 +61,9 @@ The three parameters below are in the ``NIDAQmx config`` group of the settings.
   file, in the order of the file (which is the order of the data). You can then add, remove or change channels as
   usual, also from several devices: the file is only read, never changed, unless you save. One file is one
   configuration: to work with another set of channels, save it under another suffix.
-* **Reload**: a button with a LED. The menu keeps the name of the file you chose even after you modify the channels, so
-  the LED tells whether the tree still is the file: green when it is identical, orange when a channel has been
-  added, removed or changed since the loading, grey without configuration. A click reloads the file, replacing the
-  channels of the tree, which is not possible by choosing the same entry again in the menu.
+* As soon as the channels of the tree are not the ones of the file any more (a channel added, removed or changed),
+  the menu goes back to ``(manual)``, so that it never shows a configuration that is not in the tree. To get the
+  file back, choose it again in the menu.
 * **Save as...**: a button with a LED. A click opens a small dialog asking the *Suffix* of the file
   (``config_daqmx_<suffix>.toml``; ``default`` is the file without suffix), proposed with the configuration loaded.
   The file then describes exactly the channels of the tree (those of an existing file that are not in the tree are

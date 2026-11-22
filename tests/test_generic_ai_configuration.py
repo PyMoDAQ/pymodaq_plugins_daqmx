@@ -211,57 +211,42 @@ def test_the_save_button_activated_in_the_gui_saves_with_the_suffix_of_its_dialo
     plugin.close()
 
 
-def led(plugin):
-    return plugin.settings['config', 'reload']
+def menu(plugin):
+    return plugin.settings['config', 'configuration']
 
 
-def test_the_reload_led_tells_whether_the_tree_is_the_loaded_file(qapp, driver, system_driver, folder):
-    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
-    assert led(plugin) == 'off'  # (manual): nothing to compare with
-    choose(plugin, 'configuration', 'lab')
-    assert led(plugin) == 'idle'  # the tree is the file
-    group = plugin.settings.child('channels')
-    group.removeChild(group.child('cDAQ1Mod1_ai2'))
-    plugin.commit_settings(group)  # what the plugin does when the GUI removes a channel
-    assert led(plugin) == 'warning'
-    plugin.close()
-
-
-def test_a_value_changed_in_a_channel_makes_the_led_warn_and_changing_it_back_makes_it_idle_again(
+def test_the_menu_goes_back_to_manual_when_a_channel_is_removed_and_the_file_can_be_chosen_again(
         qapp, driver, system_driver, folder):
     plugin = make_detector(DAQ_0DViewer_NIDAQmx)
     choose(plugin, 'configuration', 'lab')
-    value = plugin.settings.child('channels', 'cDAQ1Mod3_ai0', 'min_val')
-    previous = value.value()
-    value.setValue(previous + 1)
-    plugin.commit_settings(value)
-    assert led(plugin) == 'warning'
-    value.setValue(previous)
-    plugin.commit_settings(value)
-    assert led(plugin) == 'idle'
-    plugin.close()
-
-
-def test_reload_puts_back_the_channels_of_the_file(qapp, driver, system_driver, folder):
-    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
-    choose(plugin, 'configuration', 'lab')
+    assert menu(plugin) == 'lab'  # the tree is the file
     group = plugin.settings.child('channels')
     group.removeChild(group.child('cDAQ1Mod1_ai2'))
-    gui = gui_copy(plugin)
-    button = gui.child('config', 'reload')
-    plugin.update_settings(edict(path=putils.get_param_path(button), param=button, change='activated'))
+    plugin.commit_settings(group)  # what the plugin does when the GUI removes a channel
+    assert menu(plugin) == '(manual)'
+    choose(plugin, 'configuration', 'lab')
     assert len(group.children()) == 4
-    assert led(plugin) == 'idle'
+    assert menu(plugin) == 'lab'
     plugin.close()
 
 
-def test_reload_without_configuration_only_says_so(qapp, driver, system_driver, folder):
+def test_the_menu_goes_back_to_manual_when_a_value_of_a_channel_is_changed(qapp, driver, system_driver, folder):
     plugin = make_detector(DAQ_0DViewer_NIDAQmx)
-    plugin.settings.child('channels').addNew('Dev2/ai3')
-    sent = press(plugin, 'config', 'reload')
-    assert [status.command for status in sent] == ['Update_Status']
-    assert len(plugin.settings.child('channels').children()) == 1  # nothing is replaced
-    assert led(plugin) == 'off'
+    choose(plugin, 'configuration', 'lab')
+    value = plugin.settings.child('channels', 'cDAQ1Mod3_ai0', 'min_val')
+    value.setValue(value.value() + 1)
+    plugin.commit_settings(value)
+    assert menu(plugin) == '(manual)'
+    plugin.close()
+
+
+def test_the_menu_stays_on_manual_while_channels_are_added_by_hand(qapp, driver, system_driver, folder):
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    group = plugin.settings.child('channels')
+    group.addNew('Dev2/ai3')
+    plugin.commit_settings(group)
+    assert menu(plugin) == '(manual)'
+    assert 'reload' not in plugin.settings.child('config').names
     plugin.close()
 
 
@@ -272,7 +257,6 @@ def test_after_a_save_the_menu_shows_the_file_that_was_just_written(qapp, driver
     plugin.settings.child('config', 'save').opts.update(suffix='second')
     press(plugin, 'config', 'save')
     assert plugin.settings['config', 'configuration'] == 'second'  # the tree is that file now
-    assert led(plugin) == 'idle'
     plugin.close()
 
 
