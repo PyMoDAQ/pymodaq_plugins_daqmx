@@ -111,3 +111,26 @@ def test_a_file_that_cannot_be_read_puts_the_control_module_in_error_with_the_fi
     assert [status.command for status in sent] == ['error']
     assert 'config_daqmx_broken.toml' in sent[0].attribute
     plugin.close()
+
+
+def test_after_a_failed_load_the_menu_shows_the_configuration_really_loaded(qapp, driver, system_driver, folder):
+    (folder / 'config_daqmx_broken.toml').write_text('version = 1\n[modules.M.ai.x]\ntype = "nothing"\n')
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    choose(plugin, 'configuration', 'broken')
+    assert plugin.settings['configuration'] == '(manual)'  # nothing was loaded before
+    choose(plugin, 'configuration', 'lab')
+    choose(plugin, 'module', 'cDAQ1Mod3')
+    choose(plugin, 'configuration', 'broken')
+    assert (plugin.settings['configuration'], plugin.settings['module']) == ('lab', 'cDAQ1Mod3')
+    assert [child.opts['title'] for child in plugin.settings.child('channels').children()] == [
+        'cDAQ1Mod3/ai0', 'cDAQ1Mod3/ai5']  # and the channels are the ones of that module
+    plugin.close()
+
+
+def test_going_back_to_manual_keeps_the_channels_and_hides_the_module(qapp, driver, system_driver, folder):
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    choose(plugin, 'configuration', 'lab')
+    choose(plugin, 'configuration', '(manual)')
+    assert not plugin.settings.child('module').opts['visible']
+    assert len(plugin.settings.child('channels').children()) == 2
+    plugin.close()

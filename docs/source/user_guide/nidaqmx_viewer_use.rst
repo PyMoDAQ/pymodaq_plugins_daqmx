@@ -65,6 +65,7 @@ and dedicated to DAQmx.
 
 The loading is done as soon as the choice is made, whether it comes from you or from the state manager. The
 status LED of the viewer tells how it went: it shows an error, with the message, when the file cannot be read or
-written, and is back to normal when it worked.
+written, and is back to normal when it worked. After a failure the menus go back to the configuration and module that are really
+loaded, so that they never show something that is not in the tree.
 
 A file that cannot be read gives an error that names the file and the entry that is wrong.

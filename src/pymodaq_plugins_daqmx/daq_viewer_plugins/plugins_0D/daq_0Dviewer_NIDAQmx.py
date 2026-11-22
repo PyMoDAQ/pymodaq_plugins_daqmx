@@ -45,6 +45,7 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         super().__init__(*args, **kwargs)
         self.settings.child('channels').setLimits(NIDAQSystem().all_channels(ChannelKind.AI))
         self.files = ConfigFiles()
+        self.loaded = (MANUAL, '')  # the configuration and the module whose channels are in the tree
         self.refresh_menu()
 
     def refresh_menu(self) -> None:
@@ -56,12 +57,23 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         The control module is told if it worked (its LED is normal) or not (its LED shows the error).
         """
         label = self.settings['configuration']
-        if label == MANUAL:
+        if label == MANUAL:  # the channels stay as they are, to be edited by hand
+            self.loaded = (MANUAL, '')
+            self.settings.child('module').setOpts(visible=False)
             return
         try:
             self._load(label)
         except (ValueError, OSError) as error:  # ConfigFileError is a ValueError
+            self.show_loaded()  # the menu keeps telling the truth
             self.fail(error)
+
+    def show_loaded(self) -> None:
+        """Put the menus back on what is really loaded."""
+        configuration, module = self.loaded
+        self.settings.child('configuration').setValue(configuration)
+        self.settings.child('module').setOpts(visible=configuration != MANUAL)
+        if module:
+            self.settings.child('module').setValue(module)
 
     def _load(self, label: str) -> None:
         configuration = self.files.load(_suffix(label))
@@ -71,6 +83,7 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         if self.settings['module'] not in modules:
             module.setValue(modules[0] if modules else '')
         self.settings.child('channels').setChannels(configuration.channels(self.settings['module']))
+        self.loaded = (label, self.settings['module'])
         self.notify(f'Configuration {label}, module {self.settings["module"]} loaded')
 
     def save_configuration(self) -> None:
