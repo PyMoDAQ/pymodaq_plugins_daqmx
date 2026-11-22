@@ -34,6 +34,7 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         {'title': 'NIDAQmx config:', 'name': 'config', 'type': 'group', 'children': [
             {'title': 'Configuration:', 'name': 'configuration', 'type': 'list', 'limits': [MANUAL],
              'value': MANUAL},
+            {'title': 'Reload', 'name': 'reload', 'type': 'action_led', 'limits': 'status', 'value': Status.OFF},
             save_param(),
         ]},
         {'title': 'Channels:', 'name': 'channels', 'type': 'ni_channels', 'kind': ChannelKind.AI.value,
@@ -46,6 +47,7 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         self.settings.child('channels').setLimits(NIDAQSystem().all_channels(ChannelKind.AI))
         self.files = ConfigFiles()
         self.loaded = MANUAL  # the configuration whose channels are in the tree
+        self.in_file = []  # the channels of that configuration, to tell if the tree still is the file
         self.refresh_menu()
 
     def refresh_menu(self) -> None:
@@ -59,6 +61,7 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         label = self.settings['config', 'configuration']
         if label == MANUAL:  # the channels stay as they are, to be edited by hand
             self.loaded = MANUAL
+            self.in_file = []
             return
         try:
             self._load(label)
@@ -71,6 +74,7 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         channels = [channel for module in configuration.modules for channel in configuration.channels(module)]
         self.settings.child('channels').setChannels(channels)
         self.loaded = label
+        self.in_file = channels
         self.settings.child('config', 'save').setOpts(suffix=label)  # what the dialog of the save button proposes
         self.notify(f'Configuration {label} loaded')
 
@@ -108,6 +112,21 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
     def channels(self) -> list:
         return channels_of(self.settings.child('channels'))
 
+    def update_reload_led(self) -> None:
+        """The LED of the reload button: grey without configuration, green if the tree still is the file, orange if it
+        has been modified since (a value that cannot be a channel is a modification too)."""
+        if self.loaded == MANUAL:
+            state = Status.OFF
+        else:
+            try:
+                same = self.channels() == self.in_file
+            except ValueError:
+                same = False
+            state = Status.IDLE if same else Status.WARNING
+        led = self.settings.child('config', 'reload')
+        if led.value() != state:
+            led.setValue(state)
+
     def own(self, param: Parameter) -> Parameter:
         """The parameter of the tree of this plugin that ``param`` stands for.
 
@@ -128,6 +147,11 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         param = self.own(param)
         if param.name() == 'configuration' and param.parent() is self.settings.child('config'):
             self.load_configuration()
+        elif param.name() == 'reload' and param.opts['type'] == 'action_led':  # clicked in the GUI
+            if self.loaded == MANUAL:
+                self.notify('Nothing to reload: choose a configuration')
+            else:
+                self.load_configuration()
         elif param.opts['type'] == 'ni_save':  # the button has been clicked, after the dialog of the GUI
             param.opts.update(suffix=button.opts['suffix'])
             try:
@@ -138,6 +162,7 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
                 self.fail(error)
         if param.name() == 'type' and param.parent() is not None:
             set_type(ChannelKind.AI, param.parent(), param.value())
+        self.update_reload_led()
         super().commit_settings(param)
 
 

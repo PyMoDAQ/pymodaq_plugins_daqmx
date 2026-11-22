@@ -209,3 +209,57 @@ def test_the_save_button_activated_in_the_gui_saves_with_the_suffix_of_its_dialo
     assert [c.name for c in ConfigFiles(folder).load('fromgui').channels('Dev2')] == ['Dev2/ai3']
     assert plugin.settings['config', 'save'] == 'idle'
     plugin.close()
+
+
+def led(plugin):
+    return plugin.settings['config', 'reload']
+
+
+def test_the_reload_led_tells_whether_the_tree_is_the_loaded_file(qapp, driver, system_driver, folder):
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    assert led(plugin) == 'off'  # (manual): nothing to compare with
+    choose(plugin, 'configuration', 'lab')
+    assert led(plugin) == 'idle'  # the tree is the file
+    group = plugin.settings.child('channels')
+    group.removeChild(group.child('cDAQ1Mod1_ai2'))
+    plugin.commit_settings(group)  # what the plugin does when the GUI removes a channel
+    assert led(plugin) == 'warning'
+    plugin.close()
+
+
+def test_a_value_changed_in_a_channel_makes_the_led_warn_and_changing_it_back_makes_it_idle_again(
+        qapp, driver, system_driver, folder):
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    choose(plugin, 'configuration', 'lab')
+    value = plugin.settings.child('channels', 'cDAQ1Mod3_ai0', 'min_val')
+    previous = value.value()
+    value.setValue(previous + 1)
+    plugin.commit_settings(value)
+    assert led(plugin) == 'warning'
+    value.setValue(previous)
+    plugin.commit_settings(value)
+    assert led(plugin) == 'idle'
+    plugin.close()
+
+
+def test_reload_puts_back_the_channels_of_the_file(qapp, driver, system_driver, folder):
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    choose(plugin, 'configuration', 'lab')
+    group = plugin.settings.child('channels')
+    group.removeChild(group.child('cDAQ1Mod1_ai2'))
+    gui = gui_copy(plugin)
+    button = gui.child('config', 'reload')
+    plugin.update_settings(edict(path=putils.get_param_path(button), param=button, change='activated'))
+    assert len(group.children()) == 4
+    assert led(plugin) == 'idle'
+    plugin.close()
+
+
+def test_reload_without_configuration_only_says_so(qapp, driver, system_driver, folder):
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    plugin.settings.child('channels').addNew('Dev2/ai3')
+    sent = press(plugin, 'config', 'reload')
+    assert [status.command for status in sent] == ['Update_Status']
+    assert len(plugin.settings.child('channels').children()) == 1  # nothing is replaced
+    assert led(plugin) == 'off'
+    plugin.close()
