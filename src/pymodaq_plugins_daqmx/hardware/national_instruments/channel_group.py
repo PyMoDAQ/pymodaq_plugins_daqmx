@@ -8,7 +8,7 @@ from typing import List
 
 from pymodaq_gui.parameter.pymodaq_ptypes import GroupParameter, registerParameterType
 
-from pymodaq_plugins_daqmx.hardware.national_instruments.api import ChannelKind
+from pymodaq_plugins_daqmx.hardware.national_instruments.api import AIVoltage, ChannelKind, NIDAQSystem
 from pymodaq_plugins_daqmx.hardware.national_instruments.channel_tree import channel_from_params, channel_params
 from pymodaq_plugins_daqmx.hardware.national_instruments.config_files import CHANNEL_TYPES
 
@@ -23,8 +23,9 @@ class ChannelGroup(GroupParameter):
         opts['type'] = 'ni_channels'
         opts.setdefault('kind', ChannelKind.AI.value)
         opts.setdefault('limits', [])
+        opts['available'] = list(opts['limits'])
         opts['addText'] = 'Add'
-        opts['addList'] = list(opts['limits'])
+        opts['addList'] = list(opts['available'])
         super().__init__(**opts)
         self.sigChildAdded.connect(self._update_add_list)
         self.sigChildRemoved.connect(self._update_add_list)
@@ -38,19 +39,54 @@ class ChannelGroup(GroupParameter):
 
     def _update_add_list(self, *args) -> None:
         used = self._used()
-        self.setOpts(addList=[name for name in self.opts['limits'] if name not in used])
+        self.setOpts(addList=[name for name in self.opts['available'] if name not in used])
+
+    def setOpts(self, **opts) -> None:
+        super().setOpts(**opts)
+        if 'available' in opts:  # also what the GUI receives from the plugin: it then follows the children by itself
+            self._update_add_list()
 
     def setLimits(self, limits) -> None:
-        """The channels that can be added."""
-        self.opts['limits'] = list(limits)
-        self._update_add_list()
+        """The channels that can be added, sent to the GUI as the option ``available``: the group of the GUI
+        keeps its own add list up to date when it adds or removes a channel, the plugin cannot do it for it."""
+        self.setOpts(available=list(limits))
+
+    def setChannels(self, channels) -> None:
+        """Replace the channels of the group by these channels of the API, in this order."""
+        for child in list(self.children()):
+            self.removeChild(child)
+        for channel in channels:
+            self.addChild(channel_params(self.kind, channel))
 
     def addNew(self, typ=None) -> None:
         """Add the channel named ``typ`` (``Dev1/ai0``), unless it is already in the group."""
         if typ is None or typ in self._used():
             return
-        first_type = next(iter(CHANNEL_TYPES[self.kind].values()))
-        self.addChild(channel_params(self.kind, first_type(typ)))
+        self.addChild(channel_params(self.kind, self._default_channel(typ)))
+
+    def _default_channel(self, name: str):
+        """The channel to add, of the first type that its device can measure (a module may only measure a
+        temperature: the driver refuses another type), with the values of that type; a voltage input gets the widest
+        range of the device, as a module may not accept the usual +-10 V."""
+        types = CHANNEL_TYPES[self.kind]
+        device = name.split('/')[0]
+        measures, ranges = [], []
+        if self.kind is ChannelKind.AI:
+            try:
+                measures = NIDAQSystem().ai_measurement_types(device)
+                ranges = NIDAQSystem().ai_voltage_ranges(device)
+            except ValueError:  # not a device of the system
+                pass
+        channel_type = next((cls for label, cls in types.items() if _MEASURES.get(label) in measures),
+                            next(iter(types.values())))
+        if channel_type is AIVoltage and ranges:
+            low, high = max(ranges, key=lambda pair: pair[1] - pair[0])
+            return AIVoltage(name, min_val=low, max_val=high)
+        return channel_type(name)
+
+
+_MEASURES = {'voltage': 'voltage', 'current': 'current', 'thermocouple': 'temperature_thermocouple',
+             'rtd': 'temperature_rtd'}  # the type of channel -> what the device reports it can measure
 
 
 registerParameterType('ni_channels', ChannelGroup, override=True)

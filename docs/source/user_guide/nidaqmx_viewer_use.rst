@@ -18,8 +18,9 @@ How to use it
    initializes without any channel (there is nothing to configure yet) and a grab without a channel only writes
    *No channel to acquire* in the log.
 2. **Add the channels.** The *Add* button of ``Channels`` lists the channels of the computer that are not in the
-   group yet (``Dev1/ai0``, ``cDAQ1Mod1/ai0``...). Each one is added as a group named after it, with the type
-   ``voltage`` and its default parameters.
+   group yet (``Dev1/ai0``, ``cDAQ1Mod1/ai0``...). Each one is added as a group named after it, with the first type
+   its device can measure (``voltage``, then ``current``, ``thermocouple`` and ``rtd``) and its default parameters; a
+   voltage channel gets the widest voltage range of the device.
 3. **Choose the type of each channel** (``voltage``, ``current``, ``thermocouple``, ``rtd``). The group is rebuilt with
    only the parameters of the new type; the values that the two types share, such as the range, are kept.
    Remove a channel with the remove button of its group.
@@ -43,12 +44,38 @@ Settings
   API (``AIVoltage``, ``AICurrent``, ``AIThermocouple``, ``AIRtd``), with the same names; see :doc:`config_files`
   for the list.
 
-Loading a configuration
------------------------
+Loading and saving a configuration
+----------------------------------
 
 Entering the channels again at each start is tedious, and the state manager of the Dashboard cannot restore them,
 because they exist only once the plugin has started. The way to restore them is to **load a configuration file**
 (:doc:`config_files`), which describes the channels of a setup: it is a form of state manager built into the plugin
-and dedicated to DAQmx. This choice, a drop-down list of the configurations
-found in the folder of the files, is not available in the viewer yet: it comes in a following version, and until
-then the channels have to be added by hand.
+and dedicated to DAQmx.
+
+The three parameters below are in the ``NIDAQmx config`` group of the settings.
+
+* **Configuration**: a drop-down list with ``(manual)`` (the channels are the ones you add) and the configuration
+  files of the folder, ``default`` being ``config_daqmx.toml``. As it is a plain parameter, the choice is saved by
+  the state manager of the Dashboard, which sets the menu again, and so loads the same file. The list is read
+  when the plugin starts, and again after a save.
+* **Configuration** also loads the channels: choosing a file replaces the channels of the tree by the ones of the
+  file, in the order of the file (which is the order of the data). You can then add, remove or change channels as
+  usual, also from several devices: the file is only read, never changed, unless you save. One file is one
+  configuration: to work with another set of channels, save it under another suffix.
+* As soon as the channels of the tree are not the ones of the file any more (a channel added, removed or changed),
+  the menu goes back to ``(manual)``, so that it never shows a configuration that is not in the tree. To get the
+  file back, choose it again in the menu.
+* **Save as...**: a button with a LED. A click opens a small dialog asking the *Suffix* of the file
+  (``config_daqmx_<suffix>.toml``; ``default`` is the file without suffix), proposed with the configuration loaded.
+  The file then describes exactly the channels of the tree (those of an existing file that are not in the tree are
+  removed). The format of the file groups the channels by module, so each channel is written in the module its name
+  starts with (``Dev1`` for ``Dev1/ai1``, ``cDAQ1Mod3`` for ``cDAQ1Mod3/ai0``): channels of several devices can be
+  mixed. Only the suffix is given, never a path: the file always goes to the folder of the configuration files. After a save the menu shows the file that was just written, which is what the tree now is. The LED of the button
+  is grey until you save, green once the file is written, and orange if it failed.
+
+The loading is done as soon as the choice is made, whether it comes from you or from the state manager. The
+status LED of the viewer tells how it went: it shows an error, with the message, when the file cannot be read or
+written, and is back to normal when it worked. After a failure the menu goes back to the configuration that is really loaded, so that it never shows something
+that is not in the tree.
+
+A file that cannot be read gives an error that names the file and the entry that is wrong.

@@ -28,6 +28,17 @@ class TaskListener:
         """
 
 
+_CANNOT_SYNCHRONIZE = -201425
+
+
+def _not_synchronizable(config: TaskConfig, error: nidaqmx.DaqError) -> str:
+    """The message of the driver, told in terms of the channels: which devices were put in the same task."""
+    devices = sorted({channel.name.split('/')[0] for channel in config.channels})
+    return (f"The devices {', '.join(devices)} cannot be synchronized in a single task ({str(error).splitlines()[0]}). Use "
+            f"separate tasks for the devices that cannot share a clock (the delta-sigma modules, such as the "
+            f"NI 9211 or NI 9217, cannot be timed with other modules).")
+
+
 class _Task:
     """What every typed task shares: a ``nidaqmx.Task`` built from a config, released on error and on close."""
     needs_timing = False
@@ -48,6 +59,11 @@ class _Task:
                 config.timing.apply_to(self._task)
             if config.trigger is not None:
                 config.trigger.apply_to(self._task)
+        except nidaqmx.DaqError as error:
+            self._task.close()
+            if error.error_code == _CANNOT_SYNCHRONIZE:
+                raise nidaqmx.DaqError(_not_synchronizable(config, error), error.error_code) from error
+            raise
         except Exception:
             self._task.close()
             raise
