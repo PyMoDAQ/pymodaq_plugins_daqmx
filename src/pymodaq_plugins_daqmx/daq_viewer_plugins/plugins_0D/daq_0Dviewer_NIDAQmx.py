@@ -1,6 +1,8 @@
 from typing import List, Optional
 
+from pymodaq.control_modules.thread_commands import ThreadStatus
 from pymodaq.control_modules.viewer_utility_classes import main
+from pymodaq.utils.daq_utils import ThreadCommand
 from pyqtgraph.parametertree import Parameter
 
 from pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_AI import DAQ_Viewer_AIBase
@@ -43,30 +45,39 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         super().__init__(*args, **kwargs)
         self.settings.child('channels').setLimits(NIDAQSystem().all_channels(ChannelKind.AI))
         self.files = ConfigFiles()
-        self.configuration = None  # the configuration file chosen in the menu
         self.refresh_menu()
 
     def refresh_menu(self) -> None:
         self.settings.child('configuration').setLimits([MANUAL] + [_label(s) for s in self.files.suffixes()])
 
-    def load_configuration(self) -> None:
-        """The modules of the chosen file are offered; the channels follow the module."""
-        label = self.settings['configuration']
-        module = self.settings.child('module')
-        if label == MANUAL:
-            self.configuration = None
-            module.setOpts(visible=False)
-            return
-        self.configuration = self.files.load(_suffix(label))
-        modules = list(self.configuration.modules)
-        module.setOpts(limits=modules, visible=True)
-        module.setValue(modules[0] if modules else '')
-        self.load_module()
+    def ini_detector(self, controller=None):
+        info = super().ini_detector(controller)
+        if self.settings['configuration'] != MANUAL:  # restored by the state manager, which does not call commit_settings
+            self.load_configuration()
+        return info
 
-    def load_module(self) -> None:
-        module = self.settings['module']
-        if self.configuration is not None and module:
-            self.settings.child('channels').setChannels(self.configuration.channels(module))
+    def load_configuration(self) -> None:
+        """Read the chosen file, offer its modules and replace the channels by the ones of the chosen module.
+
+        The control module is told if it worked (its LED is normal) or not (its LED shows the error).
+        """
+        label = self.settings['configuration']
+        if label == MANUAL:
+            return
+        try:
+            self._load(label)
+        except (ValueError, OSError) as error:  # ConfigFileError is a ValueError
+            self.fail(error)
+
+    def _load(self, label: str) -> None:
+        configuration = self.files.load(_suffix(label))
+        modules = list(configuration.modules)
+        module = self.settings.child('module')
+        module.setOpts(limits=modules, visible=True)
+        if self.settings['module'] not in modules:
+            module.setValue(modules[0] if modules else '')
+        self.settings.child('channels').setChannels(configuration.channels(self.settings['module']))
+        self.notify(f'Configuration {label}, module {self.settings["module"]} loaded')
 
     def save_configuration(self) -> None:
         """Write the channels of the tree as the module of the suffix, keeping the rest of that file if it exists."""
@@ -77,18 +88,28 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         existing = self.files.load(suffix) if self.files.path(suffix).exists() else Configuration()
         self.files.save(suffix, existing.with_channels(module, self.channels()))
         self.refresh_menu()
+        self.notify(f'Channels saved as the module {module} of the configuration {_label(suffix)}')
+
+    def notify(self, message: str) -> None:
+        """Tell the control module that the action succeeded: its LED is back to normal."""
+        self.emit_status(ThreadCommand('Update_Status', [message, 'log']))
+
+    def fail(self, error: Exception) -> None:
+        """Tell the control module that the action failed: its LED shows the error and its message."""
+        self.emit_status(ThreadCommand(ThreadStatus.ERROR, str(error)))
 
     def channels(self) -> list:
         return channels_of(self.settings.child('channels'))
 
     def commit_settings(self, param: Parameter) -> None:
-        if param.name() == 'configuration':
+        if param.name() in ('configuration', 'module') and param.parent() is self.settings:
             self.load_configuration()
-        elif param.name() == 'module' and param.parent() is self.settings:
-            self.load_module()
-        elif param.name() == 'save' and param.opts['type'] == 'bool_push' and param.value():
+        elif param.opts['type'] == 'bool_push' and param.value():
             param.setValue(False)
-            self.save_configuration()
+            try:
+                self.save_configuration()
+            except (ValueError, OSError) as error:
+                self.fail(error)
         if param.name() == 'type' and param.parent() is not None:
             set_type(ChannelKind.AI, param.parent(), param.value())
         super().commit_settings(param)

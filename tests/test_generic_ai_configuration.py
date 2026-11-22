@@ -33,6 +33,23 @@ def choose(plugin, name, value):
     plugin.commit_settings(param)
 
 
+def capture(plugin):
+    """What the plugin tells the control module (apart from the sync of the tree) is collected in the list."""
+    sent = []
+    plugin.emit_status = lambda status: status.command != 'update_settings' and sent.append(status)
+    return sent
+
+
+def press(plugin, *path):
+    """Press an action button of the settings; what the plugin tells the control module is returned."""
+    sent = capture(plugin)
+    button = plugin.settings.child(*path)
+    button.setValue(True)
+    plugin.commit_settings(button)
+    assert button.value() is False  # the button is released
+    return sent
+
+
 def test_the_menu_offers_a_manual_choice_and_the_files_of_the_folder(qapp, driver, system_driver, folder):
     plugin = make_detector(DAQ_0DViewer_NIDAQmx)
     menu = plugin.settings.child('configuration')
@@ -41,15 +58,19 @@ def test_the_menu_offers_a_manual_choice_and_the_files_of_the_folder(qapp, drive
     plugin.close()
 
 
-def test_choosing_a_configuration_and_a_module_fills_the_channels_in_the_order_of_the_file(
+def test_choosing_a_configuration_fills_the_channels_in_the_order_of_the_file_and_tells_the_control_module(
         qapp, driver, system_driver, folder):
     plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    sent = capture(plugin)
     choose(plugin, 'configuration', 'lab')
+    assert [status.command for status in sent] == ['Update_Status']
+    assert 'lab' in sent[0].attribute[0]
     assert plugin.settings.child('module').opts['limits'] == ['cDAQ1Mod1', 'cDAQ1Mod2', 'cDAQ1Mod3', 'cDAQ1Mod4']
     choose(plugin, 'module', 'cDAQ1Mod3')
     group = plugin.settings.child('channels')
     assert [child.opts['title'] for child in group.children()] == ['cDAQ1Mod3/ai0', 'cDAQ1Mod3/ai5']
-    choose(plugin, 'module', 'cDAQ1Mod1')  # the channels of the previous module are replaced
+    choose(plugin, 'module', 'cDAQ1Mod1')
+  # the channels of the previous module are replaced
     assert [child.opts['title'] for child in group.children()] == ['cDAQ1Mod1/ai2', 'cDAQ1Mod1/ai1']
     plugin.close()
 
@@ -61,9 +82,8 @@ def test_saving_under_a_suffix_writes_the_channels_of_the_tree(qapp, driver, sys
     group.addNew('Dev2/ai1')
     plugin.settings.child('save', 'module').setValue('Dev2')
     plugin.settings.child('save', 'suffix').setValue('mine')
-    choose_param = plugin.settings.child('save', 'save')
-    choose_param.setValue(True)
-    plugin.commit_settings(choose_param)
+    sent = press(plugin, 'save', 'save')
+    assert [status.command for status in sent] == ['Update_Status']
     saved = ConfigFiles(folder).load('mine')
     assert [channel.name for channel in saved.channels('Dev2')] == ['Dev2/ai3', 'Dev2/ai1']
     assert plugin.settings.child('configuration').opts['limits'] == ['(manual)', 'default', 'lab', 'mine']
@@ -75,19 +95,26 @@ def test_saving_into_an_existing_suffix_keeps_the_other_modules_of_the_file(qapp
     plugin.settings.child('channels').addNew('Dev2/ai3')
     plugin.settings.child('save', 'module').setValue('Dev2')
     plugin.settings.child('save', 'suffix').setValue('lab')
-    param = plugin.settings.child('save', 'save')
-    param.setValue(True)
-    plugin.commit_settings(param)
+    press(plugin, 'save', 'save')
     saved = ConfigFiles(folder).load('lab')
     assert [channel.name for channel in saved.channels('Dev2')] == ['Dev2/ai3']
     assert [channel.name for channel in saved.channels('cDAQ1Mod3')] == ['cDAQ1Mod3/ai0', 'cDAQ1Mod3/ai5']
-    assert param.value() is False  # the button is released
     plugin.close()
 
 
-def test_a_file_that_cannot_be_read_is_an_error_naming_it(qapp, driver, system_driver, folder):
+def test_a_file_that_cannot_be_read_puts_the_control_module_in_error_with_the_file_named(
+        qapp, driver, system_driver, folder):
     (folder / 'config_daqmx_broken.toml').write_text('version = 1\n[modules.M.ai.x]\ntype = "nothing"\n')
     plugin = make_detector(DAQ_0DViewer_NIDAQmx)
-    with pytest.raises(config_files.ConfigFileError, match='config_daqmx_broken.toml'):
-        choose(plugin, 'configuration', 'broken')
+    sent = capture(plugin)
+    choose(plugin, 'configuration', 'broken')
+    assert [status.command for status in sent] == ['error']
+    assert 'config_daqmx_broken.toml' in sent[0].attribute
+    plugin.close()
+
+
+def test_a_configuration_restored_before_the_initialization_is_loaded_by_it(qapp, driver, system_driver, folder):
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx, configuration='lab', module='cDAQ1Mod3')
+    assert [child.opts['title'] for child in plugin.settings.child('channels').children()] == [
+        'cDAQ1Mod3/ai0', 'cDAQ1Mod3/ai5']
     plugin.close()
