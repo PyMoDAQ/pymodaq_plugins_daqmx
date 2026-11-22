@@ -109,3 +109,43 @@ def test_the_1d_viewer_gives_a_trace_per_module_at_the_frequency_of_the_module(q
     assert [data.dim for data in dte] == ['Data1D', 'Data1D']
     assert [data.axes[0].get_data()[1] for data in dte] == pytest.approx([1 / 1000, 1 / 500])
     plugin.close()
+
+
+def test_a_digital_edge_trigger_starts_every_task(qapp, driver, system_driver):
+    from nidaqmx.constants import Edge
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    group = plugin.settings.child('channels')
+    group.addNew('Dev1/ai0')
+    group.addNew('Dev2/ai3')
+    trigger = plugin.settings.child('trigger')
+    trigger.child('type').setValue('digital edge')
+    plugin.commit_settings(trigger.child('type'))
+    assert trigger.child('terminal').opts['visible'] and not trigger.child('level').opts['visible']
+    trigger.child('terminal').setValue('/Dev1/PFI1')
+    trigger.child('edge').setValue('falling')
+    grab_and_wait(plugin)
+    assert [task.trigger_calls for task in driver] == [[('dig_edge', '/Dev1/PFI1', Edge.FALLING)]] * 2
+    plugin.close()
+
+
+def test_an_analog_edge_trigger_waits_for_the_level_of_a_channel(qapp, driver, system_driver):
+    from nidaqmx.constants import Slope
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    plugin.settings.child('channels').addNew('Dev1/ai0')
+    trigger = plugin.settings.child('trigger')
+    trigger.child('type').setValue('analog edge')
+    plugin.commit_settings(trigger.child('type'))
+    assert trigger.child('channel').opts['visible'] and not trigger.child('terminal').opts['visible']
+    trigger.child('channel').setValue('Dev1/ai1')
+    trigger.child('level').setValue(1.5)
+    grab_and_wait(plugin)
+    assert driver[0].trigger_calls == [('anlg_edge', 'Dev1/ai1', Slope.RISING, 1.5)]
+    plugin.close()
+
+
+def test_without_trigger_the_tasks_start_at_once(qapp, driver, system_driver):
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    plugin.settings.child('channels').addNew('Dev1/ai0')
+    grab_and_wait(plugin)
+    assert driver[0].trigger_calls == []
+    plugin.close()

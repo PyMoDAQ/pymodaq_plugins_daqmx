@@ -6,7 +6,10 @@ from pymodaq.utils.daq_utils import ThreadCommand
 from pyqtgraph.parametertree import Parameter
 
 from pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_AI import Acquisition, DAQ_Viewer_AIBase
-from pymodaq_plugins_daqmx.hardware.national_instruments.api import ChannelKind, NIDAQSystem
+from nidaqmx.constants import Edge, Slope
+
+from pymodaq_plugins_daqmx.hardware.national_instruments.api import (
+    AnalogEdgeTrigger, ChannelKind, DigitalEdgeTrigger, NIDAQSystem)
 from pymodaq_plugins_daqmx.hardware.national_instruments.channel_group import channels_of
 from pymodaq_plugins_daqmx.hardware.national_instruments.channel_tree import set_type
 from pymodaq_plugins_daqmx.hardware.national_instruments.config_files import Configuration, ConfigFiles
@@ -14,6 +17,7 @@ from pymodaq_plugins_daqmx.hardware.national_instruments.save_button import save
 from pymodaq_gui.utils.status_palette import Status
 
 MANUAL = '(manual)'    # no configuration file: the channels are the ones of the tree
+TRIGGER_TYPES = ['none', 'digital edge', 'analog edge']
 DEFAULT = 'default'    # the name of the configuration of the file without suffix
 
 
@@ -36,6 +40,14 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
              'value': MANUAL},
             save_param(),
         ]},
+        {'title': 'Start trigger:', 'name': 'trigger', 'type': 'group', 'children': [
+            {'title': 'Type:', 'name': 'type', 'type': 'list', 'limits': TRIGGER_TYPES, 'value': 'none'},
+            {'title': 'Terminal:', 'name': 'terminal', 'type': 'list', 'limits': [], 'visible': False},
+            {'title': 'Channel:', 'name': 'channel', 'type': 'list', 'limits': [], 'visible': False},
+            {'title': 'Edge:', 'name': 'edge', 'type': 'list', 'limits': ['rising', 'falling'], 'value': 'rising',
+             'visible': False},
+            {'title': 'Level (V):', 'name': 'level', 'type': 'float', 'value': 0., 'visible': False},
+        ]},
         {'title': 'Module frequencies:', 'name': 'frequencies', 'type': 'group', 'children': []},
         {'title': 'Channels:', 'name': 'channels', 'type': 'ni_channels', 'kind': ChannelKind.AI.value,
          'limits': [], 'children': []},
@@ -44,7 +56,11 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.settings.child('channels').setLimits(NIDAQSystem().all_channels(ChannelKind.AI))
+        system = NIDAQSystem()
+        self.settings.child('channels').setLimits(system.all_channels(ChannelKind.AI))
+        self.settings.child('trigger', 'terminal').setLimits(
+            [terminal for device in system.devices() for terminal in system.terminals(device)])
+        self.settings.child('trigger', 'channel').setLimits(system.all_channels(ChannelKind.AI))
         self.files = ConfigFiles()
         self.loaded = MANUAL  # the configuration whose channels are in the tree
         self.in_file = []  # the channels of that configuration, to tell if the tree still is the file
@@ -133,6 +149,25 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
                 group.addChild({'title': f'{module}:', 'name': module, 'type': 'int', 'min': 1,
                                 'value': self.settings['frequency']})
 
+    def trigger(self):
+        """The start trigger chosen in the settings, or None."""
+        settings = self.settings.child('trigger')
+        kind = settings['type']
+        if kind == 'digital edge':
+            return DigitalEdgeTrigger(settings['terminal'], Edge[settings['edge'].upper()])
+        if kind == 'analog edge':
+            return AnalogEdgeTrigger(settings['channel'], settings['level'], Slope[settings['edge'].upper()])
+        return None
+
+    def show_trigger(self) -> None:
+        """Only the parameters of the chosen type of trigger are visible."""
+        settings = self.settings.child('trigger')
+        kind = settings['type']
+        settings.child('terminal').setOpts(visible=kind == 'digital edge')
+        settings.child('channel').setOpts(visible=kind == 'analog edge')
+        settings.child('level').setOpts(visible=kind == 'analog edge')
+        settings.child('edge').setOpts(visible=kind != 'none')
+
     def acquisitions(self) -> List[Acquisition]:
         """One task for each module: the channels of a module are acquired together, at its own frequency."""
         self.sync_frequencies()  # the channels may have been added without the GUI telling the plugin
@@ -186,8 +221,11 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
             except (ValueError, OSError) as error:
                 param.setValue(Status.ERROR)
                 self.fail(error)
-        if param.name() == 'type' and param.parent() is not None:
+        if param.name() == 'type' and param.parent() is not None and param.parent().parent() is self.settings.child(
+                'channels'):  # the type of a channel: its group is rebuilt
             set_type(ChannelKind.AI, param.parent(), param.value())
+        if param.name() == 'type' and param.parent() is self.settings.child('trigger'):
+            self.show_trigger()
         self.leave_configuration_if_modified()
         self.sync_frequencies()
         super().commit_settings(param)
