@@ -41,3 +41,13 @@ def test_changing_the_type_of_a_channel_changes_the_channel_acquired(qapp, drive
     grab_and_wait(plugin)
     assert driver[-1].channels[0][0] == 'ai_thermocouple'
     plugin.close()
+
+
+def test_the_1d_generic_viewer_gives_the_trace_of_its_channels(qapp, driver, system_driver):
+    from pymodaq_plugins_daqmx.daq_viewer_plugins.plugins_1D.daq_1Dviewer_NIDAQmx import DAQ_1DViewer_NIDAQmx
+    plugin = make_detector(DAQ_1DViewer_NIDAQmx, Nsamples=10)
+    plugin.settings.child('channels').addNew('Dev2/ai3')
+    dte = grab_and_wait(plugin)
+    assert dte[0].dim == 'Data1D' and dte[0].data[0].shape == (10,)
+    assert dte[0].labels == ['Dev2/ai3']
+    plugin.close()
