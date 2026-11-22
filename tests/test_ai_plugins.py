@@ -212,3 +212,16 @@ class TestSlave:
         assert not driver[0].closed
         master.close()
         assert driver[0].closed
+
+
+class TestListedAs1D:
+    def test_the_1d_viewers_start_with_the_trace_display(self, qapp, driver):
+        from pymodaq_plugins_daqmx.daq_viewer_plugins.plugins_1D.daq_1Dviewer_DAQmxAI import DAQ_1DViewer_DAQmxAI
+        from pymodaq_plugins_daqmx.daq_viewer_plugins.plugins_1D.daq_1Dviewer_DAQmxDualAI import (
+            DAQ_1DViewer_DAQmxDualAI)
+        for cls, channels in ((DAQ_1DViewer_DAQmxAI, {'ai_channel': 'Dev1/ai0'}),
+                              (DAQ_1DViewer_DAQmxDualAI, {'ai_channel0': 'Dev1/ai0', 'ai_channel1': 'Dev1/ai1'})):
+            plugin = make_detector(cls, Nsamples=10, **channels)
+            dte = grab_and_wait(plugin)
+            assert dte[0].dim == 'Data1D' and dte[0].data[0].shape == (10,)
+            plugin.close()
