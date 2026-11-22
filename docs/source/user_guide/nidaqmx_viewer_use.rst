@@ -57,14 +57,17 @@ The three parameters below are in the ``NIDAQmx config`` group of the settings.
   files of the folder, ``default`` being ``config_daqmx.toml``. As it is a plain parameter, the choice is saved by
   the state manager of the Dashboard, which sets the menu again, and so loads the same file. The list is read
   when the plugin starts, and again after a save.
-* **Module**: the modules of the chosen file. Choosing a configuration, then a module, replaces the channels of the
-  tree by the ones of the module, in the order of the file (which is the order of the data). You can then add,
-  remove or change channels as usual: the file is only read, never changed, unless you save.
+* **Module**: ``(all)``, the default, or one of the modules of the chosen file. Choosing a configuration loads the
+  channels of all its modules, in the order of the file (which is the order of the data); choosing a module loads only
+  its channels. You can then add, remove or change channels as usual, also from several devices: the file is only
+  read, never changed, unless you save.
 * **Save as...**: a button with a LED. A click opens a small dialog asking the *Suffix* of the file
-  (``config_daqmx_<suffix>.toml``; ``default`` is the file without suffix) and the *Module*, proposed with the ones of
-  the configuration loaded or, without configuration, with the device of the first channel (``Dev1`` for ``Dev1/ai1``); the channels of the tree are then written as that module. The other modules of an existing
-  file are kept. Only the suffix is given, never a path: the file always goes to the folder of the configuration
-  files. The LED of the button is grey until you save, green once the file is written, and orange if it failed.
+  (``config_daqmx_<suffix>.toml``; ``default`` is the file without suffix), proposed with the configuration loaded.
+  The channels of the tree are written in that file, each one in the module its name starts with (``Dev1`` for
+  ``Dev1/ai1``, ``cDAQ1Mod3`` for ``cDAQ1Mod3/ai0``), so that channels of several devices can be mixed. In an existing
+  file the modules of the tree are replaced and the other ones are kept. Only the suffix is given, never a path: the
+  file always goes to the folder of the configuration files. The LED of the button is grey until you save, green once
+  the file is written, and orange if it failed.
 
 The loading is done as soon as the choice is made, whether it comes from you or from the state manager. The
 status LED of the viewer tells how it went: it shows an error, with the message, when the file cannot be read or

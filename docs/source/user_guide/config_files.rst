@@ -36,7 +36,9 @@ Format
    informative.
 
 ``[modules.<name>]``
-   One table for each module, named as in NI MAX (``cDAQ1Mod3``, or ``Dev1`` for a board). ``product`` is the product
+   One table for each module, named as in NI MAX (``cDAQ1Mod3``, or ``Dev1`` for a board). The name of a channel is
+   its module and its key: ``[modules.cDAQ1Mod3.ai.ai0]`` is the channel ``cDAQ1Mod3/ai0``, so the module of a channel
+   is the device its name starts with. ``product`` is the product
    type of the module, informative.
 
 ``[modules.<name>.ai.<key>]``

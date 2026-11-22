@@ -1,4 +1,4 @@
-"""The save button of the NI viewers: a click asks for the suffix and the module, then triggers the save."""
+"""The save button of the NI viewers: a click asks for the suffix, then triggers the save."""
 import pytest
 
 pytest.importorskip('nidaqmx')
@@ -12,7 +12,7 @@ from pymodaq_plugins_daqmx.hardware.national_instruments import save_button
 
 
 def make_tree(qtbot):
-    group = Parameter.create(name='config', type='group', children=[save_button.save_param(suffix='lab', module='Mod1')])
+    group = Parameter.create(name='config', type='group', children=[save_button.save_param(suffix='lab')])
     tree = ParameterTree()
     tree.setParameters(group, showTop=False)
     qtbot.addWidget(tree)
@@ -32,27 +32,27 @@ def _items(tree):
         stack.extend(item.child(i) for i in range(item.childCount()))
 
 
-def test_a_click_asks_for_the_suffix_and_the_module_then_activates(qtbot, monkeypatch):
+def test_a_click_asks_for_the_suffix_then_activates(qtbot, monkeypatch):
     group, tree = make_tree(qtbot)
     asked = []
 
-    def ask(suffix, module):
-        asked.append((suffix, module))
-        return 'mine', 'Mod2'
+    def ask(suffix):
+        asked.append(suffix)
+        return 'mine'
 
-    monkeypatch.setattr(save_button, 'ask_target', ask)
+    monkeypatch.setattr(save_button, 'ask_suffix', ask)
     activated = []
     group.child('save').sigActivated.connect(activated.append)
     click(tree, group)
-    assert asked == [('lab', 'Mod1')]  # pre-filled with the options of the button
-    assert (group.child('save').opts['suffix'], group.child('save').opts['module']) == ('mine', 'Mod2')
+    assert asked == ['lab']  # pre-filled with the option of the button
+    assert group.child('save').opts['suffix'] == 'mine'
     assert len(activated) == 1
 
 
 def test_cancelling_the_dialog_does_nothing(qtbot, monkeypatch):
     group, tree = make_tree(qtbot)
-    monkeypatch.setattr(save_button, 'ask_target', lambda suffix, module: None)
+    monkeypatch.setattr(save_button, 'ask_suffix', lambda suffix: None)
     activated = []
     group.child('save').sigActivated.connect(activated.append)
     click(tree, group)
-    assert activated == [] and (group.child('save').opts['suffix'], group.child('save').opts['module']) == ('lab', 'Mod1')
+    assert activated == [] and group.child('save').opts['suffix'] == 'lab'

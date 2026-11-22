@@ -15,6 +15,7 @@ from pymodaq_gui.utils.status_palette import Status
 
 MANUAL = '(manual)'    # no configuration file: the channels are the ones of the tree
 DEFAULT = 'default'    # the name of the configuration of the file without suffix
+ALL = '(all)'          # all the modules of the file
 
 
 def _label(suffix: str) -> str:
@@ -47,7 +48,6 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         self.settings.child('channels').setLimits(NIDAQSystem().all_channels(ChannelKind.AI))
         self.files = ConfigFiles()
         self.loaded = (MANUAL, '')  # the configuration and the module whose channels are in the tree
-        self.suggested = ''  # the module that the save dialog proposed on its own, to tell it from one typed by the user
         self.refresh_menu()
 
     def refresh_menu(self) -> None:
@@ -81,26 +81,37 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         configuration = self.files.load(_suffix(label))
         modules = list(configuration.modules)
         module = self.settings.child('config', 'module')
-        module.setOpts(limits=modules, visible=True)
+        module.setOpts(limits=[ALL] + modules, visible=True)
         if self.settings['config', 'module'] not in modules:
-            module.setValue(modules[0] if modules else '')
-        self.settings.child('channels').setChannels(configuration.channels(self.settings['config', 'module']))
-        self.loaded = (label, self.settings['config', 'module'])
-        # what the dialog of the save button proposes
-        self.settings.child('config', 'save').setOpts(suffix=label, module=self.settings['config', 'module'])
-        self.notify(f'Configuration {label}, module {self.settings["config", "module"]} loaded')
+            module.setValue(ALL)
+        chosen = self.settings['config', 'module']
+        channels = [channel for name in modules for channel in configuration.channels(name)] if chosen == ALL \
+            else configuration.channels(chosen)
+        self.settings.child('channels').setChannels(channels)
+        self.loaded = (label, chosen)
+        self.settings.child('config', 'save').setOpts(suffix=label)  # what the dialog of the save button proposes
+        self.notify(f'Configuration {label}, module {chosen} loaded')
 
     def save_configuration(self, button: Parameter) -> None:
-        """Write the channels of the tree as the module of the suffix given by the dialog of the button, keeping the
-        rest of that file if it exists."""
+        """Write the channels of the tree in the file of the suffix given by the dialog of the button.
+
+        Each channel goes in the module that its name starts with (``Dev1`` for ``Dev1/ai1``), as the files name a
+        channel after its module: the devices can be mixed. In an existing file the modules of the tree are replaced
+        and the other ones are kept.
+        """
         suffix = _suffix(button.opts['suffix'])
-        module = button.opts['module']
-        if not module:
-            raise ValueError('Give the name of the module that the channels belong to')
-        existing = self.files.load(suffix) if self.files.path(suffix).exists() else Configuration()
-        self.files.save(suffix, existing.with_channels(module, self.channels()))
+        channels = self.channels()
+        if not channels:
+            raise ValueError('There is no channel to save')
+        by_module = {}
+        for channel in channels:
+            by_module.setdefault(channel.name.split('/')[0], []).append(channel)
+        configuration = self.files.load(suffix) if self.files.path(suffix).exists() else Configuration()
+        for module, module_channels in by_module.items():
+            configuration = configuration.with_channels(module, module_channels)
+        self.files.save(suffix, configuration)
         self.refresh_menu()
-        self.notify(f'Channels saved as the module {module} of the configuration {_label(suffix)}')
+        self.notify(f'Channels saved in the configuration {_label(suffix)}')
 
     def notify(self, message: str) -> None:
         """Tell the control module that the action succeeded: its LED is back to normal."""
@@ -113,29 +124,18 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
     def channels(self) -> list:
         return channels_of(self.settings.child('channels'))
 
-    def suggest_module(self) -> None:
-        """Without a configuration, propose the device of the first channel (``Dev1`` for ``Dev1/ai1``) as the module to
-        save, unless the user typed another."""
-        button = self.settings.child('config', 'save')
-        children = self.settings.child('channels').children()
-        if self.loaded[0] != MANUAL or not children or button.opts['module'] not in ('', self.suggested):
-            return
-        self.suggested = children[0].opts['title'].split('/')[0]
-        button.setOpts(module=self.suggested)
-
     def commit_settings(self, param: Parameter) -> None:
         if param.name() in ('configuration', 'module') and param.parent() is self.settings.child('config'):
             self.load_configuration()
         elif param.opts['type'] == 'ni_save':  # the button has been clicked, after the dialog of the GUI
             led = self.settings.child('config', 'save')
-            led.opts.update(suffix=param.opts['suffix'], module=param.opts['module'])  # what the dialog returned
+            led.opts.update(suffix=param.opts['suffix'])  # what the dialog returned
             try:
                 self.save_configuration(param)
                 led.setValue(Status.IDLE)
             except (ValueError, OSError) as error:
                 led.setValue(Status.ERROR)
                 self.fail(error)
-        self.suggest_module()
         if param.name() == 'type' and param.parent() is not None:
             set_type(ChannelKind.AI, param.parent(), param.value())
         super().commit_settings(param)
