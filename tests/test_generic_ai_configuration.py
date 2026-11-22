@@ -286,3 +286,51 @@ def test_a_value_that_is_not_a_configuration_is_ignored(qapp, driver, system_dri
     assert sent == []
     assert len(plugin.settings.child('channels').children()) == 4
     plugin.close()
+
+
+def replay(statuses, gui):
+    """What the control module does with the sync of the tree sent by the plugin (see its ``thread_status``)."""
+    for status in statuses:
+        if status.command != 'update_settings':
+            continue
+        path, data, change = status.attribute
+        if change == 'childAdded':
+            gui.child(*path).addChild(data[0])
+        elif change == 'childRemoved':
+            parent = gui.child(*path)
+            parent.removeChild(parent.child(data))
+        elif change == 'value':
+            gui.child(*path).setValue(data)
+        elif change == 'limits':
+            gui.child(*path).setLimits(data)
+        elif change == 'options':
+            gui.child(*path).setOpts(**data)
+
+
+def test_switching_between_configurations_that_share_channels_is_replayed_by_the_gui(
+        qapp, driver, system_driver, folder):
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    gui = gui_copy(plugin)
+    sent = []
+    plugin.emit_status = sent.append
+    choose(plugin, 'configuration', 'lab')
+    choose(plugin, 'configuration', 'default')
+    choose(plugin, 'configuration', 'lab')
+    replay(sent, gui)
+    assert [c.name() for c in gui.child('channels').children()] == \
+           [c.name() for c in plugin.settings.child('channels').children()]
+    plugin.close()
+
+
+def test_switching_configurations_chosen_in_the_gui_is_replayed_by_the_gui(qapp, driver, system_driver, folder):
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    gui = gui_copy(plugin)
+    sent = []
+    plugin.emit_status = sent.append
+    for label in ['lab', 'default', 'lab', 'default']:
+        from_gui(plugin, gui, 'config', 'configuration', value=label)
+        replay(sent, gui)
+        sent.clear()
+        assert [c.name() for c in gui.child('channels').children()] == \
+               [c.name() for c in plugin.settings.child('channels').children()]
+    plugin.close()
