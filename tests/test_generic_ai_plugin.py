@@ -63,3 +63,49 @@ def test_without_channel_the_plugin_initializes_without_task_and_acquires_once_a
     dte = grab_and_wait(plugin)
     assert dte[0].labels == ['Dev2/ai3']
     plugin.close()
+
+
+def test_each_module_is_acquired_by_its_own_task_and_gives_its_own_data(qapp, driver, system_driver):
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    group = plugin.settings.child('channels')
+    group.addNew('Dev1/ai0')
+    group.addNew('Dev2/ai3')
+    group.addNew('Dev1/ai1')
+    dte = grab_and_wait(plugin)
+    assert [task.channels[0][1] for task in driver] == ['Dev1/ai0', 'Dev2/ai3']  # one task per module
+    assert [name for _, name, _ in driver[0].channels] == ['Dev1/ai0', 'Dev1/ai1']
+    assert [data.labels for data in dte] == [['Dev1/ai0', 'Dev1/ai1'], ['Dev2/ai3']]
+    assert [data.name for data in dte] == ['NI AI Dev1', 'NI AI Dev2']
+    plugin.close()
+
+
+def test_each_module_has_its_own_frequency_that_starts_at_the_global_one(qapp, driver, system_driver):
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    group = plugin.settings.child('channels')
+    group.addNew('Dev1/ai0')
+    group.addNew('Dev2/ai3')
+    plugin.commit_settings(group)
+    frequencies = plugin.settings.child('frequencies')
+    assert [(c.name(), c.value()) for c in frequencies.children()] == [('Dev1', 1000), ('Dev2', 1000)]
+    frequencies.child('Dev2').setValue(500)
+    plugin.commit_settings(frequencies.child('Dev2'))
+    grab_and_wait(plugin)
+    assert [task.timing_calls[0][1] for task in driver] == [1000, 500]
+    group.removeChild(group.child('Dev1_ai0'))
+    plugin.commit_settings(group)
+    assert [c.name() for c in frequencies.children()] == ['Dev2']
+    plugin.close()
+
+
+def test_the_1d_viewer_gives_a_trace_per_module_at_the_frequency_of_the_module(qapp, driver, system_driver):
+    from pymodaq_plugins_daqmx.daq_viewer_plugins.plugins_1D.daq_1Dviewer_NIDAQmx import DAQ_1DViewer_NIDAQmx
+    plugin = make_detector(DAQ_1DViewer_NIDAQmx, Nsamples=10)
+    group = plugin.settings.child('channels')
+    group.addNew('Dev1/ai0')
+    group.addNew('Dev2/ai3')
+    plugin.commit_settings(group)
+    plugin.settings.child('frequencies', 'Dev2').setValue(500)
+    dte = grab_and_wait(plugin)
+    assert [data.dim for data in dte] == ['Data1D', 'Data1D']
+    assert [data.axes[0].get_data()[1] for data in dte] == pytest.approx([1 / 1000, 1 / 500])
+    plugin.close()

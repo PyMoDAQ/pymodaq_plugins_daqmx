@@ -5,7 +5,7 @@ from pymodaq.control_modules.viewer_utility_classes import main
 from pymodaq.utils.daq_utils import ThreadCommand
 from pyqtgraph.parametertree import Parameter
 
-from pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_AI import DAQ_Viewer_AIBase
+from pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_AI import Acquisition, DAQ_Viewer_AIBase
 from pymodaq_plugins_daqmx.hardware.national_instruments.api import ChannelKind, NIDAQSystem
 from pymodaq_plugins_daqmx.hardware.national_instruments.channel_group import channels_of
 from pymodaq_plugins_daqmx.hardware.national_instruments.channel_tree import set_type
@@ -36,6 +36,7 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
              'value': MANUAL},
             save_param(),
         ]},
+        {'title': 'Module frequencies:', 'name': 'frequencies', 'type': 'group', 'children': []},
         {'title': 'Channels:', 'name': 'channels', 'type': 'ni_channels', 'kind': ChannelKind.AI.value,
          'limits': [], 'children': []},
     ]
@@ -115,6 +116,32 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
     def channels(self) -> list:
         return channels_of(self.settings.child('channels'))
 
+    def modules(self) -> List[str]:
+        """The modules of the channels of the tree (the device a channel name starts with), in order of appearance."""
+        names = [child.opts['title'].split('/')[0] for child in self.settings.child('channels').children()]
+        return list(dict.fromkeys(names))
+
+    def sync_frequencies(self) -> None:
+        """One frequency for each module of the channels: a new module starts at the global frequency."""
+        group = self.settings.child('frequencies')
+        modules = self.modules()
+        for child in group.children():
+            if child.name() not in modules:
+                group.removeChild(child)
+        for module in modules:
+            if module not in group.names:
+                group.addChild({'title': f'{module}:', 'name': module, 'type': 'int', 'min': 1,
+                                'value': self.settings['frequency']})
+
+    def acquisitions(self) -> List[Acquisition]:
+        """One task for each module: the channels of a module are acquired together, at its own frequency."""
+        self.sync_frequencies()  # the channels may have been added without the GUI telling the plugin
+        by_module = {}
+        for channel in self.channels():
+            by_module.setdefault(channel.name.split('/')[0], []).append(channel)
+        return [Acquisition(module, channels, self.settings['frequencies', module])
+                for module, channels in by_module.items()]
+
     def leave_configuration_if_modified(self) -> None:
         """The menu goes back to ``(manual)`` as soon as the channels of the tree are not the ones of the file any more
         (a value that cannot be a channel is a modification too), so that it never shows a configuration that is not
@@ -162,6 +189,7 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         if param.name() == 'type' and param.parent() is not None:
             set_type(ChannelKind.AI, param.parent(), param.value())
         self.leave_configuration_if_modified()
+        self.sync_frequencies()
         super().commit_settings(param)
 
 
