@@ -23,8 +23,9 @@ class ChannelGroup(GroupParameter):
         opts['type'] = 'ni_channels'
         opts.setdefault('kind', ChannelKind.AI.value)
         opts.setdefault('limits', [])
+        opts['available'] = list(opts['limits'])
         opts['addText'] = 'Add'
-        opts['addList'] = list(opts['limits'])
+        opts['addList'] = list(opts['available'])
         super().__init__(**opts)
         self.sigChildAdded.connect(self._update_add_list)
         self.sigChildRemoved.connect(self._update_add_list)
@@ -38,12 +39,17 @@ class ChannelGroup(GroupParameter):
 
     def _update_add_list(self, *args) -> None:
         used = self._used()
-        self.setOpts(addList=[name for name in self.opts['limits'] if name not in used])
+        self.setOpts(addList=[name for name in self.opts['available'] if name not in used])
+
+    def setOpts(self, **opts) -> None:
+        super().setOpts(**opts)
+        if 'available' in opts:  # also what the GUI receives from the plugin: it then follows the children by itself
+            self._update_add_list()
 
     def setLimits(self, limits) -> None:
-        """The channels that can be added."""
-        self.opts['limits'] = list(limits)
-        self._update_add_list()
+        """The channels that can be added, sent to the GUI as the option ``available``: the group of the GUI
+        keeps its own add list up to date when it adds or removes a channel, the plugin cannot do it for it."""
+        self.setOpts(available=list(limits))
 
     def setChannels(self, channels) -> None:
         """Replace the channels of the group by these channels of the API, in this order."""

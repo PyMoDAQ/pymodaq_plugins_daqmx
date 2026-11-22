@@ -60,9 +60,9 @@ and dedicated to DAQmx.
   remove or change channels as usual: the file is only read, never changed, unless you save.
 * **Save as...**: a button with a LED. A click opens a small dialog asking the *Suffix* of the file
   (``config_daqmx_<suffix>.toml``; ``default`` is the file without suffix) and the *Module*, proposed with the ones of
-  the configuration loaded; the channels of the tree are then written as that module. The other modules of an existing
+  the configuration loaded or, without configuration, with the device of the first channel (``Dev1`` for ``Dev1/ai1``); the channels of the tree are then written as that module. The other modules of an existing
   file are kept. Only the suffix is given, never a path: the file always goes to the folder of the configuration
-  files. The LED of the button is green once the file is written, and orange if it failed.
+  files. The LED of the button is grey until you save, green once the file is written, and orange if it failed.
 
 The loading is done as soon as the choice is made, whether it comes from you or from the state manager. The
 status LED of the viewer tells how it went: it shows an error, with the message, when the file cannot be read or

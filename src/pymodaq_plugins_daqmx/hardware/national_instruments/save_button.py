@@ -19,7 +19,7 @@ def save_params(suffix: str = 'default', module: str = '') -> List[dict]:
     them) and the button."""
     return [{'title': 'Suffix:', 'name': 'suffix', 'type': 'str', 'value': suffix, 'visible': False},
             {'title': 'Module:', 'name': 'module', 'type': 'str', 'value': module, 'visible': False},
-            {'title': 'Save as...', 'name': 'save', 'type': 'ni_save', 'limits': 'status', 'value': Status.IDLE}]
+            {'title': 'Save as...', 'name': 'save', 'type': 'ni_save', 'limits': 'status', 'value': Status.OFF}]
 
 
 def ask_target(suffix: str, module: str) -> Optional[Tuple[str, str]]:

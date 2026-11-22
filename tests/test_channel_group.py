@@ -56,3 +56,23 @@ def test_the_group_takes_new_limits(qtbot):
     group.setLimits(['Dev2/ai0', 'Dev2/ai1'])
 
     assert group.opts['addList'] == ['Dev2/ai0', 'Dev2/ai1']
+
+
+def test_a_copy_of_the_group_in_the_gui_keeps_its_list_up_to_date_by_itself():
+    """The GUI receives the channels that can be added once (an option), then follows the children it adds or
+    removes without waiting for the plugin."""
+    group = Parameter.create(name='channels', type='ni_channels', kind='ai', limits=[], children=[])
+    group.setOpts(available=['Dev1/ai0', 'Dev1/ai1'])  # what the plugin sends
+    assert group.opts['addList'] == ['Dev1/ai0', 'Dev1/ai1']
+    group.addNew('Dev1/ai1')
+    assert group.opts['addList'] == ['Dev1/ai0']
+    group.removeChild(group.child('Dev1_ai1'))
+    assert group.opts['addList'] == ['Dev1/ai0', 'Dev1/ai1']
+
+
+def test_the_limits_set_by_the_plugin_are_sent_as_the_available_channels():
+    group = Parameter.create(name='channels', type='ni_channels', kind='ai', limits=[], children=[])
+    changes = []
+    group.sigOptionsChanged.connect(lambda param, opts: changes.append(dict(opts)))
+    group.setLimits(['Dev1/ai0'])
+    assert any(change.get('available') == ['Dev1/ai0'] for change in changes)

@@ -148,3 +148,22 @@ def test_a_save_that_fails_puts_the_led_of_the_button_in_error(qapp, driver, sys
     assert [status.command for status in sent] == ['error']
     assert plugin.settings['save', 'save'] == 'error'
     plugin.close()
+
+
+def test_without_configuration_the_dialog_proposes_the_device_of_the_channels(qapp, driver, system_driver, folder):
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    group = plugin.settings.child('channels')
+    group.addNew('Dev1/ai1')
+    plugin.commit_settings(group.child('Dev1_ai1'))  # what the plugin does when the GUI adds a channel
+    assert plugin.settings['save', 'module'] == 'Dev1'
+    plugin.settings.child('save', 'module').setValue('mine')  # typed by the user: not replaced
+    group.addNew('Dev2/ai0')
+    plugin.commit_settings(group.child('Dev2_ai0'))
+    assert plugin.settings['save', 'module'] == 'mine'
+    plugin.close()
+
+
+def test_the_led_of_the_save_button_starts_off(qapp, driver, system_driver, folder):
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    assert plugin.settings['save', 'save'] == 'off'
+    plugin.close()

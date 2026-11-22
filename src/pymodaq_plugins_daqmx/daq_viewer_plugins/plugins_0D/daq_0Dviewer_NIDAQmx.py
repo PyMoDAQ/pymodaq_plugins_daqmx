@@ -44,6 +44,7 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         self.settings.child('channels').setLimits(NIDAQSystem().all_channels(ChannelKind.AI))
         self.files = ConfigFiles()
         self.loaded = (MANUAL, '')  # the configuration and the module whose channels are in the tree
+        self.suggested = ''  # the module that the save dialog proposed on its own, to tell it from one typed by the user
         self.refresh_menu()
 
     def refresh_menu(self) -> None:
@@ -108,6 +109,16 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
     def channels(self) -> list:
         return channels_of(self.settings.child('channels'))
 
+    def suggest_module(self) -> None:
+        """Without a configuration, propose the device of the first channel (``Dev1`` for ``Dev1/ai1``) as the module to
+        save, unless the user typed another."""
+        module = self.settings.child('save', 'module')
+        children = self.settings.child('channels').children()
+        if self.loaded[0] != MANUAL or not children or module.value() not in ('', self.suggested):
+            return
+        self.suggested = children[0].opts['title'].split('/')[0]
+        module.setValue(self.suggested)
+
     def commit_settings(self, param: Parameter) -> None:
         if param.name() in ('configuration', 'module') and param.parent() is self.settings:
             self.load_configuration()
@@ -119,6 +130,7 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
             except (ValueError, OSError) as error:
                 led.setValue(Status.ERROR)
                 self.fail(error)
+        self.suggest_module()
         if param.name() == 'type' and param.parent() is not None:
             set_type(ChannelKind.AI, param.parent(), param.value())
         super().commit_settings(param)
