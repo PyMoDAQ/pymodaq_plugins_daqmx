@@ -30,7 +30,8 @@ def test_a_channel_goes_into_the_tree_and_comes_back(qtbot, channel):
 def test_a_channel_group_has_the_parameters_of_its_type_only(qtbot):
     thermocouple = group(CHANNELS[2])
 
-    assert thermocouple.name() == 'Dev1/ai2'
+    assert thermocouple.opts['title'] == 'Dev1/ai2'   # the name has no '/': the path of a parameter is a list of names
+    assert thermocouple.name() == 'Dev1_ai2'
     assert [child.name() for child in thermocouple.children()] == [
         'type', 'thermocouple_type', 'units', 'min_val', 'max_val']
     assert thermocouple.child('type').opts['limits'] == ['voltage', 'current', 'thermocouple', 'rtd']

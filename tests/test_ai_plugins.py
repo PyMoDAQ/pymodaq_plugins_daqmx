@@ -37,6 +37,13 @@ class TestAI:
         assert float(dte[0].data[0][0]) == pytest.approx(0.45)  # the double reads s / 10 for sample s
         plugin.close()
 
+    def test_0d_without_averaging_asks_the_driver_for_two_samples_and_keeps_one(self, qapp, driver):
+        plugin = make_detector(DAQ_0DViewer_DAQmxAI, ai_channel='Dev1/ai0')
+        dte = grab_and_wait(plugin, naverage=1)
+        assert driver[-1].timing_calls[0][2]['samps_per_chan'] == 2  # a clocked acquisition needs two samples
+        assert float(dte[0].data[0][0]) == pytest.approx(0.0)  # the first one, as the double reads s / 10
+        plugin.close()
+
     def test_1d_gives_the_trace_and_a_time_axis(self, qapp, driver):
         plugin = make_detector(DAQ_0DViewer_DAQmxAI, ai_channel='Dev1/ai0', Nsamples=10, frequency=100)
         plugin.settings.child('display').setValue('1D')
@@ -212,3 +219,16 @@ class TestSlave:
         assert not driver[0].closed
         master.close()
         assert driver[0].closed
+
+
+class TestListedAs1D:
+    def test_the_1d_viewers_start_with_the_trace_display(self, qapp, driver):
+        from pymodaq_plugins_daqmx.daq_viewer_plugins.plugins_1D.daq_1Dviewer_DAQmxAI import DAQ_1DViewer_DAQmxAI
+        from pymodaq_plugins_daqmx.daq_viewer_plugins.plugins_1D.daq_1Dviewer_DAQmxDualAI import (
+            DAQ_1DViewer_DAQmxDualAI)
+        for cls, channels in ((DAQ_1DViewer_DAQmxAI, {'ai_channel': 'Dev1/ai0'}),
+                              (DAQ_1DViewer_DAQmxDualAI, {'ai_channel0': 'Dev1/ai0', 'ai_channel1': 'Dev1/ai1'})):
+            plugin = make_detector(cls, Nsamples=10, **channels)
+            dte = grab_and_wait(plugin)
+            assert dte[0].dim == 'Data1D' and dte[0].data[0].shape == (10,)
+            plugin.close()

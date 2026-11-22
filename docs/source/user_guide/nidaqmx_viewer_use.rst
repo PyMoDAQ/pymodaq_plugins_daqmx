@@ -1,62 +1,54 @@
-NIDAQmx viewer
-==============
+Generic viewer NIDAQmx
+======================
 
-This plugin is meant to be used to make measurement and acquire analog data with a NI card. According to the material used, a lot of physical quantity can be detected. Until August 2025, you can measure temperatures, currents or voltages.
+``NIDAQmx`` is the generic viewer for the analog inputs of any NI device (a card, or the modules of a cDAQ). It is
+listed with the 0D viewers (``DAQ_0DViewer_NIDAQmx``) and with the 1D viewers (``DAQ_1DViewer_NIDAQmx``): they are the
+same plugin, the 1D one only starts with the ``1D`` display. The channels are not fixed in the plugin, you add the ones
+you need, each with the parameters of its type.
 
 .. note::
-    Stay aware of the maximum quantity measurable which depends on what can supports your device.
+    Stay aware of the maximum quantity measurable, which depends on what your device supports. The plugin has been
+    tested against a fake of the ``nidaqmx`` layer, and still needs tests on hardware.
 
-It was tested with a cDAQ-9174 and a USB-6341 with modules NI-9205, NI-9211 and NI 9217.
+How to use it
+-------------
 
-Global Configuration
---------------------
+1. **Initialize the detector first.** The list of the channels of the computer is read by the plugin when it starts,
+   so the *Add* button of the ``Channels`` group has nothing to offer before the initialization. The plugin
+   initializes without any channel (there is nothing to configure yet) and a grab without a channel only writes
+   *No channel to acquire* in the log.
+2. **Add the channels.** The *Add* button of ``Channels`` lists the channels of the computer that are not in the
+   group yet (``Dev1/ai0``, ``cDAQ1Mod1/ai0``...). Each one is added as a group named after it, with the type
+   ``voltage`` and its default parameters.
+3. **Choose the type of each channel** (``voltage``, ``current``, ``thermocouple``, ``rtd``). The group is rebuilt with
+   only the parameters of the new type; the values that the two types share, such as the range, are kept.
+   Remove a channel with the remove button of its group.
+4. **Set the acquisition**: the display, the frequency and, for the traces, the number of samples (see below).
+5. **Grab or start the live mode.** The task is built from the channels when the first one is available, and rebuilt
+   at the next grab when the channels changed (in live mode, at the next start).
 
-To use this plugin, you need to provide some parameters, or at least be aware of the default settings. Refer to their description below and the examples given for both 0D and 1D configuration.
+The data follow the order of the channels in the group, and are labelled with their names.
 
-* **Devices**: The device you want to use among each detected device. It can be the whole cDAQ, such as ``cDAQ[X]``, or a specific module, such as ``cDAQ[X]Mod[Y]``.
+Settings
+--------
 
-* **Signal type**: the type of measurement you want to make (mostly ANALOG_INPUT since digital measurements are not supported yet and output signals do not concern viewers but daq_move).
+* **Display type**: ``0D`` gives the mean of the samples of each channel (with its standard error), ``1D`` gives the
+  trace as a function of time.
+* **Frequency Acq.**: the sampling rate, common to all the channels.
+* **Nsamples** (``1D`` only): the length of the trace. In ``0D`` the number of points averaged is the *Naverage* of the
+  viewer, and in ``1D`` *Naverage* is the number of traces averaged. The driver needs at least two samples for a
+  clocked acquisition: *Nsamples* cannot be below 2, and with *Naverage* = 1 two samples are acquired and the first
+  one is kept.
+* **Channels**: the group described above. The parameters of a channel are the fields of its channel class of the
+  API (``AIVoltage``, ``AICurrent``, ``AIThermocouple``, ``AIRtd``), with the same names; see :doc:`config_files`
+  for the list.
 
-* **Plugin config**: A push button (which disappear when used) loading a specific configuration set by the user. It aims to prevent from multiple channel entry each time the plugin is loaded. It is very useful in the case of setups including many modules / channels, for exemple with one experimental bench being used for multiples measurement campaigns. To make your configuration, refer to the example shown in the file ``C:\ProgramData\.pymodaq.\config_daqmx.toml`` and fill the file ``C:\Users\<user>\.pymodaq.\config_daqmx.toml`` with your own material (syntax needs to be respected to prevent from errors).
+Loading a configuration
+-----------------------
 
-0D Configuration
-----------------
-
-The goal of 0D acquisition is to display each data in live and keep the graphical history. It is sometimes necessary to control visually some quantity, for example for security reasons.
-
-* **Clock Settings - Nsamples**: Fixed to 1
-
-.. image:: /images/params_0D.jpg
-    :width: 800
-
-1D Configuration
-----------------
-
-The goal of 1D acquisition is to get data with an optimal use of the hardware capacity. Data are acquired in the hardware buffer first and then transmitted to PyMoDAQ, which display each array of data received, hence the use of the 1D viewer.
-
-* **NSamples To Read**: the number of samples displayed by the viewer
-
-* **Clock Settings - Nsamples**: The number of samples requested to the material for each channel
-
-* **Clock Settings - Frequency**: the acquisition rate, which is common for each acquisition channel.
-
-.. image:: /images/params_1D.jpg
-    :width: 800
-
-Channels Configuration
-----------------------
-
-Last but not least, the channels section of the parameters tree contains each analog measurement you will process. If you clicked on the **load config** button, the channels from the .toml configuration file are displayed here. You can also generate directly the channels you want to use, selecting the id corresponding the the physical channel your sensor is plugged-in, and choosing the type of your analog input. Below are some examples of channels that can be used with this plugin.
-
-* **AI Channels**: the channel(s) you will use for your analog measurements, something like ``cDAQ[X]Mod[Y]/ai[Z]``. You can generate it directly or load it automatically using the plugin config. Pay attention not creating the same channel twice!
-
-.. image:: /images/params_AIchannels.jpg
-    :width: 800
-
-Use
----
-
-It works as a usual viewer plugin, acquiring data on each channels at the configured rate.
-
-If you encounter some problems, you might get some warnings or errors in the log, check it to get some hints to solve it.
-You can run ``Get-Content .pymodaq\log\pymodaq.log -Tail 10 -Wait`` in the PowerShell to display the log in real time.
+Entering the channels again at each start is tedious, and the state manager of the Dashboard cannot restore them,
+because they exist only once the plugin has started. The way to restore them is to **load a configuration file**
+(:doc:`config_files`), which describes the channels of a setup: it is a form of state manager built into the plugin
+and dedicated to DAQmx. This choice, a drop-down list of the configurations
+found in the folder of the files, is not available in the viewer yet: it comes in a following version, and until
+then the channels have to be added by hand.

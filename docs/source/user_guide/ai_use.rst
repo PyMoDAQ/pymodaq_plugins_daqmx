@@ -5,6 +5,9 @@ These plugins acquire one (``DAQmxAI``) or two (``DAQmxDualAI``) analog inputs o
 and 10 V (differential terminals). They have been ported from the ``pydaqmx`` branch with the same names and settings,
 and tested against a fake of the ``nidaqmx`` layer only, not yet on hardware.
 
+They are also listed with the 1D viewers (``DAQ_1DViewer_DAQmxAI``, ``DAQ_1DViewer_DAQmxDualAI``): the same plugins,
+starting with the ``1D`` display.
+
 Configuration
 -------------
 
