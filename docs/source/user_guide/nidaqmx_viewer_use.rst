@@ -18,8 +18,9 @@ How to use it
    initializes without any channel (there is nothing to configure yet) and a grab without a channel only writes
    *No channel to acquire* in the log.
 2. **Add the channels.** The *Add* button of ``Channels`` lists the channels of the computer that are not in the
-   group yet (``Dev1/ai0``, ``cDAQ1Mod1/ai0``...). Each one is added as a group named after it, with the type
-   ``voltage`` and its default parameters.
+   group yet (``Dev1/ai0``, ``cDAQ1Mod1/ai0``...). Each one is added as a group named after it, with the first type
+   its device can measure (``voltage``, then ``current``, ``thermocouple`` and ``rtd``) and its default parameters; a
+   voltage channel gets the widest voltage range of the device.
 3. **Choose the type of each channel** (``voltage``, ``current``, ``thermocouple``, ``rtd``). The group is rebuilt with
    only the parameters of the new type; the values that the two types share, such as the range, are kept.
    Remove a channel with the remove button of its group.

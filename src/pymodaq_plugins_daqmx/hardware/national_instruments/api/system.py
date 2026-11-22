@@ -65,6 +65,10 @@ class NIDAQSystem:
         """Voltage ranges of the analog inputs as ``(min, max)`` pairs."""
         return self._device_property(device, 'ai_voltage_rngs', _pairs, [])
 
+    def ai_measurement_types(self, device):
+        """Kinds of measure of the analog inputs, as lower case names (``voltage``, ``temperature_rtd``...)."""
+        return self._device_property(device, 'ai_meas_types', lambda types: [t.name.lower() for t in types], [])
+
     def ao_voltage_ranges(self, device):
         """Voltage ranges of the analog outputs as ``(min, max)`` pairs."""
         return self._device_property(device, 'ao_voltage_rngs', _pairs, [])

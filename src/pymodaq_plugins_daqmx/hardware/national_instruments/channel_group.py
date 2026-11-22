@@ -62,21 +62,31 @@ class ChannelGroup(GroupParameter):
         """Add the channel named ``typ`` (``Dev1/ai0``), unless it is already in the group."""
         if typ is None or typ in self._used():
             return
-        first_type = next(iter(CHANNEL_TYPES[self.kind].values()))
-        self.addChild(channel_params(self.kind, self._default_channel(first_type, typ)))
+        self.addChild(channel_params(self.kind, self._default_channel(typ)))
 
-    def _default_channel(self, channel_type, name: str):
-        """The channel with the values of its type; a voltage input gets the widest range of its device, as a module
-        may not accept the usual \u00b110 V (the driver refuses it when the task starts)."""
-        if channel_type is AIVoltage:
+    def _default_channel(self, name: str):
+        """The channel to add, of the first type that its device can measure (a module may only measure a
+        temperature: the driver refuses another type), with the values of that type; a voltage input gets the widest
+        range of the device, as a module may not accept the usual +-10 V."""
+        types = CHANNEL_TYPES[self.kind]
+        device = name.split('/')[0]
+        measures, ranges = [], []
+        if self.kind is ChannelKind.AI:
             try:
-                ranges = NIDAQSystem().ai_voltage_ranges(name.split('/')[0])
+                measures = NIDAQSystem().ai_measurement_types(device)
+                ranges = NIDAQSystem().ai_voltage_ranges(device)
             except ValueError:  # not a device of the system
-                ranges = []
-            if ranges:
-                low, high = max(ranges, key=lambda pair: pair[1] - pair[0])
-                return AIVoltage(name, min_val=low, max_val=high)
+                pass
+        channel_type = next((cls for label, cls in types.items() if _MEASURES.get(label) in measures),
+                            next(iter(types.values())))
+        if channel_type is AIVoltage and ranges:
+            low, high = max(ranges, key=lambda pair: pair[1] - pair[0])
+            return AIVoltage(name, min_val=low, max_val=high)
         return channel_type(name)
+
+
+_MEASURES = {'voltage': 'voltage', 'current': 'current', 'thermocouple': 'temperature_thermocouple',
+             'rtd': 'temperature_rtd'}  # the type of channel -> what the device reports it can measure
 
 
 registerParameterType('ni_channels', ChannelGroup, override=True)

@@ -8,6 +8,7 @@ import threading
 import weakref
 
 import nidaqmx
+from nidaqmx.constants import UsageTypeAI
 import pytest
 
 
@@ -315,6 +316,7 @@ class DoubleDevice:
     ai_max_single_chan_rate = property(lambda self: self._get('ai_max_single'))
     ao_max_rate = property(lambda self: self._get('ao_max'))
     ai_trig_usage = property(lambda self: self._get('ai_trig'))
+    ai_meas_types = property(lambda self: self._properties.get('ai_meas', [UsageTypeAI.VOLTAGE, UsageTypeAI.CURRENT]))
     di_trig_usage = property(lambda self: self._get('di_trig'))
 
 
