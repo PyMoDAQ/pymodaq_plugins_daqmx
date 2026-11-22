@@ -41,7 +41,7 @@ Format
    One table for each analog input channel. The channel is ``<module>/<key>`` (``cDAQ1Mod3/ai0``) and the order of
    the tables in the file is the order of the data of an acquisition. ``type`` selects the kind of channel and its
    other keys. ``info`` is a free note, kept when the file is saved again. A key that does not belong to the type
-   is an error, so that a typo cannot go unnoticed. A key you leave out has the default of the API, given below.
+   is an error, so that a typo cannot go unnoticed.
 
 The names of the keys are the names of the arguments of the channels of the Python API
 (see :doc:`../api/reference`), and a value that is a constant of the driver is written with its name.
@@ -103,6 +103,29 @@ The names of the keys are the names of the arguments of the channels of the Pyth
      - ``DEG_C``, 0, 100
 
 Only the analog input channels are described for now.
+
+Default values
+--------------
+
+Only ``type`` is required in a channel. **A key you leave out takes the default value of the table above, which is the
+default of the Python API**, and nothing tells you when it happens. In particular, a voltage channel without
+``min_val`` and ``max_val`` is measured on the range -10 V to 10 V, and a thermocouple channel without them on 0 to
+100 degrees. The range is passed to the driver, which may round it to a range the module supports, so write the
+ranges you rely on explicitly:
+
+.. code-block:: toml
+
+   [modules.cDAQ1Mod3.ai.ai0]
+   type = "voltage"        # measured from -10 V to 10 V, RSE not set: DEFAULT terminal configuration
+
+   [modules.cDAQ1Mod3.ai.ai1]
+   type = "voltage"
+   min_val = -1.0          # explicit, nothing is left to the defaults
+   max_val = 1.0
+   terminal_config = "RSE"
+
+``terminal_config = "DEFAULT"`` lets the driver choose the terminal configuration of the module. The settings tree of
+the plugin shows the values that were read, defaults included, once a configuration is chosen.
 
 Mistakes
 --------
