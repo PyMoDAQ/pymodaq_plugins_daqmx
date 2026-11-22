@@ -108,17 +108,33 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
     def channels(self) -> list:
         return channels_of(self.settings.child('channels'))
 
+    def own(self, param: Parameter) -> Parameter:
+        """The parameter of the tree of this plugin that ``param`` stands for.
+
+        What the GUI changes arrives as its own copy of the parameter, which is not in the tree of the plugin (and
+        has not the same parents): what the plugin changes in its tree has to go through this method.
+        """
+        names = []
+        node = param
+        while node is not None and node.name() != self.settings.name():
+            names.append(node.name())
+            node = node.parent()
+        if node is None:  # not a parameter of a settings tree
+            return param
+        return self.settings.child(*reversed(names)) if names else self.settings
+
     def commit_settings(self, param: Parameter) -> None:
+        button = param  # the one of the GUI: it holds what its dialog returned
+        param = self.own(param)
         if param.name() == 'configuration' and param.parent() is self.settings.child('config'):
             self.load_configuration()
         elif param.opts['type'] == 'ni_save':  # the button has been clicked, after the dialog of the GUI
-            led = self.settings.child('config', 'save')
-            led.opts.update(suffix=param.opts['suffix'])  # what the dialog returned
+            param.opts.update(suffix=button.opts['suffix'])
             try:
                 self.save_configuration(param)
-                led.setValue(Status.IDLE)
+                param.setValue(Status.IDLE)
             except (ValueError, OSError) as error:
-                led.setValue(Status.ERROR)
+                param.setValue(Status.ERROR)
                 self.fail(error)
         if param.name() == 'type' and param.parent() is not None:
             set_type(ChannelKind.AI, param.parent(), param.value())

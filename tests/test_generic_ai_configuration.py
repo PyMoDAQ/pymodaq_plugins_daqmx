@@ -3,6 +3,10 @@ import shutil
 from pathlib import Path
 
 import pytest
+from easydict import EasyDict as edict
+from pyqtgraph.parametertree import Parameter
+
+from pymodaq_gui.parameter import pymodaq_ptypes, utils as putils  # noqa: F401  (the types are registered)
 
 pytest.importorskip('nidaqmx')
 pytest.importorskip('pymodaq')
@@ -160,4 +164,48 @@ def test_a_save_that_fails_puts_the_led_of_the_button_in_error(qapp, driver, sys
 def test_the_led_of_the_save_button_starts_off(qapp, driver, system_driver, folder):
     plugin = make_detector(DAQ_0DViewer_NIDAQmx)
     assert plugin.settings['config', 'save'] == 'off'
+    plugin.close()
+
+
+def gui_copy(plugin):
+    """The settings tree of the GUI: the same parameters in other objects, as the control module holds them."""
+    return Parameter.create(name=plugin.settings.name(), type='group', children=DAQ_0DViewer_NIDAQmx.params)
+
+
+def from_gui(plugin, gui, *path, value=None):
+    """What the control module does when the user changes a parameter in the GUI: the plugin receives the copy."""
+    param = gui.child(*path)
+    if value is not None:
+        param.setValue(value)
+    plugin.update_settings(edict(path=putils.get_param_path(param), param=param, change='value'))
+
+
+def test_a_configuration_chosen_in_the_gui_is_loaded_in_the_tree_of_the_plugin(qapp, driver, system_driver, folder):
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    gui = gui_copy(plugin)
+    from_gui(plugin, gui, 'config', 'configuration', value='lab')
+    assert len(plugin.settings.child('channels').children()) == 4
+    assert plugin.settings['config', 'configuration'] == 'lab'
+    plugin.close()
+
+
+def test_a_type_changed_in_the_gui_rebuilds_the_channel_of_the_tree_of_the_plugin(qapp, driver, system_driver, folder):
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    plugin.settings.child('channels').addNew('Dev2/ai3')
+    gui = gui_copy(plugin)
+    gui.child('channels').addNew('Dev2/ai3')
+    from_gui(plugin, gui, 'channels', 'Dev2_ai3', 'type', value='thermocouple')
+    assert plugin.settings.child('channels', 'Dev2_ai3').child('thermocouple_type') is not None
+    plugin.close()
+
+
+def test_the_save_button_activated_in_the_gui_saves_with_the_suffix_of_its_dialog(qapp, driver, system_driver, folder):
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    plugin.settings.child('channels').addNew('Dev2/ai3')
+    gui = gui_copy(plugin)
+    button = gui.child('config', 'save')
+    button.opts['suffix'] = 'fromgui'  # what the dialog returned
+    plugin.update_settings(edict(path=putils.get_param_path(button), param=button, change='activated'))
+    assert [c.name for c in ConfigFiles(folder).load('fromgui').channels('Dev2')] == ['Dev2/ai3']
+    assert plugin.settings['config', 'save'] == 'idle'
     plugin.close()
