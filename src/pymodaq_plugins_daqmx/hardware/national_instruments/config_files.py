@@ -65,7 +65,7 @@ class Configuration:
         return new
 
 
-def _type_name(channel) -> str:
+def type_name(channel) -> str:
     for kind, types in CHANNEL_TYPES.items():
         for name, cls in types.items():
             if type(channel) is cls:
@@ -73,7 +73,7 @@ def _type_name(channel) -> str:
     raise ValueError(f'cannot save a channel of type {type(channel).__name__}')
 
 
-def _channel_fields(cls):
+def channel_fields(cls):
     return [f for f in dataclasses.fields(cls) if f.name != 'name']
 
 
@@ -83,7 +83,7 @@ def _decode(cls, name: str, entry: dict, shown=None):
     ``shown`` gives the name a key has in the file, when it is not the one of the API (previous format).
     """
     shown = shown or {}
-    known = {f.name: f for f in _channel_fields(cls)}
+    known = {f.name: f for f in channel_fields(cls)}
     unknown = sorted(set(entry) - set(known) - {'type', 'info'})
     if unknown:
         raise ValueError(f"unknown key {unknown[0]!r}, expected {sorted(known) + ['info']}")
@@ -100,15 +100,15 @@ def _decode(cls, name: str, entry: dict, shown=None):
                                  f"expected one of {[m.name for m in annotation]}") from None
         else:
             values[key] = float(value)
-    missing = [f.name for f in _channel_fields(cls) if f.default is dataclasses.MISSING and f.name not in values]
+    missing = [f.name for f in channel_fields(cls) if f.default is dataclasses.MISSING and f.name not in values]
     if missing:
         raise ValueError(f"missing {shown.get(missing[0], missing[0])!r}")
     return cls(name, **values)
 
 
 def _encode(channel, note: str) -> dict:
-    entry = {'type': _type_name(channel)}
-    for f in _channel_fields(type(channel)):
+    entry = {'type': type_name(channel)}
+    for f in channel_fields(type(channel)):
         value = getattr(channel, f.name)
         entry[f.name] = value.name if isinstance(value, enum.Enum) else float(value)
     entry['info'] = note

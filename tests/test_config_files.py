@@ -136,14 +136,14 @@ def test_a_file_of_an_unknown_version_is_refused(tmp_path):
 def test_the_user_guide_describes_every_type_key_and_value_of_the_format():
     import dataclasses
     import enum
-    from pymodaq_plugins_daqmx.hardware.national_instruments.config_files import CHANNEL_TYPES, _channel_fields
+    from pymodaq_plugins_daqmx.hardware.national_instruments.config_files import CHANNEL_TYPES, channel_fields
     page = (Path(__file__).parent.parent / 'docs' / 'source' / 'user_guide' / 'config_files.rst').read_text()
 
     missing = []
     for types in CHANNEL_TYPES.values():
         for name, cls in types.items():
             missing += [f'type {name}'] if f'``{name}``' not in page else []
-            for f in _channel_fields(cls):
+            for f in channel_fields(cls):
                 missing += [f'key {f.name}'] if f'``{f.name}``' not in page else []
                 if isinstance(f.type, type) and issubclass(f.type, enum.Enum):
                     missing += [f'value {m.name}' for m in f.type if f'``{m.name}``' not in page]
