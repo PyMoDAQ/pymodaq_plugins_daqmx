@@ -70,8 +70,8 @@ The three parameters below are in the ``NIDAQmx config`` group of the settings.
   The file then describes exactly the channels of the tree (those of an existing file that are not in the tree are
   removed). The format of the file groups the channels by module, so each channel is written in the module its name
   starts with (``Dev1`` for ``Dev1/ai1``, ``cDAQ1Mod3`` for ``cDAQ1Mod3/ai0``): channels of several devices can be
-  mixed. Only the suffix is given, never a path: the file always goes to the folder of the configuration files. The LED of the button is grey until you save, green once
-  the file is written, and orange if it failed.
+  mixed. Only the suffix is given, never a path: the file always goes to the folder of the configuration files. After a save the menu shows the file that was just written, which is what the tree now is. The LED of the button
+  is grey until you save, green once the file is written, and orange if it failed.
 
 The loading is done as soon as the choice is made, whether it comes from you or from the state manager. The
 status LED of the viewer tells how it went: it shows an error, with the message, when the file cannot be read or

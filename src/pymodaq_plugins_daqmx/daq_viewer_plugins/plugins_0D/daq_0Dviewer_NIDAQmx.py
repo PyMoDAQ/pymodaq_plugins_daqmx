@@ -59,6 +59,8 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         The control module is told if it worked (its LED is normal) or not (its LED shows the error).
         """
         label = self.settings['config', 'configuration']
+        if not isinstance(label, str):  # a combo that is being rebuilt sends no choice
+            return
         if label == MANUAL:  # the channels stay as they are, to be edited by hand
             self.loaded = MANUAL
             self.in_file = []
@@ -99,6 +101,8 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
             configuration = configuration.with_channels(module, module_channels)
         self.files.save(suffix, configuration)
         self.refresh_menu()
+        self.loaded, self.in_file = _label(suffix), channels  # the tree is that file now
+        self.settings.child('config', 'configuration').setValue(self.loaded)
         self.notify(f'Channels saved in the configuration {_label(suffix)}')
 
     def notify(self, message: str) -> None:

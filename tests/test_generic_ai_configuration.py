@@ -263,3 +263,26 @@ def test_reload_without_configuration_only_says_so(qapp, driver, system_driver, 
     assert len(plugin.settings.child('channels').children()) == 1  # nothing is replaced
     assert led(plugin) == 'off'
     plugin.close()
+
+
+def test_after_a_save_the_menu_shows_the_file_that_was_just_written(qapp, driver, system_driver, folder):
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    choose(plugin, 'configuration', 'lab')
+    plugin.settings.child('channels').addNew('Dev2/ai3')
+    plugin.settings.child('config', 'save').opts.update(suffix='second')
+    press(plugin, 'config', 'save')
+    assert plugin.settings['config', 'configuration'] == 'second'  # the tree is that file now
+    assert led(plugin) == 'idle'
+    plugin.close()
+
+
+def test_a_value_that_is_not_a_configuration_is_ignored(qapp, driver, system_driver, folder):
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    choose(plugin, 'configuration', 'lab')
+    sent = capture(plugin)
+    param = plugin.settings.child('config', 'configuration')
+    param.opts['value'] = None  # what a combo that is being rebuilt sends
+    plugin.commit_settings(param)
+    assert sent == []
+    assert len(plugin.settings.child('channels').children()) == 4
+    plugin.close()
