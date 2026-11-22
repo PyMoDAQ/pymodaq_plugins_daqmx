@@ -111,10 +111,3 @@ def test_a_file_that_cannot_be_read_puts_the_control_module_in_error_with_the_fi
     assert [status.command for status in sent] == ['error']
     assert 'config_daqmx_broken.toml' in sent[0].attribute
     plugin.close()
-
-
-def test_a_configuration_restored_before_the_initialization_is_loaded_by_it(qapp, driver, system_driver, folder):
-    plugin = make_detector(DAQ_0DViewer_NIDAQmx, configuration='lab', module='cDAQ1Mod3')
-    assert [child.opts['title'] for child in plugin.settings.child('channels').children()] == [
-        'cDAQ1Mod3/ai0', 'cDAQ1Mod3/ai5']
-    plugin.close()

@@ -53,7 +53,7 @@ and dedicated to DAQmx.
 
 * **Configuration**: a drop-down list with ``(manual)`` (the channels are the ones you add) and the configuration
   files of the folder, ``default`` being ``config_daqmx.toml``. As it is a plain parameter, the choice is saved by
-  the state manager of the Dashboard, which then loads the same file when the plugin initializes. The list is read
+  the state manager of the Dashboard, which sets the menu again, and so loads the same file. The list is read
   when the plugin starts, and again after a save.
 * **Module**: the modules of the chosen file. Choosing a configuration, then a module, replaces the channels of the
   tree by the ones of the module, in the order of the file (which is the order of the data). You can then add,
@@ -63,7 +63,7 @@ and dedicated to DAQmx.
   are kept. Only the suffix is given, never a path: the file always goes to the folder of the configuration files.
   *Save* is a button: it is released once the file is written.
 
-The loading is done as soon as the choice is made (and at the initialization if a configuration was restored). The
+The loading is done as soon as the choice is made, whether it comes from you or from the state manager. The
 status LED of the viewer tells how it went: it shows an error, with the message, when the file cannot be read or
 written, and is back to normal when it worked.
 

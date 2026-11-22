@@ -50,12 +50,6 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
     def refresh_menu(self) -> None:
         self.settings.child('configuration').setLimits([MANUAL] + [_label(s) for s in self.files.suffixes()])
 
-    def ini_detector(self, controller=None):
-        info = super().ini_detector(controller)
-        if self.settings['configuration'] != MANUAL:  # restored by the state manager, which does not call commit_settings
-            self.load_configuration()
-        return info
-
     def load_configuration(self) -> None:
         """Read the chosen file, offer its modules and replace the channels by the ones of the chosen module.
 
