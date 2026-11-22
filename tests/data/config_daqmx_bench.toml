@@ -1,0 +1,62 @@
+title = "Configuration file of the DAQmx plugin"
+
+[NIDAQ_Devices.DEVICE01]
+title = "Configuration entry for a NIDAQmx device"
+name = "cDAQ1"
+product = "cDAQ-9174"
+
+[NIDAQ_Devices.DEVICE01.MODULE01]
+title = "Example of module plugged in a NIDAQmx device"
+name = "cDAQ1Mod1"
+product = "NI 9211"
+
+[NIDAQ_Devices.DEVICE01.MODULE02]
+title = "Example of module plugged in a NIDAQmx device"
+name = "cDAQ1Mod2"
+product = "NI 9217"
+
+[NIDAQ_Devices.DEVICE01.MODULE03]
+title = "Example of module plugged in a NIDAQmx device"
+name = "cDAQ1Mod3"
+product = "NI 9205"
+
+[NIDAQ_Devices.DEVICE01.MODULE04]
+title = "Example of module plugged in a NIDAQmx device"
+name = "cDAQ1Mod4"
+product = "NI 9203"
+
+[NIDAQ_Devices.DEVICE01.MODULE01.ai.ai2]
+name = "cDAQ1Mod1/ai2"
+source = "ANALOG_INPUT"
+analog_type = "TEMPERATURE_THERMOCOUPLE"
+value_min = 0
+value_max = 50
+thermo_type = "K"
+info = "Example of AI thermocouple channel"
+
+[NIDAQ_Devices.DEVICE01.MODULE01.ai.ai1]
+name = "cDAQ1Mod1/ai1"
+source = "ANALOG_INPUT"
+analog_type = "TEMPERATURE_THERMOCOUPLE"
+value_min = 0
+value_max = 50
+thermo_type = "K"
+info = "Example of AI thermocouple channel"
+
+[NIDAQ_Devices.DEVICE01.MODULE03.ai.ai0]
+name = "cDAQ1Mod3/ai0"
+source = "ANALOG_INPUT"
+analog_type = "VOLTAGE"
+value_min = -10.0
+value_max = 10.0
+termination = "RSE"
+info = "Example of AI voltage channel"
+
+[NIDAQ_Devices.DEVICE01.MODULE03.ai.ai5]
+name = "cDAQ1Mod3/ai5"
+source = "ANALOG_INPUT"
+analog_type = "VOLTAGE"
+value_min = -10.0
+value_max = 10.0
+termination = "RSE"
+info = "Example of AI voltage channel"
