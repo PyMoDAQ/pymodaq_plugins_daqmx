@@ -83,3 +83,22 @@ def test_a_read_waits_for_the_whole_acquisition_by_default(driver):
 
     assert driver[0].read_timeouts[0] >= 20.  # 40 samples at 2 Hz
     assert driver[0].read_timeouts[1] == 3.
+
+
+def test_devices_that_cannot_be_synchronized_in_one_task_are_named_in_the_error(driver, monkeypatch):
+    import nidaqmx
+    import nidaqmx_double
+    from pymodaq_plugins_daqmx.hardware.national_instruments.api import (
+        AIVoltage, AnalogInputTask, ClockSettings, TaskConfig)
+
+    def refuse(self, *args, **kwargs):
+        raise nidaqmx.DaqError('The multidevice task does not have a method for synchronizing timing.', -201425)
+
+    monkeypatch.setattr(nidaqmx_double._Timing, 'cfg_samp_clk_timing', refuse)
+    config = TaskConfig((AIVoltage('Dev1/ai0'), AIVoltage('Dev2/ai0'), AIVoltage('Dev1/ai1')),
+                        timing=ClockSettings(rate=100, samples=4))
+    with pytest.raises(nidaqmx.DaqError) as error:
+        AnalogInputTask(config)
+    assert error.value.error_code == -201425
+    assert 'Dev1' in str(error.value) and 'Dev2' in str(error.value)
+    assert 'separate tasks' in str(error.value)
