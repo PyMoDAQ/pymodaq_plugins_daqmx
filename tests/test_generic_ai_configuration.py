@@ -43,10 +43,7 @@ def capture(plugin):
 def press(plugin, *path):
     """Press an action button of the settings; what the plugin tells the control module is returned."""
     sent = capture(plugin)
-    button = plugin.settings.child(*path)
-    button.setValue(True)
-    plugin.commit_settings(button)
-    assert button.value() is False  # the button is released
+    plugin.commit_settings(plugin.settings.child(*path))  # what the plugin does when the GUI activates the button
     return sent
 
 
@@ -84,6 +81,7 @@ def test_saving_under_a_suffix_writes_the_channels_of_the_tree(qapp, driver, sys
     plugin.settings.child('save', 'suffix').setValue('mine')
     sent = press(plugin, 'save', 'save')
     assert [status.command for status in sent] == ['Update_Status']
+    assert plugin.settings['save', 'save'] == 'idle'  # the LED of the button
     saved = ConfigFiles(folder).load('mine')
     assert [channel.name for channel in saved.channels('Dev2')] == ['Dev2/ai3', 'Dev2/ai1']
     assert plugin.settings.child('configuration').opts['limits'] == ['(manual)', 'default', 'lab', 'mine']
@@ -133,4 +131,20 @@ def test_going_back_to_manual_keeps_the_channels_and_hides_the_module(qapp, driv
     choose(plugin, 'configuration', '(manual)')
     assert not plugin.settings.child('module').opts['visible']
     assert len(plugin.settings.child('channels').children()) == 2
+    plugin.close()
+
+
+def test_the_dialog_proposes_the_configuration_and_the_module_that_are_loaded(qapp, driver, system_driver, folder):
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    choose(plugin, 'configuration', 'lab')
+    choose(plugin, 'module', 'cDAQ1Mod3')
+    assert (plugin.settings['save', 'suffix'], plugin.settings['save', 'module']) == ('lab', 'cDAQ1Mod3')
+    plugin.close()
+
+
+def test_a_save_that_fails_puts_the_led_of_the_button_in_error(qapp, driver, system_driver, folder):
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    sent = press(plugin, 'save', 'save')  # no module given
+    assert [status.command for status in sent] == ['error']
+    assert plugin.settings['save', 'save'] == 'error'
     plugin.close()

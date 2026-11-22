@@ -58,10 +58,11 @@ and dedicated to DAQmx.
 * **Module**: the modules of the chosen file. Choosing a configuration, then a module, replaces the channels of the
   tree by the ones of the module, in the order of the file (which is the order of the data). You can then add,
   remove or change channels as usual: the file is only read, never changed, unless you save.
-* **Save as**: writes the channels of the tree as the module named in *Module*, in the file of the given *Suffix*
-  (``config_daqmx_<suffix>.toml``; ``default`` is the file without suffix). The other modules of an existing file
-  are kept. Only the suffix is given, never a path: the file always goes to the folder of the configuration files.
-  *Save* is a button: it is released once the file is written.
+* **Save as...**: a button with a LED. A click opens a small dialog asking the *Suffix* of the file
+  (``config_daqmx_<suffix>.toml``; ``default`` is the file without suffix) and the *Module*, proposed with the ones of
+  the configuration loaded; the channels of the tree are then written as that module. The other modules of an existing
+  file are kept. Only the suffix is given, never a path: the file always goes to the folder of the configuration
+  files. The LED of the button is green once the file is written, and orange if it failed.
 
 The loading is done as soon as the choice is made, whether it comes from you or from the state manager. The
 status LED of the viewer tells how it went: it shows an error, with the message, when the file cannot be read or

@@ -10,6 +10,8 @@ from pymodaq_plugins_daqmx.hardware.national_instruments.api import ChannelKind,
 from pymodaq_plugins_daqmx.hardware.national_instruments.channel_group import channels_of
 from pymodaq_plugins_daqmx.hardware.national_instruments.channel_tree import set_type
 from pymodaq_plugins_daqmx.hardware.national_instruments.config_files import Configuration, ConfigFiles
+from pymodaq_plugins_daqmx.hardware.national_instruments.save_button import save_params
+from pymodaq_gui.utils.status_palette import Status
 
 MANUAL = '(manual)'    # no configuration file: the channels are the ones of the tree
 DEFAULT = 'default'    # the name of the configuration of the file without suffix
@@ -33,11 +35,7 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         {'title': 'Module:', 'name': 'module', 'type': 'list', 'limits': [], 'visible': False},
         {'title': 'Channels:', 'name': 'channels', 'type': 'ni_channels', 'kind': ChannelKind.AI.value,
          'limits': [], 'children': []},
-        {'title': 'Save as:', 'name': 'save', 'type': 'group', 'children': [
-            {'title': 'Suffix:', 'name': 'suffix', 'type': 'str', 'value': DEFAULT},
-            {'title': 'Module:', 'name': 'module', 'type': 'str', 'value': ''},
-            {'title': 'Save', 'name': 'save', 'type': 'bool_push', 'value': False},
-        ]},
+        {'title': 'Save as:', 'name': 'save', 'type': 'group', 'children': save_params()},
     ]
     data_name = 'NI AI'
 
@@ -84,6 +82,8 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
             module.setValue(modules[0] if modules else '')
         self.settings.child('channels').setChannels(configuration.channels(self.settings['module']))
         self.loaded = (label, self.settings['module'])
+        self.settings.child('save', 'suffix').setValue(label)  # what the dialog of the save button proposes
+        self.settings.child('save', 'module').setValue(self.settings['module'])
         self.notify(f'Configuration {label}, module {self.settings["module"]} loaded')
 
     def save_configuration(self) -> None:
@@ -111,11 +111,13 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
     def commit_settings(self, param: Parameter) -> None:
         if param.name() in ('configuration', 'module') and param.parent() is self.settings:
             self.load_configuration()
-        elif param.opts['type'] == 'bool_push' and param.value():
-            param.setValue(False)
+        elif param.opts['type'] == 'ni_save':  # the button has been clicked, after the dialog of the GUI
+            led = self.settings.child('save', 'save')
             try:
                 self.save_configuration()
+                led.setValue(Status.IDLE)
             except (ValueError, OSError) as error:
+                led.setValue(Status.ERROR)
                 self.fail(error)
         if param.name() == 'type' and param.parent() is not None:
             set_type(ChannelKind.AI, param.parent(), param.value())
