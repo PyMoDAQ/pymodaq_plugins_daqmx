@@ -62,16 +62,9 @@ def test_choosing_a_configuration_fills_the_channels_in_the_order_of_the_file_an
     choose(plugin, 'configuration', 'lab')
     assert [status.command for status in sent] == ['Update_Status']
     assert 'lab' in sent[0].attribute[0]
-    assert plugin.settings.child('config', 'module').opts['limits'] == [
-        '(all)', 'cDAQ1Mod1', 'cDAQ1Mod2', 'cDAQ1Mod3', 'cDAQ1Mod4']
     group = plugin.settings.child('channels')
-    assert [child.opts['title'] for child in group.children()] == [  # (all): the modules in the order of the file
+    assert [child.opts['title'] for child in group.children()] == [
         'cDAQ1Mod1/ai2', 'cDAQ1Mod1/ai1', 'cDAQ1Mod3/ai0', 'cDAQ1Mod3/ai5']
-    choose(plugin, 'module', 'cDAQ1Mod3')
-    group = plugin.settings.child('channels')
-    assert [child.opts['title'] for child in group.children()] == ['cDAQ1Mod3/ai0', 'cDAQ1Mod3/ai5']
-    choose(plugin, 'module', 'cDAQ1Mod1')  # the channels of the previous module are replaced
-    assert [child.opts['title'] for child in group.children()] == ['cDAQ1Mod1/ai2', 'cDAQ1Mod1/ai1']
     plugin.close()
 
 
@@ -101,20 +94,20 @@ def test_what_is_saved_is_loaded_back_as_it_was(qapp, driver, system_driver, fol
     plugin.settings.child('config', 'save').opts.update(suffix='mine')
     press(plugin, 'config', 'save')
     group.setChannels([])
-    choose(plugin, 'configuration', 'mine')  # (all)
+    choose(plugin, 'configuration', 'mine')
     assert sorted(child.opts['title'] for child in group.children()) == ['Dev1/ai1', 'Dev2/ai1', 'Dev2/ai3']
     plugin.close()
 
 
-def test_saving_into_an_existing_suffix_replaces_the_devices_of_the_tree_and_keeps_the_others(
+def test_saving_into_an_existing_suffix_makes_the_file_describe_the_channels_of_the_tree(
         qapp, driver, system_driver, folder):
     plugin = make_detector(DAQ_0DViewer_NIDAQmx)
     plugin.settings.child('channels').addNew('Dev2/ai3')
     plugin.settings.child('config', 'save').opts.update(suffix='lab')
     press(plugin, 'config', 'save')
     saved = ConfigFiles(folder).load('lab')
+    assert list(saved.modules) == ['Dev2']  # what is not in the tree is not in the file any more
     assert [channel.name for channel in saved.channels('Dev2')] == ['Dev2/ai3']
-    assert [channel.name for channel in saved.channels('cDAQ1Mod3')] == ['cDAQ1Mod3/ai0', 'cDAQ1Mod3/ai5']
     plugin.close()
 
 
@@ -135,20 +128,17 @@ def test_after_a_failed_load_the_menu_shows_the_configuration_really_loaded(qapp
     choose(plugin, 'configuration', 'broken')
     assert plugin.settings['config', 'configuration'] == '(manual)'  # nothing was loaded before
     choose(plugin, 'configuration', 'lab')
-    choose(plugin, 'module', 'cDAQ1Mod3')
     choose(plugin, 'configuration', 'broken')
-    assert (plugin.settings['config', 'configuration'], plugin.settings['config', 'module']) == ('lab', 'cDAQ1Mod3')
-    assert [child.opts['title'] for child in plugin.settings.child('channels').children()] == [
-        'cDAQ1Mod3/ai0', 'cDAQ1Mod3/ai5']  # and the channels are the ones of that module
+    assert plugin.settings['config', 'configuration'] == 'lab'
+    assert len(plugin.settings.child('channels').children()) == 4  # and the channels are the ones of that file
     plugin.close()
 
 
-def test_going_back_to_manual_keeps_the_channels_and_hides_the_module(qapp, driver, system_driver, folder):
+def test_going_back_to_manual_keeps_the_channels(qapp, driver, system_driver, folder):
     plugin = make_detector(DAQ_0DViewer_NIDAQmx)
     choose(plugin, 'configuration', 'lab')
     choose(plugin, 'configuration', '(manual)')
-    assert not plugin.settings.child('config', 'module').opts['visible']
-    assert len(plugin.settings.child('channels').children()) == 4  # the channels of (all) stay
+    assert len(plugin.settings.child('channels').children()) == 4
     plugin.close()
 
 

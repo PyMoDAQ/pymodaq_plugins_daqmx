@@ -15,7 +15,6 @@ from pymodaq_gui.utils.status_palette import Status
 
 MANUAL = '(manual)'    # no configuration file: the channels are the ones of the tree
 DEFAULT = 'default'    # the name of the configuration of the file without suffix
-ALL = '(all)'          # all the modules of the file
 
 
 def _label(suffix: str) -> str:
@@ -35,7 +34,6 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         {'title': 'NIDAQmx config:', 'name': 'config', 'type': 'group', 'children': [
             {'title': 'Configuration:', 'name': 'configuration', 'type': 'list', 'limits': [MANUAL],
              'value': MANUAL},
-            {'title': 'Module:', 'name': 'module', 'type': 'list', 'limits': [], 'visible': False},
             save_param(),
         ]},
         {'title': 'Channels:', 'name': 'channels', 'type': 'ni_channels', 'kind': ChannelKind.AI.value,
@@ -47,57 +45,41 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         super().__init__(*args, **kwargs)
         self.settings.child('channels').setLimits(NIDAQSystem().all_channels(ChannelKind.AI))
         self.files = ConfigFiles()
-        self.loaded = (MANUAL, '')  # the configuration and the module whose channels are in the tree
+        self.loaded = MANUAL  # the configuration whose channels are in the tree
         self.refresh_menu()
 
     def refresh_menu(self) -> None:
         self.settings.child('config', 'configuration').setLimits([MANUAL] + [_label(s) for s in self.files.suffixes()])
 
     def load_configuration(self) -> None:
-        """Read the chosen file, offer its modules and replace the channels by the ones of the chosen module.
+        """Replace the channels by the ones of the chosen file, in the order of the file.
 
         The control module is told if it worked (its LED is normal) or not (its LED shows the error).
         """
         label = self.settings['config', 'configuration']
         if label == MANUAL:  # the channels stay as they are, to be edited by hand
-            self.loaded = (MANUAL, '')
-            self.settings.child('config', 'module').setOpts(visible=False)
+            self.loaded = MANUAL
             return
         try:
             self._load(label)
         except (ValueError, OSError) as error:  # ConfigFileError is a ValueError
-            self.show_loaded()  # the menu keeps telling the truth
+            self.settings.child('config', 'configuration').setValue(self.loaded)  # the menu keeps telling the truth
             self.fail(error)
-
-    def show_loaded(self) -> None:
-        """Put the menus back on what is really loaded."""
-        configuration, module = self.loaded
-        self.settings.child('config', 'configuration').setValue(configuration)
-        self.settings.child('config', 'module').setOpts(visible=configuration != MANUAL)
-        if module:
-            self.settings.child('config', 'module').setValue(module)
 
     def _load(self, label: str) -> None:
         configuration = self.files.load(_suffix(label))
-        modules = list(configuration.modules)
-        module = self.settings.child('config', 'module')
-        module.setOpts(limits=[ALL] + modules, visible=True)
-        if self.settings['config', 'module'] not in modules:
-            module.setValue(ALL)
-        chosen = self.settings['config', 'module']
-        channels = [channel for name in modules for channel in configuration.channels(name)] if chosen == ALL \
-            else configuration.channels(chosen)
+        channels = [channel for module in configuration.modules for channel in configuration.channels(module)]
         self.settings.child('channels').setChannels(channels)
-        self.loaded = (label, chosen)
+        self.loaded = label
         self.settings.child('config', 'save').setOpts(suffix=label)  # what the dialog of the save button proposes
-        self.notify(f'Configuration {label}, module {chosen} loaded')
+        self.notify(f'Configuration {label} loaded')
 
     def save_configuration(self, button: Parameter) -> None:
         """Write the channels of the tree in the file of the suffix given by the dialog of the button.
 
-        Each channel goes in the module that its name starts with (``Dev1`` for ``Dev1/ai1``), as the files name a
-        channel after its module: the devices can be mixed. In an existing file the modules of the tree are replaced
-        and the other ones are kept.
+        The file describes exactly the channels of the tree: each one goes in the module that its name starts with
+        (``Dev1`` for ``Dev1/ai1``), as the files name a channel after its module, so that devices can be mixed. In an
+        existing file the description, the devices and the notes of the channels that stay are kept.
         """
         suffix = _suffix(button.opts['suffix'])
         channels = self.channels()
@@ -107,6 +89,8 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         for channel in channels:
             by_module.setdefault(channel.name.split('/')[0], []).append(channel)
         configuration = self.files.load(suffix) if self.files.path(suffix).exists() else Configuration()
+        for module in [name for name in configuration.modules if name not in by_module]:
+            del configuration.modules[module]
         for module, module_channels in by_module.items():
             configuration = configuration.with_channels(module, module_channels)
         self.files.save(suffix, configuration)
@@ -125,7 +109,7 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         return channels_of(self.settings.child('channels'))
 
     def commit_settings(self, param: Parameter) -> None:
-        if param.name() in ('configuration', 'module') and param.parent() is self.settings.child('config'):
+        if param.name() == 'configuration' and param.parent() is self.settings.child('config'):
             self.load_configuration()
         elif param.opts['type'] == 'ni_save':  # the button has been clicked, after the dialog of the GUI
             led = self.settings.child('config', 'save')
