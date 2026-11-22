@@ -48,6 +48,7 @@ Loading a configuration
 
 Entering the channels again at each start is tedious, and the state manager of the Dashboard cannot restore them,
 because they exist only once the plugin has started. The way to restore them is to **load a configuration file**
-(:doc:`config_files`), which describes the channels of a setup. This choice, a drop-down list of the configurations
+(:doc:`config_files`), which describes the channels of a setup: it is a form of state manager built into the plugin
+and dedicated to DAQmx. This choice, a drop-down list of the configurations
 found in the folder of the files, is not available in the viewer yet: it comes in a following version, and until
 then the channels have to be added by hand.

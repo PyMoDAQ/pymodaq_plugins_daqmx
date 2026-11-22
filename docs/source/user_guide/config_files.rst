@@ -2,7 +2,9 @@ Configuration files
 ===================
 
 A configuration file describes the channels of the modules of a bench, so that you do not have to enter them again
-each time a plugin starts. It is a TOML file. Each file is a *configuration*, and the plugin offers the list of the
+each time a plugin starts. It is a TOML file, and it works as a state manager built into the plugin and dedicated to
+DAQmx: the state manager of the Dashboard cannot restore the channels of a plugin, which exist only once it has
+started, whereas a configuration describes them. Each file is a *configuration*, and the plugin offers the list of the
 configurations in a drop-down menu, so that the choice is saved with the preset of the plugin.
 
 Where the files are
