@@ -1,0 +1,47 @@
+version = 1
+description = "The bench of config_daqmx_bench.toml, in the current format"
+
+[devices.cDAQ1]
+product = "cDAQ-9174"
+
+[modules.cDAQ1Mod1]
+product = "NI 9211"
+
+[modules.cDAQ1Mod1.ai.ai2]
+type = "thermocouple"
+thermocouple_type = "K"
+units = "DEG_C"
+min_val = 0.0
+max_val = 50.0
+info = "Example of AI thermocouple channel"
+
+[modules.cDAQ1Mod1.ai.ai1]
+type = "thermocouple"
+thermocouple_type = "K"
+units = "DEG_C"
+min_val = 0.0
+max_val = 50.0
+info = "Example of AI thermocouple channel"
+
+[modules.cDAQ1Mod2]
+product = "NI 9217"
+
+[modules.cDAQ1Mod3]
+product = "NI 9205"
+
+[modules.cDAQ1Mod3.ai.ai0]
+type = "voltage"
+terminal_config = "RSE"
+min_val = -10.0
+max_val = 10.0
+info = "Example of AI voltage channel"
+
+[modules.cDAQ1Mod3.ai.ai5]
+type = "voltage"
+terminal_config = "RSE"
+min_val = -10.0
+max_val = 10.0
+info = "Example of AI voltage channel"
+
+[modules.cDAQ1Mod4]
+product = "NI 9203"
