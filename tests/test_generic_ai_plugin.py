@@ -174,6 +174,19 @@ def test_the_clock_list_offers_clock_sources_of_all_the_devices(qapp, driver, sy
     plugin.close()
 
 
+def test_sources_come_from_the_chassis_of_the_module_not_from_other_devices(qapp, driver, system_driver):
+    system_driver.installed_devices[1]._properties['chassis'] = ''  # Dev2 is a board of its own, Dev1 is in cDAQ1
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    modules = two_modules(plugin)
+    for offered in (modules.child('Dev1', 'clock').opts['limits'], modules.child('Dev1', 'trigger', 'terminal').opts['limits']):
+        assert '/Dev1/PFI1' in offered
+        assert not [t for t in offered if t.startswith('/Dev2/')]
+    for offered in (modules.child('Dev2', 'clock').opts['limits'], modules.child('Dev2', 'trigger', 'terminal').opts['limits']):
+        assert '/Dev2/PFI1' in offered
+        assert not [t for t in offered if t.startswith('/Dev1/')]
+    plugin.close()
+
+
 def test_a_digital_edge_trigger_starts_the_task_of_its_module_only(qapp, driver, system_driver):
     from nidaqmx.constants import Edge
     plugin = make_detector(DAQ_0DViewer_NIDAQmx)

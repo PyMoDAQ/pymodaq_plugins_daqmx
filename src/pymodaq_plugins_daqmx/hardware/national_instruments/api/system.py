@@ -61,6 +61,10 @@ class NIDAQSystem:
         """Terminals of ``device`` (``/Dev1/PFI0``...), usable as clock or trigger sources."""
         return list(self._device_property(device, 'terminals', list, []))
 
+    def chassis(self, device):
+        """Name of the chassis that holds ``device`` (``cDAQ1`` for ``cDAQ1Mod3``), empty for a device that is not in one."""
+        return self._device_property(device, 'compact_daq_chassis_device', lambda chassis: chassis.name, '')
+
     def ai_voltage_ranges(self, device):
         """Voltage ranges of the analog inputs as ``(min, max)`` pairs."""
         return self._device_property(device, 'ai_voltage_rngs', _pairs, [])

@@ -112,7 +112,7 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         super().__init__(*args, **kwargs)
         system = NIDAQSystem()
         self.settings.child('channels').setLimits(system.all_channels(ChannelKind.AI))
-        self.terminals = [terminal for device in system.devices() for terminal in system.terminals(device)]
+        self.terminals = {device: system.terminals(device) for device in system.devices()}  # of each device
         self.files = ConfigFiles()
         self.loaded = MANUAL  # the configuration whose channels are in the tree
         self.in_file = ()  # what the file describes (see `snapshot`), to tell if the tree still is the file
@@ -240,11 +240,33 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         if param.opts['limits'] != limits:
             param.setLimits(limits)
 
+    def reachable_devices(self, module: str) -> List[str]:
+        """The devices whose terminals can reach ``module``: itself and, for a module of a chassis, the chassis and the
+        other modules of that chassis (a board cannot be wired to another device by software)."""
+        try:
+            chassis = NIDAQSystem().chassis(module)
+        except ValueError:  # not a device of the system
+            chassis = ''
+        if not chassis:
+            return [module]
+        return [device for device in self.terminals
+                if device in (module, chassis) or self.chassis_of(device) == chassis]
+
+    @staticmethod
+    def chassis_of(device: str) -> str:
+        try:
+            return NIDAQSystem().chassis(device)
+        except ValueError:
+            return ''
+
     def module_lists(self, module: str) -> dict:
-        """What the settings of ``module`` choose among. A terminal of its own ``ai`` subsystem cannot time it."""
-        others = [m for m in self.modules() if m != module]
+        """What the settings of ``module`` choose among. A terminal of its own ``ai`` subsystem cannot time it, and
+        only the devices that can reach the module offer terminals (see ``reachable_devices``)."""
+        reachable = self.reachable_devices(module)
+        others = [m for m in self.modules() if m != module and m in reachable]
         own = f'/{module}/ai/'
-        terminals = [t for t in self.terminals if not t.startswith(own) and is_signal_terminal(t)]
+        terminals = [t for device in reachable for t in self.terminals.get(device, [])
+                     if not t.startswith(own) and is_signal_terminal(t)]
         names = [child.opts['title'] for child in self.settings.child('channels').children()
                  if child.opts['title'].split('/')[0] == module]
         try:  # the dedicated analog trigger terminals of the device, which are not read

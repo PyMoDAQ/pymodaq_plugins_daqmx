@@ -51,7 +51,10 @@ Settings
     can have (the driver needs it to size its buffer), not the real one.
   * **Clock**: ``internal`` (the module times itself), a terminal wired to the device (``/Dev1/PFI1``), or the clock
     exported by another module (``/Dev1/ai/SampleClock``), which makes the modules share one clock. Any module may
-    follow an external clock. A module cannot be offered its own clock.
+    follow an external clock. A module cannot be offered its own clock. The list offers only the terminals
+    that can reach the module: those of its device, and for a module of a chassis the terminals of the chassis and of
+    the other modules of that chassis (a board cannot be wired by software to another device). The terminal of the
+    digital trigger follows the same rule.
   * **Start trigger**: ``none`` (the task starts at once), ``digital edge`` (a *Terminal* such as ``/Dev1/PFI0``, or
     the start trigger exported by another module, and an *Edge*) or ``analog edge`` (a *Channel*, a *Level* in volts
     and an *Edge*). An analog trigger watches one of the channels of the module, which the driver requires to be a

@@ -290,6 +290,11 @@ def _flat(ranges):
     return [value for pair in ranges for value in pair]
 
 
+class _Named:
+    def __init__(self, name):
+        self.name = name
+
+
 class DoubleDevice:
     """Values copied from the reports of a PCIe-6363 (``Dev2``) and of a PCI-6133 without analog output."""
 
@@ -318,6 +323,8 @@ class DoubleDevice:
     ai_trig_usage = property(lambda self: self._get('ai_trig'))
     ai_meas_types = property(lambda self: self._properties.get('ai_meas', [UsageTypeAI.VOLTAGE, UsageTypeAI.CURRENT]))
     di_trig_usage = property(lambda self: self._get('di_trig'))
+    # the chassis of a module (a device without one gives an empty name); the double puts its devices in 'cDAQ1'
+    compact_daq_chassis_device = property(lambda self: _Named(self._properties.get('chassis', 'cDAQ1')))
 
 
 def _pcie_6363():
