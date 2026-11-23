@@ -55,6 +55,8 @@ def test_maximum_rates_and_the_lack_of_one(system_driver):
     assert system.ai_max_rate('Dev2', multi_channel=False) == 2000000.0
     assert system.ao_max_rate('Dev2') == pytest.approx(2857142.857)
     assert system.ao_max_rate('Dev1') is None  # the PCI-6133 has no analog output
+    assert system.ao_min_rate('Dev2') == pytest.approx(0.1)
+    assert system.ao_min_rate('Dev1') is None
 
 
 def test_tells_whether_a_device_can_be_started_by_a_trigger(system_driver):
@@ -62,6 +64,8 @@ def test_tells_whether_a_device_can_be_started_by_a_trigger(system_driver):
 
     assert system.supports_start_trigger('Dev2', ChannelKind.AI) is True
     assert system.supports_start_trigger('Dev2', ChannelKind.DI) is True
+    assert system.supports_start_trigger('Dev2', ChannelKind.AO) is True
+    assert system.supports_start_trigger('Dev1', ChannelKind.AO) is False
     assert system.supports_start_trigger('Dev1', ChannelKind.DI) is False
 
 

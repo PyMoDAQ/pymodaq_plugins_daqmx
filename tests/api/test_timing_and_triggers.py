@@ -31,7 +31,8 @@ def test_the_sample_clock_can_come_from_another_device(driver):
 
 
 @pytest.mark.parametrize('kwargs', [dict(rate=0., samples=10), dict(rate=-1., samples=10),
-                                    dict(rate=100., samples=0)])
+                                    dict(rate=100., samples=0), dict(rate=100., samples=10, buffer=10),
+                                    dict(rate=100., buffer=0)])
 def test_a_clock_that_cannot_run_is_refused(kwargs):
     with pytest.raises(ValueError):
         ClockSettings(**kwargs)
@@ -64,6 +65,14 @@ def test_only_a_counter_has_a_terminal_of_pulses():
 
     with pytest.raises(ValueError, match='counter'):
         counter_output_terminal('Dev2/ao0')
+
+
+def test_the_buffer_of_a_continuous_task_can_be_the_samples_to_repeat(driver):
+    task, nidaqmx_task = open_task(driver, timing=ClockSettings(rate=2000., buffer=50))
+
+    (call,) = nidaqmx_task.timing_calls
+    assert call[2]['sample_mode'] == AcquisitionType.CONTINUOUS
+    assert call[2]['samps_per_chan'] == 50
 
 
 def test_without_a_number_of_samples_the_acquisition_is_continuous(driver):

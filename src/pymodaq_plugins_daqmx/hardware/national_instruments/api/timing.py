@@ -12,21 +12,30 @@ class ClockSettings:
     ``source`` is a terminal such as ``/Dev1/PFI1`` to use an external clock; empty means the onboard clock.
     A continuous acquisition (no ``samples``) is read through ``on_samples_ready`` (``start(notify_every=n)``),
     with a driver buffer holding at least one second of data.
+
+    ``buffer`` is the number of samples per channel of the driver buffer of a continuous task. Leave it to None for
+    an acquisition. For a generation that repeats the samples of its buffer (analog output), give the number of samples
+    of the signal: the driver then regenerates exactly these samples again and again.
     """
     rate: float
     samples: Optional[int] = None
     source: str = ''
     edge: Edge = Edge.RISING
+    buffer: Optional[int] = None
 
     def __post_init__(self):
         if not self.rate > 0:
             raise ValueError(f'rate must be positive, got {self.rate}')
         if self.samples is not None and not self.samples >= 1:
             raise ValueError(f'samples must be at least 1, got {self.samples}')
+        if self.buffer is not None and (self.samples is not None or not self.buffer >= 1):
+            raise ValueError(f'buffer is the size of the buffer of a continuous task (no samples), at least 1, '
+                             f'got samples={self.samples}, buffer={self.buffer}')
 
     def apply_to(self, task):
         if self.samples is None:
-            mode, per_channel = AcquisitionType.CONTINUOUS, max(1000, int(self.rate))
+            mode = AcquisitionType.CONTINUOUS
+            per_channel = max(1000, int(self.rate)) if self.buffer is None else self.buffer
         else:
             mode, per_channel = AcquisitionType.FINITE, self.samples
         task.timing.cfg_samp_clk_timing(self.rate, source=self.source, active_edge=self.edge,

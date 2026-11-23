@@ -39,6 +39,8 @@ Actuators
 
 * **NIDAQmx**: One analog output (voltage / current) of a National Instrument device, set one point at a time
 * **NIDAQmx_DO**: One digital output line (0 / 1, or a pulse to trigger an acquisition)
+* **NIDAQmx_Waveform**: Waveforms (arrays of samples) played on several analog outputs of one device, with one clock; the
+  samples come from an application such as the waveform extension of ``pymodaq_plugins_waveform``
 * **NIDAQmx_RampOutput**: A quantity driven by an analog output, changed by voltage ramps timed by a counter used as a
   clock (value = voltage x conversion factor); several axes (x, y, z) can share the clock
 

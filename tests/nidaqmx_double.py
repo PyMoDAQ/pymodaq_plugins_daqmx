@@ -320,6 +320,8 @@ class DoubleDevice:
     ai_max_multi_chan_rate = property(lambda self: self._get('ai_max_multi'))
     ai_max_single_chan_rate = property(lambda self: self._get('ai_max_single'))
     ao_max_rate = property(lambda self: self._get('ao_max'))
+    ao_min_rate = property(lambda self: self._get('ao_min'))
+    ao_trig_usage = property(lambda self: self._get('ao_trig'))
     ai_trig_usage = property(lambda self: self._get('ai_trig'))
     ai_meas_types = property(lambda self: self._properties.get('ai_meas', [UsageTypeAI.VOLTAGE, UsageTypeAI.CURRENT]))
     di_trig_usage = property(lambda self: self._get('di_trig'))
@@ -338,7 +340,8 @@ def _pcie_6363():
                    '/Dev2/ai/SampleClock', '/Dev2/ao/SampleClock', '/Dev2/ai/ConvertClock', '/Dev2/ctr0', '/Dev2/port0/line0'],
         ai_ranges=[(-0.1, 0.1), (-0.2, 0.2), (-0.5, 0.5), (-1.0, 1.0), (-2.0, 2.0), (-5.0, 5.0), (-10.0, 10.0)],
         ao_ranges=[(-5.0, 5.0), (-10.0, 10.0)], ai_max_multi=1000000.0, ai_max_single=2000000.0,
-        ao_max=2857142.8571428573, ai_trig=start_pause_reference, di_trig=start_pause_reference)
+        ao_max=2857142.8571428573, ao_min=0.1,  # ao_min: a value of the tests, not recorded
+        ao_trig=[TriggerUsage.PAUSE, TriggerUsage.START], ai_trig=start_pause_reference, di_trig=start_pause_reference)
 
 
 def _pci_6133():
@@ -351,6 +354,8 @@ def _pci_6133():
         ai_ranges=[(-1.25, 1.25), (-2.5, 2.5), (-5.0, 5.0), (-10.0, 10.0)], ao_ranges=[],
         ai_max_multi=2500000.0, ai_max_single=2500000.0,
         ao_max=nidaqmx.DaqError('Device does not support this property.', -200197),
+        ao_min=nidaqmx.DaqError('Device does not support this property.', -200197),
+        ao_trig=nidaqmx.DaqError('Device does not support this property.', -200197),
         ai_trig=[TriggerUsage.PAUSE, TriggerUsage.REFERENCE, TriggerUsage.START], di_trig=[])
 
 
