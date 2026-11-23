@@ -144,7 +144,7 @@ class DAQ_Move_NIDAQmx_Waveform(DAQ_Move_base):
         self.ispolling = False  # the move is done once the generation has started: no polling (set for each move)
 
     def move_rel(self, value: DataActuator):
-        raise NotImplementedError('a waveform has no relative move: send the samples with an absolute move')
+        raise ValueError('a waveform has no relative move: send the samples with an absolute move')
 
     def move_home(self):
         self.stop_motion()

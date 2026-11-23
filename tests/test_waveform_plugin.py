@@ -182,3 +182,8 @@ def test_a_choice_of_outputs_on_several_devices_or_none_is_refused(qapp, driver,
     with pytest.raises(ValueError, match='one device'):
         make_actuator(DAQ_Move_NIDAQmx_Waveform, channels=dict(all_items=['Dev2/ao0', 'Dev1/ao0'],
                                                                selected=['Dev2/ao0', 'Dev1/ao0']))
+
+
+def test_a_relative_move_makes_no_sense_for_a_waveform(plugin):
+    with pytest.raises(ValueError, match='no relative move'):
+        plugin.move_rel(position(np.zeros(2), np.zeros(2)))
