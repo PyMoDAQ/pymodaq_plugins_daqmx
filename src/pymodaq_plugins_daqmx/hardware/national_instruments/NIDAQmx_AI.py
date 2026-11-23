@@ -1,4 +1,14 @@
-"""Base class of the thin analog input viewers (AI and DualAI) built on top of the NIDAQmx wrapper."""
+"""Base class of the analog input viewers, built on the ``nidaqmx`` API of this package.
+
+Overview:
+
+* ``Acquisition`` describes what one task acquires (a module: channels, frequency, clock, start trigger);
+* ``start_order`` and ``trace_axis`` are the two rules that depend on the clocks (which task starts first, what the
+  axis of a trace is);
+* ``DAQ_Viewer_AIBase`` builds one task for each acquisition (``update_tasks``), grabs finite blocks (``grab_data``)
+  or streams them in live mode (``start_live``), and emits the data (``emit_points``, ``emit_traces``). Subclasses
+  only tell *what* to acquire by overriding ``channels`` or ``acquisitions``.
+"""
 from typing import List, Optional, Tuple
 
 from dataclasses import dataclass
@@ -85,7 +95,9 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
     In 0D, the Naverage of the viewer is the number of points averaged by the acquisition (`Nsamples` is hidden).
     In 1D, `Nsamples` is the length of the trace and Naverage the number of traces averaged.
 
-    Subclasses declare in `params` one list parameter per channel and give their names in `channel_names`.
+    Subclasses give the channels (`channels`, or `channel_names` for voltages) or, to acquire with several tasks, the
+    list of `acquisitions`. Each acquisition has its task and gives its own data, so the tasks can differ in
+    frequency, clock and start trigger.
     """
     params = comon_parameters + [
         {'title': 'Display type:', 'name': 'display', 'type': 'list', 'limits': ['0D', '1D'],
@@ -156,12 +168,16 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
         return max(self.samples_per_block(), MIN_CLOCKED_SAMPLES)
 
     def signature(self, streaming: bool = False):
-        """What the tasks are built for: the channels and the frequency of each, and the samples of finite tasks."""
+        """What the tasks are built for: the acquisitions (channels, frequency, clock, trigger) and the samples of
+        finite tasks. When it differs from the one the tasks were built with, the tasks are rebuilt at the next grab."""
         samples = None if streaming else self.task_samples()
         return tuple(self.acquisitions()), samples
 
     def update_tasks(self, streaming: bool = False) -> None:
-        """Replace the tasks by ones that follow the settings: finite for a snap, continuous for the live mode."""
+        """Replace the tasks by ones that follow the settings: finite for a snap, continuous for the live mode.
+
+        All tasks are built, or none is: a failure closes those already built (a task keeps its channels reserved).
+        """
         self.close()
         acquisitions = self.acquisitions()
         if not acquisitions:  # a task needs a channel: they are built when the first one is added
@@ -183,12 +199,17 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
         self.controller = tasks[0] if len(tasks) == 1 else TaskGroup(*tasks)
         self._signature = self.signature(streaming)
 
+    def no_channel_message(self) -> None:
+        self.emit_status(ThreadCommand('Update_Status', ['No channel to acquire: add one to the channels', 'log']))
+
     def ordered_tasks(self) -> List[AnalogInputTask]:
         """The tasks in the order they start: the ones that wait for the signal of another module come first."""
         return [self.tasks[i] for i in self.start_order]
 
     def read_samples(self) -> List[np.ndarray]:
-        """Run one finite acquisition of each task, together, and return their arrays (nchannels, Nsamples)."""
+        """Run one finite acquisition of each task, together, and return their arrays (nchannels, Nsamples), in the
+        order of the tasks. The tasks start in `start_order` (those that wait for a signal first) and are stopped
+        whatever happens, so that their channels are free for the next acquisition."""
         started = []
         try:
             for task in self.ordered_tasks():
@@ -208,7 +229,7 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
         if self.controller is None or self._signature != self.signature():
             self.update_tasks()  # follow the Naverage of the viewer in 0D, and the channels added or changed
         if self.controller is None:
-            self.emit_status(ThreadCommand('Update_Status', ['No channel to acquire: add one to the channels', 'log']))
+            self.no_channel_message()
             return
         if self.settings['display'] == '0D':
             # the surplus sample of Naverage=1 is dropped
@@ -222,7 +243,7 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
         self.stop_live()
         self.update_tasks(streaming=True)  # a stopped task still reserves its channels: no snap task in parallel
         if self.controller is None:
-            self.emit_status(ThreadCommand('Update_Status', ['No channel to acquire: add one to the channels', 'log']))
+            self.no_channel_message()
             return
         self._traces = [[] for _ in self.tasks]
         for index, task in enumerate(self.tasks):
@@ -247,6 +268,8 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
             self.update_tasks()  # back to the tasks of the snaps
 
     def _on_block(self, index: int, block: np.ndarray) -> None:
+        """A block of samples of the task ``index`` arrived in live mode: emit it (0D), or add it to the series of
+        traces being averaged and emit the mean when the series is complete (1D)."""
         if self.settings['display'] == '0D':
             self.emit_points([block], [index])
             return

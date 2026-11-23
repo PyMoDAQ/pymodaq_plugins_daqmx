@@ -1,34 +1,48 @@
-import re
-from typing import List, Optional
+"""Generic viewer of the analog inputs of any NI device, on the ``nidaqmx`` API.
 
+How this module is organised:
+
+* helpers on terminals (``_exporting_module``, ``is_signal_terminal``) and the settings of one module (``module_group``);
+* ``DAQ_0DViewer_NIDAQmx``, whose sections are, in order: configuration files (menu, load, save), the channels and
+  the module groups of the tree (``sync_modules``), the start trigger of a module, what is acquired
+  (``acquisitions``), and the reaction to a change of a setting (``commit_settings``).
+
+The acquisition itself (tasks, clocks, order of start, emission of the data) is in ``DAQ_Viewer_AIBase``.
+"""
+import re
+from typing import Dict, List, Optional
+
+from nidaqmx.constants import Edge, Slope
 from pymodaq.control_modules.thread_commands import ThreadStatus
 from pymodaq.control_modules.viewer_utility_classes import main
 from pymodaq.utils.daq_utils import ThreadCommand
+from pymodaq_gui.utils.status_palette import Status
 from pyqtgraph.parametertree import Parameter
 
 from pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_AI import Acquisition, DAQ_Viewer_AIBase
-from nidaqmx.constants import Edge, Slope
-
 from pymodaq_plugins_daqmx.hardware.national_instruments.api import (
     AnalogEdgeTrigger, ChannelKind, DigitalEdgeTrigger, NIDAQSystem)
 from pymodaq_plugins_daqmx.hardware.national_instruments.channel_group import channels_of, unread_of
 from pymodaq_plugins_daqmx.hardware.national_instruments.channel_tree import set_type, update_suffixes
 from pymodaq_plugins_daqmx.hardware.national_instruments.config_files import Configuration, ConfigFiles
 from pymodaq_plugins_daqmx.hardware.national_instruments.save_button import save_param
-from pymodaq_gui.utils.status_palette import Status
 
 MANUAL = '(manual)'    # no configuration file: the channels are the ones of the tree
-TRIGGER_TYPES = ['none', 'digital edge', 'analog edge']
+TRIGGER_TYPES = ['none', 'digital edge', 'analog edge']  # the types of start trigger of a module
 CLOCK_INTERNAL = 'internal'  # the sample clock of the module itself
 DEFAULT = 'default'    # the name of the configuration of the file without suffix
 
 
+# --- terminals --------------------------------------------------------------------------------------------------
+
 def _exporting_module(terminal: str) -> Optional[str]:
-    """The module that produces the signal ``terminal`` (``/Dev1/ai/SampleClock``), None for any other terminal."""
+    """The module that produces the signal ``terminal`` (``/Dev1/ai/SampleClock`` is produced by ``Dev1``), None for
+    any other terminal (``/Dev1/PFI0``, a wire). It tells which task has to be started before another one."""
     parts = (terminal or '').split('/')
     return parts[1] if len(parts) > 3 and parts[0] == '' and parts[2] == 'ai' else None
 
 
+# what the driver lists as terminals but cannot be a clock or a trigger source
 _NOT_A_SOURCE = re.compile(r'^/[^/]+/((ai|ao)\d+|ctr\d+|port\d+(/line\d+)?|APFI\d+)$', re.IGNORECASE)
 
 
@@ -37,6 +51,8 @@ def is_signal_terminal(terminal: str) -> bool:
     analog trigger terminal (``/Dev1/APFI0``), which has its own list."""
     return _NOT_A_SOURCE.match(terminal) is None
 
+
+# --- settings of a module ---------------------------------------------------------------------------------------
 
 def module_group(module: str, frequency: int, clocks: List[str], terminals: List[str], channels: List[str]) -> dict:
     """The settings of a module: its frequency, its clock and its start trigger."""
@@ -93,7 +109,10 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         self.in_file = ()  # what the file describes (see `snapshot`), to tell if the tree still is the file
         self.refresh_menu()
 
+    # --- configuration files: menu, load, save ------------------------------------------------------------------
+
     def refresh_menu(self) -> None:
+        """List the files of the configuration folder in the menu, after ``(manual)``."""
         self.settings.child('config', 'configuration').setLimits([MANUAL] + [_label(s) for s in self.files.suffixes()])
 
     def load_configuration(self) -> None:
@@ -143,9 +162,7 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         if not channels:
             raise ValueError('There is no channel to save')
         unread = unread_of(self.settings.child('channels'))
-        by_module = {}
-        for channel in channels:
-            by_module.setdefault(channel.name.split('/')[0], []).append(channel)
+        by_module = self.channels_by_module()
         configuration = self.files.load(suffix) if self.files.path(suffix).exists() else Configuration()
         for module in [name for name in configuration.modules if name not in by_module]:
             del configuration.modules[module]
@@ -162,6 +179,8 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         self.settings.child('config', 'configuration').setValue(self.loaded)
         self.notify(f'Channels saved in the configuration {_label(suffix)}')
 
+    # --- feedback to the control module -------------------------------------------------------------------------
+
     def notify(self, message: str) -> None:
         """Tell the control module that the action succeeded: its LED is back to normal."""
         self.emit_status(ThreadCommand('Update_Status', [message, 'log']))
@@ -170,8 +189,18 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         """Tell the control module that the action failed: its LED shows the error and its message."""
         self.emit_status(ThreadCommand(ThreadStatus.ERROR, str(error)))
 
+    # --- channels and module groups of the tree -----------------------------------------------------------------
+
     def channels(self) -> list:
+        """The channels of the API that the tree describes, in the order of the tree."""
         return channels_of(self.settings.child('channels'))
+
+    def channels_by_module(self) -> Dict[str, list]:
+        """The channels of the tree grouped by module (the device their name starts with), in order of appearance."""
+        by_module = {}
+        for channel in self.channels():
+            by_module.setdefault(channel.name.split('/')[0], []).append(channel)
+        return by_module
 
     def modules(self) -> List[str]:
         """The modules of the channels of the tree (the device a channel name starts with), in order of appearance."""
@@ -198,6 +227,7 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
 
     @staticmethod
     def set_limits(param: Parameter, limits: List[str]) -> None:
+        """Change the limits only when they differ: setting them sends them to the GUI and resets its combo box."""
         if param.opts['limits'] != limits:
             param.setLimits(limits)
 
@@ -216,6 +246,8 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         starts = terminals + [f'/{m}/ai/StartTrigger' for m in others]
         return {'clocks': list(dict.fromkeys(clocks)), 'terminals': list(dict.fromkeys(starts)),
                 'channels': names + apfi}
+
+    # --- start trigger of a module ------------------------------------------------------------------------------
 
     def module_trigger(self, module: str):
         """The start trigger of ``module`` as the API describes it, None if it starts at once."""
@@ -256,19 +288,23 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         settings.child('level').setOpts(visible=kind == 'analog edge')
         settings.child('edge').setOpts(visible=kind != 'none')
 
+    # --- what is acquired ---------------------------------------------------------------------------------------
+
     def acquisitions(self) -> List[Acquisition]:
         """One task for each module: its channels are acquired together, at its frequency, on its clock, started by
-        its trigger."""
+        its trigger.
+
+        ``waits_for`` lists the other modules whose exported signal (clock or start trigger) this module uses: the
+        base class starts those that wait first and the provider last."""
         self.sync_modules()  # the channels may have been added without the GUI telling the plugin
-        by_module = {}
-        for channel in self.channels():
-            by_module.setdefault(channel.name.split('/')[0], []).append(channel)
+        by_module = self.channels_by_module()
         unread = unread_of(self.settings.child('channels'))
         acquisitions = []
         for module, channels in by_module.items():
             group = self.settings.child('modules', module)
-            clock = '' if group['clock'] == CLOCK_INTERNAL else group['clock']
+            clock = '' if group['clock'] == CLOCK_INTERNAL else group['clock']  # '' = the module's own clock
             trigger = self.module_trigger(module)
+            # the parameter of the trigger that names its source depends on the type of trigger
             key = {'digital edge': 'terminal', 'analog edge': 'channel'}.get(group['trigger', 'type'])
             sources = [clock] + ([group['trigger', key]] if key is not None else [])
             waits = tuple(dict.fromkeys(m for m in (_exporting_module(source) for source in sources)
@@ -288,8 +324,9 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
 
     def leave_configuration_if_modified(self) -> None:
         """The menu goes back to ``(manual)`` as soon as the tree is not what the file describes any more: its
-        channels, the frequencies of the modules or the trigger (a value that cannot be a channel is a modification too), so that it never shows a configuration that is not
-        in the tree, and that choosing the file again reloads it."""
+        channels, the frequency, clock or trigger of a module (a value that cannot be a channel is a modification
+        too). The menu thus never shows a configuration that is not in the tree, and choosing the file again reloads
+        it."""
         if self.loaded == MANUAL:
             return
         try:
@@ -317,10 +354,20 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
             return param
         return self.settings.child(*reversed(names)) if names else self.settings
 
+    # --- reaction to a change of a setting ----------------------------------------------------------------------
+
     def commit_settings(self, param: Parameter) -> None:
+        """What the plugin does when a setting changed (in the GUI or by code).
+
+        The first branch handles the configuration actions (load, save); then the rebuilding of the tree that a
+        parameter requires (a type of channel, the units of a range, a type of trigger). Any change finally checks
+        that the tree still is the loaded configuration and updates the groups of the modules.
+        """
         button = param  # the one of the GUI: it holds what its dialog returned
         param = self.own(param)
-        if param.name() == 'configuration' and param.parent() is self.settings.child('config'):
+        parent = param.parent()
+        in_a_channel = parent is not None and parent.parent() is self.settings.child('channels')
+        if param.name() == 'configuration' and parent is self.settings.child('config'):
             self.load_configuration()
         elif param.opts['type'] == 'ni_save':  # the button has been clicked, after the dialog of the GUI
             param.opts.update(suffix=button.opts['suffix'])
@@ -330,14 +377,12 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
             except (ValueError, OSError) as error:
                 param.setValue(Status.ERROR)
                 self.fail(error)
-        if param.name() == 'type' and param.parent() is not None and param.parent().parent() is self.settings.child(
-                'channels'):  # the type of a channel: its group is rebuilt
-            set_type(ChannelKind.AI, param.parent(), param.value())
-        if param.name() == 'units' and param.parent() is not None and param.parent().parent() is self.settings.child(
-                'channels'):  # the units of a temperature: the range follows
-            update_suffixes(param.parent())
-        if param.name() == 'type' and param.parent() is not None and param.parent().name() == 'trigger':
-            self.show_trigger(param.parent().parent().name())
+        if param.name() == 'type' and in_a_channel:  # the type of a channel: its group is rebuilt
+            set_type(ChannelKind.AI, parent, param.value())
+        if param.name() == 'units' and in_a_channel:  # the units of a temperature: the range follows
+            update_suffixes(parent)
+        if param.name() == 'type' and parent is not None and parent.name() == 'trigger':
+            self.show_trigger(parent.parent().name())  # only the parameters of that type of trigger are visible
         self.leave_configuration_if_modified()
         self.sync_modules()
         super().commit_settings(param)
