@@ -22,8 +22,9 @@ How to use it
    its device can measure (``voltage``, then ``current``, ``thermocouple`` and ``rtd``) and its default parameters; a
    voltage channel gets the widest voltage range of the device.
 3. **Choose the type of each channel** (``voltage``, ``current``, ``thermocouple``, ``rtd``). The group is rebuilt with
-   only the parameters of the new type; the values that the two types share, such as the range, are kept.
-   Remove a channel with the remove button of its group.
+   only the parameters of the new type. The range is kept only between types that measure the same quantity
+   (thermocouple and RTD): changing from a voltage to a current or a temperature gives the default range of the new
+   type, as a range in volts means nothing in amperes. Remove a channel with the remove button of its group.
 4. **Set the acquisition**: the display, the frequency and, for the traces, the number of samples (see below).
 5. **Grab or start the live mode.** The task is built from the channels when the first one is available, and rebuilt
    at the next grab when the channels changed (in live mode, at the next start).
@@ -49,14 +50,17 @@ Settings
 
   * **Frequency**: the sampling rate of the module. With an external clock it is the highest frequency that clock
     can have (the driver needs it to size its buffer), not the real one.
-  * **Clock**: ``internal`` (the module times itself), a terminal wired to the device (``/Dev1/PFI1``), or the clock
-    exported by another module (``/Dev1/ai/SampleClock``), which makes the modules share one clock. Any module may
-    follow an external clock. A module cannot be offered its own clock. The list offers only the terminals
-    that can reach the module: those of its device, and for a module of a chassis the terminals of the chassis and of
-    the other modules of that chassis (a board cannot be wired by software to another device). The terminal of the
-    digital trigger follows the same rule.
+  * **Clock**: ``internal`` (the module times itself) or a clock source, which makes the modules share one clock.
+    Any module may follow an external clock. The list offers only real clock sources: the terminals wired to the
+    device (``/Dev1/PFI1``, RTSI, PXI), the sample clocks and timebases of the subsystems of the device
+    (``/Dev1/ao/SampleClock``) and the sample clock that another module exports (``/Dev1/ai/SampleClock``). A module
+    is never offered its own sample clock.
+  * **Reach of the sources**: a clock source or a digital trigger terminal has to be reachable by the module. The
+    lists offer the terminals of the device of the module and, for a module of a cDAQ chassis, the terminals of the
+    chassis (``/cDAQ1/PFI0``) and of the other modules of the same chassis. A card or a USB device only has its own
+    terminals, as a device cannot be wired to another one by software.
   * **Start trigger**: ``none`` (the task starts at once), ``digital edge`` (a *Terminal* such as ``/Dev1/PFI0``, or
-    the start trigger exported by another module, and an *Edge*) or ``analog edge`` (a *Channel*, a *Level* in volts
+    the start trigger exported by another module of the same chassis, and an *Edge*) or ``analog edge`` (a *Channel*, a *Level* in volts
     and an *Edge*). An analog trigger watches one of the channels of the module, which the driver requires to be a
     channel of the task (set its ``read`` box off if you do not want its samples); the list also offers the dedicated
     analog trigger terminals (``/Dev1/APFI0``) of the module, if it has some: such a terminal is not acquired.
@@ -73,8 +77,8 @@ Settings
 * **Channels**: the group described above. Each channel has a ``read`` box (checked by default): unchecked, the
   channel stays in the task but its samples are not in the data, which is what an analog trigger on that channel needs.
   A module whose channels are all unchecked gives no data. The parameters of a channel are the fields of its channel class of the
-  API (``AIVoltage``, ``AICurrent``, ``AIThermocouple``, ``AIRtd``), with the same names (the range, ``min_val`` and ``max_val``, is shown in the unit of its quantity: V, A or the temperature units). Changing the type of a channel keeps the values that still make sense: the range is kept only between types that measure the same quantity (thermocouple and RTD), and takes the default of the new type otherwise; see :doc:`config_files`
-  for the list.
+  API (``AIVoltage``, ``AICurrent``, ``AIThermocouple``, ``AIRtd``), with the same names; the range (``min_val`` and ``max_val``) is shown in the unit of its quantity: V, A, or the
+  temperature units of the channel. See :doc:`config_files` for the list.
 
 Loading and saving a configuration
 ----------------------------------
