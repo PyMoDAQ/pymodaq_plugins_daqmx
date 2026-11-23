@@ -51,7 +51,9 @@ Format
 ``[modules.<name>.ai.<key>]``
    One table for each analog input channel. The channel is ``<module>/<key>`` (``cDAQ1Mod3/ai0``) and the order of
    the tables in the file is the order of the data of an acquisition. ``type`` selects the kind of channel and its
-   other keys. ``info`` is a free note, kept when the file is saved again. A key that does not belong to the type
+   other keys. ``info`` is a free note, kept when the file is saved again. ``read`` is optional and ``true`` by
+   default: with ``false`` the channel is in the task but its samples are not in the data (to watch a trigger
+   without reading it). A key that does not belong to the type
    is an error, so that a typo cannot go unnoticed.
 
 The names of the keys are the names of the arguments of the channels of the Python API

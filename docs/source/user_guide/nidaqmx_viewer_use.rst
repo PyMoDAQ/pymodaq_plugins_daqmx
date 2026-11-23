@@ -54,7 +54,9 @@ Settings
   viewer, and in ``1D`` *Naverage* is the number of traces averaged. The driver needs at least two samples for a
   clocked acquisition: *Nsamples* cannot be below 2, and with *Naverage* = 1 two samples are acquired and the first
   one is kept.
-* **Channels**: the group described above. The parameters of a channel are the fields of its channel class of the
+* **Channels**: the group described above. Each channel has a ``read`` box (checked by default): unchecked, the
+  channel stays in the task but its samples are not in the data, which is what an analog trigger on that channel needs.
+  A module whose channels are all unchecked gives no data. The parameters of a channel are the fields of its channel class of the
   API (``AIVoltage``, ``AICurrent``, ``AIThermocouple``, ``AIRtd``), with the same names; see :doc:`config_files`
   for the list.
 

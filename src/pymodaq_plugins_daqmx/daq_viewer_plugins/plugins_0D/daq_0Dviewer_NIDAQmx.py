@@ -10,7 +10,7 @@ from nidaqmx.constants import Edge, Slope
 
 from pymodaq_plugins_daqmx.hardware.national_instruments.api import (
     AnalogEdgeTrigger, ChannelKind, DigitalEdgeTrigger, NIDAQSystem)
-from pymodaq_plugins_daqmx.hardware.national_instruments.channel_group import channels_of
+from pymodaq_plugins_daqmx.hardware.national_instruments.channel_group import channels_of, unread_of
 from pymodaq_plugins_daqmx.hardware.national_instruments.channel_tree import set_type
 from pymodaq_plugins_daqmx.hardware.national_instruments.config_files import Configuration, ConfigFiles
 from pymodaq_plugins_daqmx.hardware.national_instruments.save_button import save_param
@@ -89,7 +89,8 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
     def _load(self, label: str) -> None:
         configuration = self.files.load(_suffix(label))
         channels = [channel for module in configuration.modules for channel in configuration.channels(module)]
-        self.settings.child('channels').setChannels(channels)
+        unread = {name for module in configuration.modules for name in configuration.unread(module)}
+        self.settings.child('channels').setChannels(channels, unread)
         self.sync_frequencies()
         self.sync_trigger_channels()
         for module in self.modules():  # a module that the file gives no frequency to goes back to the global one
@@ -113,6 +114,7 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         channels = self.channels()
         if not channels:
             raise ValueError('There is no channel to save')
+        unread = unread_of(self.settings.child('channels'))
         by_module = {}
         for channel in channels:
             by_module.setdefault(channel.name.split('/')[0], []).append(channel)
@@ -120,7 +122,8 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         for module in [name for name in configuration.modules if name not in by_module]:
             del configuration.modules[module]
         for module, module_channels in by_module.items():
-            configuration = configuration.with_channels(module, module_channels)
+            configuration = configuration.with_channels(
+                module, module_channels, unread=[c.name for c in module_channels if c.name in unread])
             configuration = configuration.with_frequency(module, self.settings['frequencies', module])
         self.files.save(suffix, configuration.with_trigger(self.trigger_keys()))
         self.refresh_menu()
@@ -208,7 +211,7 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         trigger."""
         self.sync_frequencies()
         frequencies = tuple((child.name(), child.value()) for child in self.settings.child('frequencies').children())
-        return tuple(self.channels()), frequencies, self.trigger_keys()
+        return tuple(self.channels()), tuple(unread_of(self.settings.child('channels'))), frequencies, self.trigger_keys()
 
     def show_trigger(self) -> None:
         """Only the parameters of the chosen type of trigger are visible."""
@@ -226,7 +229,9 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         by_module = {}
         for channel in self.channels():
             by_module.setdefault(channel.name.split('/')[0], []).append(channel)
-        return [Acquisition(module, channels, self.settings['frequencies', module])
+        unread = unread_of(self.settings.child('channels'))
+        return [Acquisition(module, channels, self.settings['frequencies', module],
+                            tuple(c.name for c in channels if c.name in unread))
                 for module, channels in by_module.items()]
 
     def leave_configuration_if_modified(self) -> None:

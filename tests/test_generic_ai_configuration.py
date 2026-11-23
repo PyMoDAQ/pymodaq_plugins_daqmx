@@ -377,3 +377,23 @@ def test_the_menu_goes_back_to_manual_when_a_frequency_or_the_trigger_is_changed
     plugin.commit_settings(trigger)
     assert menu(plugin) == '(manual)'
     plugin.close()
+
+
+def test_a_channel_that_is_not_read_is_saved_and_loaded_back_not_read(qapp, driver, system_driver, folder):
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    group = plugin.settings.child('channels')
+    group.addNew('Dev1/ai0')
+    group.addNew('Dev1/ai1')
+    group.child('Dev1_ai1', 'read').setValue(False)
+    plugin.settings.child('config', 'save').opts.update(suffix='quiet')
+    press(plugin, 'config', 'save')
+    assert ConfigFiles(folder).load('quiet').unread('Dev1') == {'Dev1/ai1'}
+
+    choose(plugin, 'configuration', 'lab')
+    choose(plugin, 'configuration', 'quiet')
+
+    assert group.child('Dev1_ai0', 'read').value() is True and group.child('Dev1_ai1', 'read').value() is False
+    group.child('Dev1_ai0', 'read').setValue(False)
+    plugin.commit_settings(group.child('Dev1_ai0', 'read'))
+    assert menu(plugin) == '(manual)'  # not reading a channel any more is a modification
+    plugin.close()

@@ -38,10 +38,17 @@ class Acquisition:
     name: str
     channels: list
     frequency: int
+    unread: tuple = ()  # names of the channels that are in the task but not in the data
+
+    @property
+    def rows(self) -> List[int]:
+        """The rows of the acquired block that go in the data."""
+        return [i for i, channel in enumerate(self.channels) if channel.name not in self.unread]
 
     @property
     def labels(self) -> List[str]:
-        return [channel.name for channel in self.channels]
+        """The names of the channels of the data."""
+        return [self.channels[i].name for i in self.rows]
 
 
 class DAQ_Viewer_AIBase(DAQ_Viewer_base):
@@ -125,7 +132,8 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
     def signature(self, streaming: bool = False):
         """What the tasks are built for: the channels and the frequency of each, and the samples of finite tasks."""
         samples = None if streaming else self.task_samples()
-        return tuple((tuple(a.channels), a.frequency, samples, self.trigger_for(a)) for a in self.acquisitions())
+        return tuple((tuple(a.channels), a.frequency, samples, self.trigger_for(a), a.unread)
+                     for a in self.acquisitions())
 
     def update_tasks(self, streaming: bool = False) -> None:
         """Replace the tasks by ones that follow the settings: finite for a snap, continuous for the live mode."""
@@ -223,8 +231,11 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
         names = self.data_names(self.acquisitions_done)
         data = []
         for index, block in zip(indexes, blocks):
-            points = DataFromPlugins(name=names[index], data=[row for row in block], dim='Data1D',
-                                     labels=self.acquisitions_done[index].labels)
+            acquisition = self.acquisitions_done[index]
+            if not acquisition.rows:  # nothing of this task is read: it only serves as a trigger
+                continue
+            points = DataFromPlugins(name=names[index], data=[block[i] for i in acquisition.rows], dim='Data1D',
+                                     labels=acquisition.labels)
             data.append(points.mean_with_errors(axis=0))
         self.dte_signal.emit(DataToExport(self.data_name, data=data))
 
@@ -236,6 +247,9 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
         data = []
         for index, series in zip(indexes, traces):
             acquisition = self.acquisitions_done[index]
+            if not acquisition.rows:
+                continue
+            series = [trace[acquisition.rows] for trace in series]  # the channels that are read
             times = np.arange(series[0].shape[1]) / acquisition.frequency
             if len(series) == 1:  # nothing to average, so no error either
                 data.append(DataFromPlugins(name=names[index], data=[row for row in series[0]], dim='Data1D',

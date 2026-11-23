@@ -25,22 +25,28 @@ def _parameter(field, value=None) -> dict:
     return {'title': field.name, 'name': field.name, 'type': 'float', 'value': float(value)}
 
 
-def _children(kind: ChannelKind, type_: str, channel=None, previous: dict = None) -> List[dict]:
+def _children(kind: ChannelKind, type_: str, channel=None, previous: dict = None, read: bool = True) -> List[dict]:
     types = CHANNEL_TYPES[kind]
-    children = [{'title': 'type', 'name': 'type', 'type': 'list', 'limits': list(types), 'value': type_}]
+    children = [{'title': 'type', 'name': 'type', 'type': 'list', 'limits': list(types), 'value': type_},
+                {'title': 'read', 'name': 'read', 'type': 'bool', 'value': read}]  # in the data, or only in the task
     for field in channel_fields(types[type_]):
         value = getattr(channel, field.name) if channel is not None else (previous or {}).get(field.name)
         children.append(_parameter(field, value))
     return children
 
 
-def channel_params(kind: ChannelKind, channel) -> dict:
+def channel_params(kind: ChannelKind, channel, read: bool = True) -> dict:
     """The settings group (as a dictionary for ``Parameter.create``) of a channel of the API.
 
     The title of the group is the name of the channel (``Dev1/ai0``); the name of the parameter has no ``/``.
     """
     return {'title': channel.name, 'name': channel.name.replace('/', '_'), 'type': 'group',
-            'children': _children(kind, type_name(channel), channel), 'removable': True, 'renamable': False}
+            'children': _children(kind, type_name(channel), channel, read=read), 'removable': True, 'renamable': False}
+
+
+def is_read(group) -> bool:
+    """Whether the samples of the channel that the group describes are in the data (else it is only in the task)."""
+    return bool(group.child('read').value())
 
 
 def channel_from_params(kind: ChannelKind, group):
@@ -61,6 +67,7 @@ def set_type(kind: ChannelKind, group, type_: str) -> None:
     """Give the group the parameters of another type of channel; the values of the parameters the two types share
     are kept."""
     kept = {child.name(): child.value() for child in group.children() if child.name() != 'type'}
+    read = kept.pop('read', True)
     for child in list(group.children()):
         group.removeChild(child)
     previous = {}
@@ -72,5 +79,5 @@ def set_type(kind: ChannelKind, group, type_: str) -> None:
                 previous[field.name] = field.type[kept[field.name]]
         else:
             previous[field.name] = kept[field.name]
-    for spec in _children(kind, type_, None, previous):
+    for spec in _children(kind, type_, None, previous, read):
         group.addChild(spec)

@@ -173,3 +173,40 @@ def test_a_dedicated_analog_trigger_terminal_can_be_the_source_and_starts_the_ta
     grab_and_wait(plugin)
     assert [task.trigger_calls for task in driver] == [[], [('anlg_edge', '/Dev2/APFI0', Slope.RISING, 0.)]]
     plugin.close()
+
+
+def test_a_channel_that_is_not_read_stays_in_the_task_but_not_in_the_data(qapp, driver, system_driver):
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    group = plugin.settings.child('channels')
+    group.addNew('Dev1/ai0')
+    group.addNew('Dev1/ai1')
+    group.addNew('Dev2/ai3')
+    assert group.child('Dev1_ai1', 'read').value() is True  # read by default
+    group.child('Dev1_ai1', 'read').setValue(False)
+    plugin.commit_settings(group.child('Dev1_ai1', 'read'))
+    dte = grab_and_wait(plugin)
+    assert [name for _, name, _ in driver[0].channels] == ['Dev1/ai0', 'Dev1/ai1']  # the task has it (a trigger)
+    assert [data.labels for data in dte] == [['Dev1/ai0'], ['Dev2/ai3']]
+    plugin.close()
+
+
+def test_a_module_without_channel_to_read_gives_no_data(qapp, driver, system_driver):
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    group = plugin.settings.child('channels')
+    group.addNew('Dev1/ai0')
+    group.addNew('Dev2/ai3')
+    group.child('Dev1_ai0', 'read').setValue(False)
+    dte = grab_and_wait(plugin)
+    assert [data.labels for data in dte] == [['Dev2/ai3']]
+    plugin.close()
+
+
+def test_changing_the_type_of_a_channel_keeps_whether_it_is_read(qapp, driver, system_driver):
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    group = plugin.settings.child('channels')
+    group.addNew('Dev1/ai0')
+    group.child('Dev1_ai0', 'read').setValue(False)
+    group.child('Dev1_ai0', 'type').setValue('current')
+    plugin.commit_settings(group.child('Dev1_ai0', 'type'))
+    assert group.child('Dev1_ai0', 'read').value() is False
+    plugin.close()

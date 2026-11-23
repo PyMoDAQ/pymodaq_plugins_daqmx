@@ -202,3 +202,24 @@ def test_a_wrong_frequency_or_trigger_is_reported_with_the_file_and_the_key(tmp_
     with pytest.raises(ConfigFileError, match=where) as error:
         ConfigFiles(tmp_path).load('')
     assert 'config_daqmx.toml' in str(error.value)
+
+
+def test_a_channel_that_is_not_read_survives_a_round_trip_and_the_others_are_written_without_the_key(folder):
+    files = ConfigFiles(folder)
+    configuration = files.load('')
+    names = [channel.name for channel in configuration.channels('cDAQ1Mod1')]
+    configuration = configuration.with_channels('cDAQ1Mod1', configuration.channels('cDAQ1Mod1'), unread=[names[0]])
+    files.save('quiet', configuration)
+
+    loaded = files.load('quiet')
+
+    assert loaded.unread('cDAQ1Mod1') == {names[0]}
+    assert files.path('quiet').read_text().count('read = false') == 1
+
+
+def test_a_read_key_that_is_not_a_boolean_is_reported(tmp_path):
+    (tmp_path / 'config_daqmx.toml').write_text(
+        'version = 1\n[modules.Dev1.ai.ai0]\ntype = "voltage"\nread = "no"\n')
+
+    with pytest.raises(ConfigFileError, match="read"):
+        ConfigFiles(tmp_path).load('')
