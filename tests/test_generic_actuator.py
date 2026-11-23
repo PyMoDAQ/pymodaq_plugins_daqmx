@@ -85,3 +85,8 @@ def test_a_pulse_sets_the_line_high_for_a_while_then_low_again(qapp, driver, sys
     assert [w[0] for w in task.writes] == [False, True, False]
     assert plugin.get_actuator_value().value() == 0.  # the line is low again
     plugin.close()
+
+
+def test_the_actuator_asks_for_the_simple_user_interface():
+    from pymodaq.control_modules.daq_move_ui.utils import UiType
+    assert DAQ_Move_NIDAQmx.ui_type == UiType.SIMPLE

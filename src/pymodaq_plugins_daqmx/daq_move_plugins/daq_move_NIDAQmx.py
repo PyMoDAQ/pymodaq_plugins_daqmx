@@ -9,6 +9,7 @@ import time
 from typing import Union
 
 import numpy as np
+from pymodaq.control_modules.daq_move_ui.utils import UiType
 from pymodaq.control_modules.move_utility_classes import (DAQ_Move_base, DataActuator, DataActuatorType,
                                                           comon_parameters_fun, main)
 from pymodaq.utils.daq_utils import ThreadCommand
@@ -38,6 +39,7 @@ class DAQ_Move_NIDAQmx(DAQ_Move_base):
     _axis_names = ['output']
     _epsilons = [1e-3]
     data_actuator_type = DataActuatorType.DataActuator
+    ui_type = UiType.SIMPLE  # a value to type (a level; for a digital line, 0 or 1) and a button to set it
     params = [
         {'title': 'Output:', 'name': 'channel', 'type': 'list', 'limits': [],
          'tip': 'An analog output (Dev1/ao0) or a digital line (Dev1/port0/line0)'},
