@@ -37,7 +37,8 @@ Below is the list of instruments included in this plugin
 Actuators
 +++++++++
 
-* **NIDAQmx**: General generation (voltage / current) with National Instrument materials
+* **NIDAQmx**: One output of a National Instrument device, driven one point at a time: an analog output (voltage /
+  current) or a digital line (0 / 1, or a pulse to trigger)
 * **NIDAQmx_RampOutput**: A quantity driven by an analog output, changed by voltage ramps timed by a counter used as a
   clock (value = voltage x conversion factor); several axes (x, y, z) can share the clock
 
