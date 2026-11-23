@@ -128,10 +128,11 @@ from the analog viewer in a few points:
 * The group ``Lines`` replaces ``Channels``: *Add* lists the lines of the computer, and a line has no type nor range,
   only its ``read`` box.
 * The group of each module (``Modules``) is the same, with the frequency and the clock, but the start trigger is
-  ``none`` or ``digital edge`` only: a digital input has no analog trigger. The clock of a digital input is often not
-  the onboard one, which many devices do not have for digital lines: choose a clock source (for instance
-  ``/Dev1/ai/SampleClock``, the sample clock of the analog inputs of the same device) when the driver refuses the
-  ``internal`` one.
+  ``none`` or ``digital edge`` only: a digital input has no analog trigger. ``internal`` is the sample clock of the
+  digital task itself (``/Dev1/di/SampleClock``), which exists on the devices that can time their digital lines. If the
+  driver refuses it, choose a clock source: a PFI terminal wired to a clock, or the clock of another module. The
+  sample clock of an analog input (``/Dev1/ai/SampleClock``) is a different clock: it only runs while an analog
+  task of that device runs, at its rate, which is what you want to read lines in step with analog channels.
 * Each module has its own task and gives its own data, named ``NI DI <module>``, with the lines as traces labelled
   with their names.
 * There is no live mode and no configuration file in this version.
