@@ -327,7 +327,7 @@ def _pcie_6363():
         'Dev2', ai=[f'Dev2/ai{c}' for c in range(32)], ao=[f'Dev2/ao{c}' for c in range(4)],
         ci=[f'Dev2/ctr{c}' for c in range(4)], co=[f'Dev2/ctr{c}' for c in range(4)] + ['Dev2/freqout'],
         di=[f'Dev2/port0/line{c}' for c in range(4)], do=[f'Dev2/port0/line{c}' for c in range(4)],
-        terminals=[f'/Dev2/PFI{c}' for c in range(6)],
+        terminals=[f'/Dev2/PFI{c}' for c in range(6)] + ['/Dev2/APFI0', '/Dev2/APFI1'],
         ai_ranges=[(-0.1, 0.1), (-0.2, 0.2), (-0.5, 0.5), (-1.0, 1.0), (-2.0, 2.0), (-5.0, 5.0), (-10.0, 10.0)],
         ao_ranges=[(-5.0, 5.0), (-10.0, 10.0)], ai_max_multi=1000000.0, ai_max_single=2000000.0,
         ao_max=2857142.8571428573, ai_trig=start_pause_reference, di_trig=start_pause_reference)

@@ -145,9 +145,15 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         return list(dict.fromkeys(names))
 
     def sync_trigger_channels(self) -> None:
-        """The channels that an analog trigger can watch are the ones of the tree (the driver only accepts a channel
-        of the task)."""
+        """What an analog trigger can watch: the channels of the tree (the driver only accepts a channel of the task)
+        and the dedicated analog trigger terminals (``/Dev1/APFI0``) of the devices of the tree, which are not read."""
         names = [child.opts['title'] for child in self.settings.child('channels').children()]
+        system = NIDAQSystem()
+        for module in self.modules():
+            try:
+                names += [t for t in system.terminals(module) if '/APFI' in t]
+            except ValueError:  # a module that is not a device of the system
+                pass
         channel = self.settings.child('trigger', 'channel')
         if channel.opts['limits'] != names:
             channel.setLimits(names)
@@ -171,7 +177,8 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         kind = settings['type']
         if kind == 'digital edge':
             return DigitalEdgeTrigger(settings['terminal'], Edge[settings['edge'].upper()])
-        if kind == 'analog edge' and settings['channel'] in acquisition.labels:
+        source = settings['channel']
+        if kind == 'analog edge' and (source in acquisition.labels or source.startswith(f'/{acquisition.name}/')):
             return AnalogEdgeTrigger(settings['channel'], settings['level'], Slope[settings['edge'].upper()])
         return None
 
