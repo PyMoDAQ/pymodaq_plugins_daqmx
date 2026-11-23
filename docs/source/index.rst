@@ -22,7 +22,6 @@ This plugin is compatible with PymoDAQ 5.
    introduction
    user_guide
    api/index
-   nidaqmx
    library
    creating_plugin
    

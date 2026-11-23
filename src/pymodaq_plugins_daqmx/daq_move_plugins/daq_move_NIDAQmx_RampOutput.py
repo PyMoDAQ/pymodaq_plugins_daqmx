@@ -4,13 +4,13 @@ from pymodaq.control_modules.move_utility_classes import (DAQ_Move_base, comon_p
                                                           DataActuator, main)
 from pymodaq.utils.logger import set_logger, get_module_name
 
-from pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni import NIDAQmx, ChannelType
+from pymodaq_plugins_daqmx.hardware.national_instruments.api import ChannelKind, NIDAQSystem
 from pymodaq_plugins_daqmx.hardware.national_instruments.ramp_output import RampOutputController
 
 logger = set_logger(get_module_name(__file__))
 
-AO_CHANNELS = NIDAQmx.get_NIDAQ_channels(source_type=ChannelType.ANALOG_OUTPUT)
-COUNTER_CHANNELS = NIDAQmx.get_NIDAQ_channels(source_type=ChannelType.COUNTER_OUTPUT)
+AO_CHANNELS = NIDAQSystem().all_channels(ChannelKind.AO)
+COUNTER_CHANNELS = NIDAQSystem().all_channels(ChannelKind.CO)
 
 
 class DAQ_Move_NIDAQmx_RampOutput(DAQ_Move_base):
