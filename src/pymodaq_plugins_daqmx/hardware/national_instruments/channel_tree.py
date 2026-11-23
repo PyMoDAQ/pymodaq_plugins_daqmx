@@ -97,7 +97,9 @@ def set_type(kind: ChannelKind, group, type_: str) -> None:
     are kept."""
     kept = {child.name(): child.value() for child in group.children() if child.name() != 'type'}
     read = kept.pop('read', True)
-    if _quantity(type_) != _quantity(group.child('type').value()):  # a range in volts means nothing in amperes
+    # the value of the type has already changed: the previous quantity is the one the range is shown in
+    previous = group.child('min_val').opts.get('suffix', '')
+    if _quantity(type_) != ('temperature' if previous not in ('V', 'A') else previous):  # volts mean nothing in amperes
         for name in _RANGE:
             kept.pop(name, None)
     for child in list(group.children()):

@@ -59,10 +59,16 @@ def test_changing_the_type_replaces_the_parameters(qtbot):
 def test_the_range_is_not_kept_when_the_quantity_changes(qtbot):
     channel = group(AIVoltage('Dev1/ai0', -5., 5.))
 
-    set_type(ChannelKind.AI, channel, 'current')
-    assert channel_from_params(ChannelKind.AI, channel) == AICurrent('Dev1/ai0')  # the default range of a current
+    def switch(type_):  # the plugin is told after the value of the type has changed
+        channel.child('type').setValue(type_)
+        set_type(ChannelKind.AI, channel, type_)
 
-    set_type(ChannelKind.AI, channel, 'voltage')
+    switch('current')
+    assert channel_from_params(ChannelKind.AI, channel) == AICurrent('Dev1/ai0')  # the default range of a current
+    switch('thermocouple')
+    assert channel_from_params(ChannelKind.AI, channel) == AIThermocouple('Dev1/ai0')
+    assert channel.child('max_val').opts['suffix'] == '°C'
+    switch('voltage')
     assert channel_from_params(ChannelKind.AI, channel) == AIVoltage('Dev1/ai0')
 
 
