@@ -6,6 +6,7 @@ import time
 
 from pymodaq.control_modules.daq_move_ui.utils import UiType
 from pymodaq.control_modules.move_utility_classes import DataActuator, comon_parameters_fun, main
+from pymodaq.utils.daq_utils import ThreadCommand
 
 from pymodaq_plugins_daqmx.hardware.national_instruments.api import ChannelKind, DigitalOut, DigitalTask, TaskConfig
 from pymodaq_plugins_daqmx.hardware.national_instruments.output_actuator import OutputActuator
@@ -23,6 +24,8 @@ class DAQ_Move_NIDAQmx_DO(OutputActuator):
         {'title': 'Pulse:', 'name': 'pulse', 'type': 'bool', 'value': False,
          'tip': 'A move to 1 sets the line high for the pulse width, then low again'},
         {'title': 'Pulse width (ms):', 'name': 'pulse_width', 'type': 'float', 'value': 10., 'min': 0.},
+        {'title': 'Pulses sent:', 'name': 'pulses', 'type': 'int', 'value': 0, 'readonly': True,
+         'tip': 'The line is low again after a pulse, so the position does not show it: this counts them'},
     ] + comon_parameters_fun(False, axis_names=OutputActuator._axis_names, epsilon=_epsilons)
 
     def make_task(self):
@@ -42,6 +45,10 @@ class DAQ_Move_NIDAQmx_DO(OutputActuator):
             time.sleep(self.settings['pulse_width'] * 1e-3)
             self.send(0.)
             self.target_value = DataActuator(data=0., units=self.axis_unit)  # the line is low again
+            self.settings.child('pulses').setValue(self.settings['pulses'] + 1)
+            self.emit_status(ThreadCommand('Update_Status', [
+                f"Pulse {self.settings['pulses']} of {self.settings['pulse_width']:g} ms sent on "
+                f"{self.settings['channel']}", 'log']))
         else:
             self.send(level)
 

@@ -92,6 +92,21 @@ def test_a_pulse_sets_the_line_high_for_a_while_then_low_again(qapp, driver, sys
     plugin.close()
 
 
+def test_each_pulse_is_logged_and_counted(qapp, driver, system_driver):
+    plugin = make_actuator(DAQ_Move_NIDAQmx_DO, channel='Dev2/port0/line1', pulse=True, pulse_width=1.)
+    sent = []
+    plugin.emit_status = lambda status: status.command != 'update_settings' and sent.append(status)
+    assert plugin.settings['pulses'] == 0 and plugin.settings.child('pulses').opts['readonly']
+    plugin.move_abs(DataActuator(data=1., units=''))
+    plugin.move_abs(DataActuator(data=1., units=''))
+    assert plugin.settings['pulses'] == 2
+    assert [s.command for s in sent] == ['Update_Status', 'Update_Status']
+    assert 'Dev2/port0/line1' in sent[0].attribute[0] and '1' in sent[0].attribute[0]
+    plugin.move_abs(DataActuator(data=0., units=''))  # a move to 0 is no pulse
+    assert plugin.settings['pulses'] == 2
+    plugin.close()
+
+
 def test_each_actuator_asks_for_its_user_interface():
     from pymodaq.control_modules.daq_move_ui.utils import UiType
     assert DAQ_Move_NIDAQmx.ui_type == UiType.SIMPLE

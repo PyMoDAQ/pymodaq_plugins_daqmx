@@ -24,7 +24,7 @@ Digital lines (``NIDAQmx_DO``)
 ------------------------------
 
 A line is high for a value of 1 and low for 0. The *Pulse* option is for triggering something: a move to 1 then sets
-the line high for the **Pulse width** (in ms) and sets it low again, so the position is 0 again afterwards. Wire the line
+the line high for the **Pulse width** (in ms) and sets it low again, so the position is 0 again afterwards (it is the real level of the line). As that is too fast to see, each pulse is written in the log and counted in the read-only **Pulses sent**. Wire the line
 to a PFI terminal of the device (or of the chassis) and use that terminal as the *Terminal* of the start trigger of a
 module of the generic viewers (:doc:`nidaqmx_viewer_use`) to start an acquisition with it.
 
