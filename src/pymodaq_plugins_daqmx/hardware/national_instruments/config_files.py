@@ -15,7 +15,7 @@ import toml
 from nidaqmx.constants import TerminalConfiguration, ThermocoupleType, UsageTypeAI
 
 from pymodaq_plugins_daqmx.hardware.national_instruments.api import (
-    AICurrent, AIRtd, AIThermocouple, AIVoltage, ChannelKind)
+    AICurrent, AIRtd, AIThermocouple, AIVoltage, ChannelKind, DigitalIn)
 
 FORMAT_VERSION = 1
 
@@ -25,6 +25,7 @@ TRIGGER_KEYS = {'digital edge': ('terminal', 'edge'), 'analog edge': ('channel',
 #: channel types of a configuration file, by the ``type`` key, for each kind of channel
 CHANNEL_TYPES = {
     ChannelKind.AI: {'voltage': AIVoltage, 'current': AICurrent, 'thermocouple': AIThermocouple, 'rtd': AIRtd},
+    ChannelKind.DI: {'line': DigitalIn},  # in the settings tree only: the files describe analog inputs
 }
 
 

@@ -35,11 +35,12 @@ DEFAULT = 'default'    # the name of the configuration of the file without suffi
 
 # --- terminals --------------------------------------------------------------------------------------------------
 
-def _exporting_module(terminal: str) -> Optional[str]:
-    """The module that produces the signal ``terminal`` (``/Dev1/ai/SampleClock`` is produced by ``Dev1``), None for
-    any other terminal (``/Dev1/PFI0``, a wire). It tells which task has to be started before another one."""
+def _exporting_module(terminal: str, subsystem: str = 'ai') -> Optional[str]:
+    """The module that produces the signal ``terminal`` (``/Dev1/ai/SampleClock`` is produced by ``Dev1`` for the
+    subsystem ``ai``), None for any other terminal (``/Dev1/PFI0``, a wire). It tells which task has to be started
+    before another one."""
     parts = (terminal or '').split('/')
-    return parts[1] if len(parts) > 3 and parts[0] == '' and parts[2] == 'ai' else None
+    return parts[1] if len(parts) > 3 and parts[0] == '' and parts[2] == subsystem else None
 
 
 # what the driver lists as terminals but cannot be a clock or a trigger source
@@ -63,7 +64,8 @@ def is_clock_source(terminal: str) -> bool:
     return _CLOCK_SOURCE.match(terminal) is not None
 
 
-def module_group(module: str, frequency: int, clocks: List[str], terminals: List[str], channels: List[str]) -> dict:
+def module_group(module: str, frequency: int, clocks: List[str], terminals: List[str], channels: List[str],
+                 trigger_types: List[str] = TRIGGER_TYPES) -> dict:
     """The settings of a module: its frequency, its clock and its start trigger."""
     return {'title': module, 'name': module, 'type': 'group', 'children': [
         {'title': 'Frequency:', 'name': 'frequency', 'type': 'int', 'value': frequency, 'min': 1,
@@ -71,7 +73,7 @@ def module_group(module: str, frequency: int, clocks: List[str], terminals: List
         {'title': 'Clock:', 'name': 'clock', 'type': 'list', 'limits': clocks, 'value': CLOCK_INTERNAL,
          'tip': 'The clock of the module, or a terminal (a clock wired in, or the clock that another module exports)'},
         {'title': 'Start trigger:', 'name': 'trigger', 'type': 'group', 'children': [
-            {'title': 'Type:', 'name': 'type', 'type': 'list', 'limits': TRIGGER_TYPES, 'value': 'none'},
+            {'title': 'Type:', 'name': 'type', 'type': 'list', 'limits': trigger_types, 'value': 'none'},
             {'title': 'Terminal:', 'name': 'terminal', 'type': 'list', 'limits': terminals, 'visible': False},
             {'title': 'Channel:', 'name': 'channel', 'type': 'list', 'limits': channels, 'visible': False,
              'tip': 'A channel of this module (it is acquired) or a dedicated analog trigger terminal'},
@@ -107,16 +109,23 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
          'limits': [], 'children': []},
     ]
     data_name = 'NI AI'
+    # what distinguishes the subclasses for other inputs (the digital lines): the channels of the tree, the subsystem
+    # that exports the clock and the trigger of a module, the types of start trigger, and whether there are files
+    kind = ChannelKind.AI
+    subsystem = 'ai'
+    trigger_types = TRIGGER_TYPES
+    has_configuration = True
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         system = NIDAQSystem()
-        self.settings.child('channels').setLimits(system.all_channels(ChannelKind.AI))
+        self.settings.child('channels').setLimits(system.all_channels(self.kind))
         self.terminals = {device: system.terminals(device) for device in system.devices()}  # of each device
         self.files = ConfigFiles()
         self.loaded = MANUAL  # the configuration whose channels are in the tree
         self.in_file = ()  # what the file describes (see `snapshot`), to tell if the tree still is the file
-        self.refresh_menu()
+        if self.has_configuration:
+            self.refresh_menu()
 
     # --- configuration files: menu, load, save ------------------------------------------------------------------
 
@@ -228,7 +237,7 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         for module in modules:
             lists = self.module_lists(module)
             if module not in group.names:
-                group.addChild(module_group(module, self.settings['frequency'], **lists))
+                group.addChild(module_group(module, self.settings['frequency'], trigger_types=self.trigger_types, **lists))
                 continue
             self.set_limits(group.child(module, 'clock'), lists['clocks'])
             self.set_limits(group.child(module, 'trigger', 'terminal'), lists['terminals'])
@@ -264,7 +273,7 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         only the devices that can reach the module offer terminals (see ``reachable_devices``)."""
         reachable = self.reachable_devices(module)
         others = [m for m in self.modules() if m != module and m in reachable]
-        own = f'/{module}/ai/'
+        own = f'/{module}/{self.subsystem}/'
         terminals = [t for device in reachable for t in self.terminals.get(device, [])
                      if not t.startswith(own) and is_signal_terminal(t)]
         names = [child.opts['title'] for child in self.settings.child('channels').children()
@@ -275,8 +284,8 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
             apfi = []
         # the clock sources of all the devices, and the sample clock that another module of the tree exports
         clocks = ([CLOCK_INTERNAL] + [t for t in terminals if is_clock_source(t)]
-                  + [f'/{m}/ai/SampleClock' for m in others])
-        starts = terminals + [f'/{m}/ai/StartTrigger' for m in others]
+                  + [f'/{m}/{self.subsystem}/SampleClock' for m in others])
+        starts = terminals + [f'/{m}/{self.subsystem}/StartTrigger' for m in others]
         return {'clocks': list(dict.fromkeys(clocks)), 'terminals': list(dict.fromkeys(starts)),
                 'channels': names + apfi}
 
@@ -340,7 +349,7 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
             # the parameter of the trigger that names its source depends on the type of trigger
             key = {'digital edge': 'terminal', 'analog edge': 'channel'}.get(group['trigger', 'type'])
             sources = [clock] + ([group['trigger', key]] if key is not None else [])
-            waits = tuple(dict.fromkeys(m for m in (_exporting_module(source) for source in sources)
+            waits = tuple(dict.fromkeys(m for m in (_exporting_module(source, self.subsystem) for source in sources)
                                         if m not in (None, module) and m in by_module))
             acquisitions.append(Acquisition(module, channels, group['frequency'],
                                             tuple(c.name for c in channels if c.name in unread), clock, trigger, waits))
@@ -400,9 +409,9 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         param = self.own(param)
         parent = param.parent()
         in_a_channel = parent is not None and parent.parent() is self.settings.child('channels')
-        if param.name() == 'configuration' and parent is self.settings.child('config'):
+        if self.has_configuration and param.name() == 'configuration' and parent is self.settings.child('config'):
             self.load_configuration()
-        elif param.opts['type'] == 'ni_save':  # the button has been clicked, after the dialog of the GUI
+        elif self.has_configuration and param.opts['type'] == 'ni_save':  # the button has been clicked, after the dialog of the GUI
             param.opts.update(suffix=button.opts['suffix'])
             try:
                 self.save_configuration(param)
@@ -411,7 +420,7 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
                 param.setValue(Status.ERROR)
                 self.fail(error)
         if param.name() == 'type' and in_a_channel:  # the type of a channel: its group is rebuilt
-            set_type(ChannelKind.AI, parent, param.value())
+            set_type(self.kind, parent, param.value())
         if param.name() == 'units' and in_a_channel:  # the units of a temperature: the range follows
             update_suffixes(parent)
         if param.name() == 'type' and parent is not None and parent.name() == 'trigger':

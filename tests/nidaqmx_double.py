@@ -14,7 +14,7 @@ import pytest
 
 KNOWN_COUNTERS = {f"Dev2/ctr{c}" for c in range(4)}
 KNOWN_AO_CHANNELS = {f"Dev2/ao{c}" for c in range(4)}
-KNOWN_LINES = {f"Dev2/port0/line{c}" for c in range(8)}
+KNOWN_LINES = {f"Dev2/port0/line{c}" for c in range(8)} | {f"Dev1/port0/line{c}" for c in range(4)}
 KNOWN_AI_CHANNELS = {f"Dev{d}/ai{c}" for d in (1, 2) for c in range(8)}
 
 
