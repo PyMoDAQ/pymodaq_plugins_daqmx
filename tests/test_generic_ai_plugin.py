@@ -163,6 +163,17 @@ def test_the_clock_and_terminal_lists_offer_terminals_not_channels(qapp, driver,
     plugin.close()
 
 
+def test_the_clock_list_offers_clock_sources_of_all_the_devices(qapp, driver, system_driver):
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    modules = two_modules(plugin)
+    offered = modules.child('Dev1', 'clock').opts['limits']
+    assert offered[0] == 'internal'
+    assert {'/Dev1/PFI1', '/Dev2/PFI1', '/Dev2/ai/SampleClock', '/Dev2/ao/SampleClock'} <= set(offered)
+    assert '/Dev1/ai/SampleClock' not in offered  # a module cannot be timed by its own clock
+    assert '/Dev2/ai/ConvertClock' not in offered  # not a clock of the samples
+    plugin.close()
+
+
 def test_a_digital_edge_trigger_starts_the_task_of_its_module_only(qapp, driver, system_driver):
     from nidaqmx.constants import Edge
     plugin = make_detector(DAQ_0DViewer_NIDAQmx)

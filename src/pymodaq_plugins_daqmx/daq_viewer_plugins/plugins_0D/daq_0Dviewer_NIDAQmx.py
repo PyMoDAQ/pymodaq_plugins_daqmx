@@ -54,6 +54,15 @@ def is_signal_terminal(terminal: str) -> bool:
 
 # --- settings of a module ---------------------------------------------------------------------------------------
 
+# the terminals that can time a task: a wire in (PFI, RTSI, PXI), or the sample clock or the timebase of a subsystem
+_CLOCK_SOURCE = re.compile(r'^/[^/]+/((PFI|RTSI|PXI_Trig)\d+(/.+)?|\w+/SampleClock(Timebase)?|\w*Timebase\w*)$', re.IGNORECASE)
+
+
+def is_clock_source(terminal: str) -> bool:
+    """Whether ``terminal`` can be the sample clock of a task (``/Dev1/PFI1``, ``/Dev1/ao/SampleClock``)."""
+    return _CLOCK_SOURCE.match(terminal) is not None
+
+
 def module_group(module: str, frequency: int, clocks: List[str], terminals: List[str], channels: List[str]) -> dict:
     """The settings of a module: its frequency, its clock and its start trigger."""
     return {'title': module, 'name': module, 'type': 'group', 'children': [
@@ -242,7 +251,9 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
             apfi = [t for t in NIDAQSystem().terminals(module) if '/APFI' in t]
         except ValueError:  # a module that is not a device of the system
             apfi = []
-        clocks = [CLOCK_INTERNAL] + terminals + [f'/{m}/ai/SampleClock' for m in others]
+        # the clock sources of all the devices, and the sample clock that another module of the tree exports
+        clocks = ([CLOCK_INTERNAL] + [t for t in terminals if is_clock_source(t)]
+                  + [f'/{m}/ai/SampleClock' for m in others])
         starts = terminals + [f'/{m}/ai/StartTrigger' for m in others]
         return {'clocks': list(dict.fromkeys(clocks)), 'terminals': list(dict.fromkeys(starts)),
                 'channels': names + apfi}
