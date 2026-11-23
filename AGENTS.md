@@ -201,7 +201,8 @@ Before designing the structure of a new piece of code, look at how PyMoDAQ alrea
 
 - the base class and the factory live in one module, `<name>_factory.py`, **not** in the folder of the classes;
 - the classes live in a sibling folder (`<name>s/`), **one module per class**, each registering itself with a
-  decorator of the factory (`@WaveformFactory.register('sine')`);
+  decorator of the factory (`@WaveformFactory.register()`); the name is written once, as a class attribute
+  (like `elt_name` of the sequencer elements), not repeated in the decorator, in a title and in the class name;
 - all the submodules of that folder are imported, by its `__init__.py` (`pkgutil`) or by a function of the factory
   module as `register_elements` of the sequencer does, so adding a class is adding a file and nothing else, and a
   plugin package can register its own classes the same way;
