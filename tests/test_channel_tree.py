@@ -33,7 +33,7 @@ def test_a_channel_group_has_the_parameters_of_its_type_only(qtbot):
     assert thermocouple.opts['title'] == 'Dev1/ai2'   # the name has no '/': the path of a parameter is a list of names
     assert thermocouple.name() == 'Dev1_ai2'
     assert [child.name() for child in thermocouple.children()] == [
-        'type', 'thermocouple_type', 'units', 'min_val', 'max_val']
+        'type', 'read', 'thermocouple_type', 'units', 'min_val', 'max_val']
     assert thermocouple.child('type').opts['limits'] == ['voltage', 'current', 'thermocouple', 'rtd']
     assert thermocouple.child('thermocouple_type').opts['limits'][:3] == ['J', 'K', 'N']
 
@@ -43,7 +43,7 @@ def test_changing_the_type_replaces_the_parameters_and_keeps_the_ones_in_common(
 
     set_type(ChannelKind.AI, channel, 'voltage')
 
-    assert [child.name() for child in channel.children()] == ['type', 'min_val', 'max_val', 'terminal_config']
+    assert [child.name() for child in channel.children()] == ['type', 'read', 'min_val', 'max_val', 'terminal_config']
     assert channel.child('type').value() == 'voltage'
     assert (channel.child('min_val').value(), channel.child('max_val').value()) == (5., 60.)
     assert channel_from_params(ChannelKind.AI, channel) == AIVoltage('Dev1/ai2', 5., 60.)

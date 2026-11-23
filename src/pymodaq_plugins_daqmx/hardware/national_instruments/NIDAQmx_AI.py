@@ -1,6 +1,9 @@
 """Base class of the thin analog input viewers (AI and DualAI) built on top of the NIDAQmx wrapper."""
 from typing import List, Optional, Tuple
 
+from dataclasses import dataclass
+from functools import partial
+
 import numpy as np
 
 from pymodaq.control_modules.viewer_utility_classes import DAQ_Viewer_base, comon_parameters
@@ -13,7 +16,7 @@ from nidaqmx.constants import TerminalConfiguration
 from pyqtgraph.parametertree import Parameter
 
 from pymodaq_plugins_daqmx.hardware.national_instruments.api import (
-    AIVoltage, AnalogInputTask, ChannelKind, ClockSettings, NIDAQSystem, TaskConfig)
+    AIVoltage, AnalogInputTask, ChannelKind, ClockSettings, NIDAQSystem, TaskConfig, TaskGroup)
 from pymodaq_plugins_daqmx.hardware.national_instruments.qt_task_bridge import QtTaskBridge
 
 logger = set_logger(get_module_name(__file__))
@@ -27,6 +30,25 @@ def default_channel(index: int) -> str:
     if not AI_CHANNELS:
         return ''
     return AI_CHANNELS[min(index, len(AI_CHANNELS) - 1)]
+
+
+@dataclass(frozen=True)
+class Acquisition:
+    """What one task acquires: its channels at its frequency, and a data of its own named after ``name`` (the module)."""
+    name: str
+    channels: list
+    frequency: int
+    unread: tuple = ()  # names of the channels that are in the task but not in the data
+
+    @property
+    def rows(self) -> List[int]:
+        """The rows of the acquired block that go in the data."""
+        return [i for i, channel in enumerate(self.channels) if channel.name not in self.unread]
+
+    @property
+    def labels(self) -> List[str]:
+        """The names of the channels of the data."""
+        return [self.channels[i].name for i in self.rows]
 
 
 class DAQ_Viewer_AIBase(DAQ_Viewer_base):
@@ -48,35 +70,56 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
     data_name = 'NI AI'
 
     def ini_attributes(self):
-        self.controller: Optional[AnalogInputTask] = None  # one task for the channels and the clock of this plugin
-        self.channel_labels: List[str] = []
+        self.controller = None  # the task of this plugin, or the group of its tasks when it has several
+        self.tasks: List[AnalogInputTask] = []  # one per acquisition
+        self.acquisitions_done: List[Acquisition] = []  # what each task acquires, in the order of the tasks
+        self._signature = None  # what the tasks were built for, to rebuild them when the settings changed
         self.live: bool = False
         self.Naverage: int = 1
-        self._bridge: Optional[QtTaskBridge] = None  # relays the notifications of the continuous task, in live
-        self._traces: List[np.ndarray] = []  # the blocks of the series being averaged in live 1D
+        self._bridges: List[QtTaskBridge] = []  # relay the notifications of the continuous tasks, in live
+        self._traces: List[List[np.ndarray]] = []  # for each task, the blocks of the series being averaged in live 1D
+
+    @property
+    def channel_labels(self) -> List[str]:
+        return [label for acquisition in self.acquisitions_done for label in acquisition.labels]
 
     def channel_names(self) -> List[str]:
         raise NotImplementedError
 
     def channels(self) -> list:
-        """The channels of the task, in the order of the data; by default analog voltages named by `channel_names`."""
+        """The channels of the plugin, in the order of the data; by default analog voltages named by
+        `channel_names`."""
         return [AIVoltage(name, min_val=-10., max_val=10., terminal_config=TerminalConfiguration.DIFF)
                 for name in self.channel_names()]
 
-    def ini_detector(self, controller: Optional[AnalogInputTask] = None) -> Tuple[str, bool]:
+    def acquisitions(self) -> List[Acquisition]:
+        """What the tasks acquire, one data each: by default a single task for all the channels, at `frequency`."""
+        channels = self.channels()
+        return [Acquisition('', channels, self.settings['frequency'])] if channels else []
+
+    def trigger_for(self, acquisition: Acquisition):
+        """What starts the task of ``acquisition`` (a trigger of the API), or None to start it at once."""
+        return None
+
+    def data_names(self, acquisitions: List[Acquisition]) -> List[str]:
+        return [f'{self.data_name} {a.name}' if a.name else self.data_name for a in acquisitions]
+
+    def ini_detector(self, controller=None) -> Tuple[str, bool]:
         self.settings.child('Nsamples').setOpts(visible=self.settings['display'] == '1D')
         if self.is_master:
             self.update_tasks()
         else:  # a slave uses the task of its master, which owns it: it neither replaces nor closes it
             self.controller = controller
-            self.channel_labels = [channel.name for channel in self.channels()]
+            self.tasks = [controller]
+            self.acquisitions_done = [Acquisition('', self.channels(), self.settings['frequency'])]
+            self._signature = self.signature()
         return 'Analog input ready', True
 
     def commit_settings(self, param: Parameter) -> None:
         if param.name() == 'display':
             self.settings.child('Nsamples').setOpts(visible=param.value() == '1D')
         if self.controller is not None and self.is_master:
-            self.update_tasks(streaming=self._bridge is not None)
+            self.update_tasks(streaming=bool(self._bridges))
 
     def samples_per_block(self) -> int:
         """Points of one acquisition: the averaging of the viewer in 0D, the length of the trace in 1D."""
@@ -86,24 +129,44 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
         """Samples requested by a finite task: at least 2, the least that the driver accepts with a sample clock."""
         return max(self.samples_per_block(), MIN_CLOCKED_SAMPLES)
 
-    def update_tasks(self, streaming: bool = False) -> None:
-        """Replace the task by one that follows the settings: finite for a snap, continuous for the live mode."""
-        self.close()
-        channels = self.channels()
-        self.channel_labels = [channel.name for channel in channels]
-        if not channels:  # a task needs a channel: it is built when the first one is added
-            return
-        clock = ClockSettings(rate=self.settings['frequency'],
-                              samples=None if streaming else self.task_samples())
-        self.controller = AnalogInputTask(TaskConfig(channels=channels, timing=clock))
+    def signature(self, streaming: bool = False):
+        """What the tasks are built for: the channels and the frequency of each, and the samples of finite tasks."""
+        samples = None if streaming else self.task_samples()
+        return tuple((tuple(a.channels), a.frequency, samples, self.trigger_for(a), a.unread)
+                     for a in self.acquisitions())
 
-    def read_samples(self) -> np.ndarray:
-        """Run one finite acquisition and return an array of shape (nchannels, Nsamples)."""
-        self.controller.start()
+    def update_tasks(self, streaming: bool = False) -> None:
+        """Replace the tasks by ones that follow the settings: finite for a snap, continuous for the live mode."""
+        self.close()
+        acquisitions = self.acquisitions()
+        if not acquisitions:  # a task needs a channel: they are built when the first one is added
+            return
+        samples = None if streaming else self.task_samples()
+        tasks = []
         try:
-            return self.controller.read_analog()
+            for acquisition in acquisitions:
+                clock = ClockSettings(rate=acquisition.frequency, samples=samples)
+                tasks.append(AnalogInputTask(TaskConfig(channels=acquisition.channels, timing=clock,
+                                                        trigger=self.trigger_for(acquisition))))
+        except Exception:
+            for task in reversed(tasks):
+                task.close()
+            raise
+        self.tasks, self.acquisitions_done = tasks, acquisitions
+        self.controller = tasks[0] if len(tasks) == 1 else TaskGroup(*tasks)
+        self._signature = self.signature(streaming)
+
+    def read_samples(self) -> List[np.ndarray]:
+        """Run one finite acquisition of each task, together, and return their arrays (nchannels, Nsamples)."""
+        started = []
+        try:
+            for task in self.tasks:
+                task.start()
+                started.append(task)
+            return [task.read_analog() for task in self.tasks]
         finally:
-            self.controller.stop()
+            for task in reversed(started):
+                task.stop()
 
     def grab_data(self, Naverage: int = 1, live: bool = False, **kwargs) -> None:
         self.live = live
@@ -111,16 +174,17 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
         if live:
             self.start_live()
             return
-        if (self.controller is None or self.controller.config.timing.samples != self.task_samples()
-                or list(self.controller.config.channels) != self.channels()):
+        if self.controller is None or self._signature != self.signature():
             self.update_tasks()  # follow the Naverage of the viewer in 0D, and the channels added or changed
         if self.controller is None:
             self.emit_status(ThreadCommand('Update_Status', ['No channel to acquire: add one to the channels', 'log']))
             return
         if self.settings['display'] == '0D':
-            self.emit_points(self.read_samples()[:, :self.Naverage])  # the surplus sample of Naverage=1 is dropped
+            # the surplus sample of Naverage=1 is dropped
+            self.emit_points([block[:, :self.Naverage] for block in self.read_samples()])
         else:
-            self.emit_traces([self.read_samples() for _ in range(Naverage)])
+            series = [self.read_samples() for _ in range(Naverage)]  # for each series, a block per task
+            self.emit_traces([[blocks[i] for blocks in series] for i in range(len(self.tasks))])
 
     def start_live(self) -> None:
         """Acquire continuously: 0D, one data per block of Naverage points; 1D, one data per Naverage traces."""
@@ -129,47 +193,76 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
         if self.controller is None:
             self.emit_status(ThreadCommand('Update_Status', ['No channel to acquire: add one to the channels', 'log']))
             return
-        self._traces = []
-        self._bridge = QtTaskBridge(self.controller)
-        self._bridge.samples_ready.connect(self._on_block)
-        self.controller.start(notify_every=self.samples_per_block())
+        self._traces = [[] for _ in self.tasks]
+        for index, task in enumerate(self.tasks):
+            bridge = QtTaskBridge(task)
+            bridge.samples_ready.connect(partial(self._on_block, index))
+            self._bridges.append(bridge)
+        started = []
+        try:
+            for task in self.tasks:
+                task.start(notify_every=self.samples_per_block())
+                started.append(task)
+        except Exception:
+            for task in reversed(started):
+                task.stop()
+            raise
 
     def stop_live(self) -> None:
-        if self._bridge is not None:
-            self._bridge.samples_ready.disconnect(self._on_block)
-            self._bridge.close()  # before the task is closed (by update_tasks)
-            self._bridge = None
-            self.update_tasks()  # back to the task of the snaps
+        if self._bridges:
+            for bridge in self._bridges:
+                bridge.close()  # before the tasks are closed (by update_tasks)
+            self._bridges = []
+            self.update_tasks()  # back to the tasks of the snaps
 
-    def _on_block(self, block: np.ndarray) -> None:
+    def _on_block(self, index: int, block: np.ndarray) -> None:
         if self.settings['display'] == '0D':
-            self.emit_points(block)
+            self.emit_points([block], [index])
             return
-        self._traces.append(block)
-        if len(self._traces) >= self.Naverage:  # the traces are averaged, emitted, then a new series starts
-            traces, self._traces = self._traces, []
-            self.emit_traces(traces)
+        self._traces[index].append(block)
+        if len(self._traces[index]) >= self.Naverage:  # the traces are averaged, emitted, then a new series starts
+            traces, self._traces[index] = self._traces[index], []
+            self.emit_traces([traces], [index])
 
-    def emit_points(self, block: np.ndarray) -> None:
-        """0D data: the mean of the points of the block (channels, points), with its standard error."""
-        points = DataFromPlugins(name=self.data_name, data=[row for row in block], dim='Data1D',
-                                 labels=self.channel_labels)
-        self.dte_signal.emit(DataToExport(self.data_name, data=[points.mean_with_errors(axis=0)]))
+    def emit_points(self, blocks: List[np.ndarray], indexes: Optional[List[int]] = None) -> None:
+        """0D data: for each block (channels, points) of the tasks ``indexes``, the mean of its points with its
+        standard error."""
+        indexes = list(range(len(blocks))) if indexes is None else indexes
+        names = self.data_names(self.acquisitions_done)
+        data = []
+        for index, block in zip(indexes, blocks):
+            acquisition = self.acquisitions_done[index]
+            if not acquisition.rows:  # nothing of this task is read: it only serves as a trigger
+                continue
+            points = DataFromPlugins(name=names[index], data=[block[i] for i in acquisition.rows], dim='Data1D',
+                                     labels=acquisition.labels)
+            data.append(points.mean_with_errors(axis=0))
+        self.dte_signal.emit(DataToExport(self.data_name, data=data))
 
-    def emit_traces(self, traces: List[np.ndarray]) -> None:
-        """1D data: the mean of the traces (each shaped (channels, points)), with its standard error."""
-        times = np.arange(traces[0].shape[1]) / self.settings['frequency']
-        if len(traces) == 1:  # nothing to average, so no error either
-            data = DataFromPlugins(name=self.data_name, data=[row for row in traces[0]], dim='Data1D',
-                                   labels=self.channel_labels, axes=[Axis('time', 's', data=times, index=0)])
-            self.dte_signal.emit(DataToExport(self.data_name, data=[data]))
-            return
-        stack = np.stack(traces)  # (traces, channels, points): the traces are the first, navigation, axis
-        acquisitions = Axis('acquisition', data=np.arange(float(len(traces))), index=0)
-        data = DataFromPlugins(name=self.data_name, data=[stack[:, ch, :] for ch in range(stack.shape[1])],
-                               dim='DataND', nav_indexes=(0,), labels=self.channel_labels,
-                               axes=[acquisitions, Axis('time', 's', data=times, index=1)])
-        self.dte_signal.emit(DataToExport(self.data_name, data=[data.mean_with_errors(axis=0)]))
+    def emit_traces(self, traces: List[List[np.ndarray]], indexes: Optional[List[int]] = None) -> None:
+        """1D data: for each task of ``indexes``, the mean of its traces (each shaped (channels, points)), with its
+        standard error."""
+        indexes = list(range(len(traces))) if indexes is None else indexes
+        names = self.data_names(self.acquisitions_done)
+        data = []
+        for index, series in zip(indexes, traces):
+            acquisition = self.acquisitions_done[index]
+            if not acquisition.rows:
+                continue
+            series = [trace[acquisition.rows] for trace in series]  # the channels that are read
+            times = np.arange(series[0].shape[1]) / acquisition.frequency
+            if len(series) == 1:  # nothing to average, so no error either
+                data.append(DataFromPlugins(name=names[index], data=[row for row in series[0]], dim='Data1D',
+                                            labels=acquisition.labels,
+                                            axes=[Axis('time', 's', data=times, index=0)]))
+                continue
+            stack = np.stack(series)  # (traces, channels, points): the traces are the first, navigation, axis
+            acquisitions = Axis('acquisition', data=np.arange(float(len(series))), index=0)
+            averaged = DataFromPlugins(name=names[index], data=[stack[:, ch, :] for ch in range(stack.shape[1])],
+                                       dim='DataND', nav_indexes=(0,), labels=acquisition.labels,
+                                       axes=[acquisitions, Axis('time', 's', data=times, index=1)])
+            data.append(averaged.mean_with_errors(axis=0))
+        self.dte_signal.emit(DataToExport(self.data_name, data=data))
 
     def stop(self) -> None:
         try:
@@ -179,9 +272,10 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
         self.stop_live()
 
     def close(self) -> None:
-        if self._bridge is not None:
-            self._bridge.close()
-            self._bridge = None
+        for bridge in self._bridges:
+            bridge.close()
+        self._bridges = []
         if self.controller is not None and self.is_master:
             self.controller.close()
             self.controller = None
+            self.tasks = []

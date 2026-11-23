@@ -156,3 +156,70 @@ def test_the_example_of_the_user_guide_is_a_file_the_loader_accepts(tmp_path):
 
     assert ConfigFiles(tmp_path).load('').channels('cDAQ1Mod3')[0] == AIVoltage(
         'cDAQ1Mod3/ai0', terminal_config=TerminalConfiguration.RSE)
+
+
+def test_the_frequency_of_a_module_and_the_start_trigger_survive_a_round_trip(folder):
+    files = ConfigFiles(folder)
+    configuration = files.load('').with_frequency('cDAQ1Mod1', 14).with_trigger(
+        {'type': 'digital edge', 'terminal': '/cDAQ1/PFI0', 'edge': 'falling'})
+    files.save('timed', configuration)
+
+    loaded = files.load('timed')
+
+    assert loaded.frequency('cDAQ1Mod1') == 14 and loaded.frequency('cDAQ1Mod3') is None
+    assert loaded.trigger == {'type': 'digital edge', 'terminal': '/cDAQ1/PFI0', 'edge': 'falling'}
+    assert loaded.channels('cDAQ1Mod1') == files.load('').channels('cDAQ1Mod1')
+
+
+def test_changing_the_channels_of_a_module_keeps_its_frequency(folder):
+    configuration = ConfigFiles(folder).load('').with_frequency('cDAQ1Mod3', 250)
+    channels = configuration.channels('cDAQ1Mod3')[:1]
+
+    assert configuration.with_channels('cDAQ1Mod3', channels).frequency('cDAQ1Mod3') == 250
+
+
+def test_a_file_without_frequency_nor_trigger_loads_as_before_and_is_saved_without_them(folder):
+    files = ConfigFiles(folder)
+    files.save('plain', files.load(''))
+
+    text = files.path('plain').read_text()
+
+    assert 'frequency' not in text and '[trigger]' not in text
+    assert files.load('plain').trigger is None
+
+
+@pytest.mark.parametrize('text, where', [
+    ('[modules.Dev1]\nfrequency = 0\n', "frequency"),
+    ('[modules.Dev1]\nfrequency = "fast"\n', "frequency"),
+    ('[trigger]\ntype = "magic"\n', "type"),
+    ('[trigger]\ntype = "digital edge"\n', "terminal"),
+    ('[trigger]\ntype = "analog edge"\nchannel = "Dev1/ai0"\n', "level"),
+    ('[trigger]\ntype = "digital edge"\nterminal = "/Dev1/PFI0"\nedge = "sideways"\n', "edge"),
+])
+def test_a_wrong_frequency_or_trigger_is_reported_with_the_file_and_the_key(tmp_path, text, where):
+    (tmp_path / 'config_daqmx.toml').write_text('version = 1\n' + text)
+
+    with pytest.raises(ConfigFileError, match=where) as error:
+        ConfigFiles(tmp_path).load('')
+    assert 'config_daqmx.toml' in str(error.value)
+
+
+def test_a_channel_that_is_not_read_survives_a_round_trip_and_the_others_are_written_without_the_key(folder):
+    files = ConfigFiles(folder)
+    configuration = files.load('')
+    names = [channel.name for channel in configuration.channels('cDAQ1Mod1')]
+    configuration = configuration.with_channels('cDAQ1Mod1', configuration.channels('cDAQ1Mod1'), unread=[names[0]])
+    files.save('quiet', configuration)
+
+    loaded = files.load('quiet')
+
+    assert loaded.unread('cDAQ1Mod1') == {names[0]}
+    assert files.path('quiet').read_text().count('read = false') == 1
+
+
+def test_a_read_key_that_is_not_a_boolean_is_reported(tmp_path):
+    (tmp_path / 'config_daqmx.toml').write_text(
+        'version = 1\n[modules.Dev1.ai.ai0]\ntype = "voltage"\nread = "no"\n')
+
+    with pytest.raises(ConfigFileError, match="read"):
+        ConfigFiles(tmp_path).load('')

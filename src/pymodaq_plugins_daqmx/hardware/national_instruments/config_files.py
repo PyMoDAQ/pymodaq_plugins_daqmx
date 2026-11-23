@@ -19,6 +19,9 @@ from pymodaq_plugins_daqmx.hardware.national_instruments.api import (
 
 FORMAT_VERSION = 1
 
+#: the keys of the ``[trigger]`` table for each type of start trigger (``edge`` is optional)
+TRIGGER_KEYS = {'digital edge': ('terminal', 'edge'), 'analog edge': ('channel', 'level', 'edge')}
+
 #: channel types of a configuration file, by the ``type`` key, for each kind of channel
 CHANNEL_TYPES = {
     ChannelKind.AI: {'voltage': AIVoltage, 'current': AICurrent, 'thermocouple': AIThermocouple, 'rtd': AIRtd},
@@ -40,6 +43,8 @@ class _Module:
     product: str = ''
     channels: list = field(default_factory=list)
     notes: Dict[str, str] = field(default_factory=dict)   # channel name -> free text of the file
+    frequency: Optional[int] = None                       # sampling frequency of the module, None if not given
+    unread: set = field(default_factory=set)              # names of the channels in the task but not in the data
 
 
 class Configuration:
@@ -49,19 +54,51 @@ class Configuration:
         self.description = description
         self.devices: Dict[str, str] = {}        # device name -> product
         self.modules: Dict[str, _Module] = {}    # module name -> its content
+        self.trigger: Optional[dict] = None      # the start trigger, as the keys of the [trigger] table, or None
 
     def channels(self, module: str) -> list:
         return list(self.modules[module].channels) if module in self.modules else []
 
-    def with_channels(self, module: str, channels: list, product: str = '') -> 'Configuration':
-        """A copy where ``module`` has these channels (the notes of the channels that stay are kept)."""
+    def _copy(self) -> 'Configuration':
         new = Configuration(self.description)
         new.devices = dict(self.devices)
-        new.modules = {name: dataclasses.replace(mod, channels=list(mod.channels), notes=dict(mod.notes))
+        new.modules = {name: dataclasses.replace(mod, channels=list(mod.channels), notes=dict(mod.notes),
+                                                 unread=set(mod.unread))
                        for name, mod in self.modules.items()}
+        new.trigger = self.trigger
+        return new
+
+    def with_channels(self, module: str, channels: list, product: str = '', unread=None) -> 'Configuration':
+        """A copy where ``module`` has these channels (the notes of the channels that stay, and its frequency, are
+        kept). ``unread`` names the channels that are in the task but not in the data; by default the ones that were
+        not read stay so."""
+        new = self._copy()
         previous = new.modules.get(module, _Module(product))
         kept = {channel.name: previous.notes.get(channel.name, '') for channel in channels}
-        new.modules[module] = _Module(product or previous.product, list(channels), kept)
+        names = {channel.name for channel in channels}
+        not_read = {name for name in (previous.unread if unread is None else unread) if name in names}
+        new.modules[module] = _Module(product or previous.product, list(channels), kept, previous.frequency, not_read)
+        return new
+
+    def unread(self, module: str) -> set:
+        """The names of the channels of ``module`` that are in the task but not in the data."""
+        return set(self.modules[module].unread) if module in self.modules else set()
+
+    def frequency(self, module: str) -> Optional[int]:
+        """The sampling frequency of ``module``, ``None`` if the file does not give one."""
+        return self.modules[module].frequency if module in self.modules else None
+
+    def with_frequency(self, module: str, frequency: Optional[int]) -> 'Configuration':
+        """A copy where ``module`` samples at ``frequency``."""
+        new = self.with_channels(module, self.channels(module))
+        new.modules[module].frequency = frequency
+        return new
+
+    def with_trigger(self, trigger: Optional[dict]) -> 'Configuration':
+        """A copy with the start trigger ``trigger`` (``None``, or the keys of the ``[trigger]`` table), shared by
+        the tasks of all the modules."""
+        new = self._copy()
+        new.trigger = trigger
         return new
 
 
@@ -106,12 +143,14 @@ def _decode(cls, name: str, entry: dict, shown=None):
     return cls(name, **values)
 
 
-def _encode(channel, note: str) -> dict:
+def _encode(channel, note: str, read: bool = True) -> dict:
     entry = {'type': type_name(channel)}
     for f in channel_fields(type(channel)):
         value = getattr(channel, f.name)
         entry[f.name] = value.name if isinstance(value, enum.Enum) else float(value)
     entry['info'] = note
+    if not read:  # written only when it is not the default
+        entry['read'] = False
     return entry
 
 
@@ -175,13 +214,51 @@ class ConfigFiles:
             configuration.devices[name] = entry.get('product', '')
         for name, entry in content.get('modules', {}).items():
             module = configuration.modules[name] = _Module(entry.get('product', ''))
+            if 'frequency' in entry:
+                module.frequency = self._frequency(path, name, entry['frequency'])
             for kind in ChannelKind:
                 for key, channel_entry in entry.get(kind.value, {}).items():
                     self._add(path, module, name, kind, key, channel_entry)
+        if 'trigger' in content:
+            configuration.trigger = self._trigger(path, content['trigger'])
         return configuration
+
+    @staticmethod
+    def _frequency(path, module, value) -> int:
+        if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+            raise ConfigFileError(f'{path}: [modules.{module}] frequency must be a positive integer, got {value!r}')
+        return value
+
+    @staticmethod
+    def _trigger(path, table: dict) -> Optional[dict]:
+        """The ``[trigger]`` table, checked: the keys of its type are required and the others are dropped."""
+        kind = table.get('type')
+        if kind not in TRIGGER_KEYS:
+            raise ConfigFileError(f"{path}: [trigger] type must be one of {sorted(TRIGGER_KEYS)}, got {kind!r}")
+        trigger = {'type': kind}
+        for key in TRIGGER_KEYS[kind]:
+            if key not in table:
+                if key == 'edge':
+                    continue  # rising by default
+                raise ConfigFileError(f'{path}: [trigger] of type {kind!r} needs a {key!r}')
+            trigger[key] = table[key]
+        if trigger.get('edge', 'rising') not in ('rising', 'falling'):
+            raise ConfigFileError(f"{path}: [trigger] edge must be 'rising' or 'falling', got {trigger['edge']!r}")
+        for key in ('terminal', 'channel'):
+            if key in trigger and not isinstance(trigger[key], str):
+                raise ConfigFileError(f'{path}: [trigger] {key} must be a text, got {trigger[key]!r}')
+        if 'level' in trigger:
+            if isinstance(trigger['level'], bool) or not isinstance(trigger['level'], (int, float)):
+                raise ConfigFileError(f"{path}: [trigger] level must be a number, got {trigger['level']!r}")
+            trigger['level'] = float(trigger['level'])
+        return trigger
 
     def _add(self, path, module, module_name, kind, key, entry, shown=None):
         where = f'[{module_name}.{kind.value}.{key}]'
+        entry = dict(entry)
+        read = entry.pop('read', True)  # not a field of the channel: whether its samples are in the data
+        if not isinstance(read, bool):
+            raise ConfigFileError(f'{path}: {where} read must be true or false, got {read!r}')
         try:
             types = CHANNEL_TYPES.get(kind, {})
             if 'type' not in entry:
@@ -193,6 +270,8 @@ class ConfigFiles:
             raise ConfigFileError(f'{path}: {where} {error}') from error
         module.channels.append(channel)
         module.notes[channel.name] = entry.get('info', '')
+        if not read:
+            module.unread.add(channel.name)
 
     def _load_previous(self, path, content) -> Configuration:
         configuration = Configuration(content.get('title', ''))
@@ -220,9 +299,15 @@ class ConfigFiles:
         content['modules'] = {}
         for name, module in configuration.modules.items():
             entry = content['modules'][name] = {'product': module.product}
+            if module.frequency is not None:
+                entry['frequency'] = module.frequency
             if module.channels:
-                entry[ChannelKind.AI.value] = {channel.name.split('/')[-1]: _encode(channel, module.notes.get(channel.name, ''))
-                                               for channel in module.channels}
+                entry[ChannelKind.AI.value] = {
+                    channel.name.split('/')[-1]: _encode(channel, module.notes.get(channel.name, ''),
+                                                         channel.name not in module.unread)
+                    for channel in module.channels}
+        if configuration.trigger is not None:
+            content['trigger'] = configuration.trigger
         self.folder.mkdir(parents=True, exist_ok=True)
         self.path(suffix).write_text(toml.dumps(content))
 

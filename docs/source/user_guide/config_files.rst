@@ -39,12 +39,21 @@ Format
    One table for each module, named as in NI MAX (``cDAQ1Mod3``, or ``Dev1`` for a board). The name of a channel is
    its module and its key: ``[modules.cDAQ1Mod3.ai.ai0]`` is the channel ``cDAQ1Mod3/ai0``, so the module of a channel
    is the device its name starts with. ``product`` is the product
-   type of the module, informative.
+   type of the module, informative. ``frequency`` is optional: the sampling frequency of the module in Hz, a positive
+   integer. The generic viewer acquires each module with its own task, so each has its own frequency.
+
+``[trigger]``
+   Optional: what starts the tasks. A digital trigger starts the task of every module; an analog one watches a channel of
+   the file and starts only the task of its module. ``type`` is ``digital edge`` (``terminal``, such as
+   ``/cDAQ1/PFI0``, and ``edge``) or ``analog edge`` (``channel``, a channel of the file such as ``cDAQ1Mod3/ai0`` or a dedicated analog trigger
+   terminal such as ``/Dev1/APFI0``, ``level`` in volts, inside the range of the channel, and ``edge``). ``edge`` is ``rising`` (the default) or ``falling``. Without this table the tasks start at once.
 
 ``[modules.<name>.ai.<key>]``
    One table for each analog input channel. The channel is ``<module>/<key>`` (``cDAQ1Mod3/ai0``) and the order of
    the tables in the file is the order of the data of an acquisition. ``type`` selects the kind of channel and its
-   other keys. ``info`` is a free note, kept when the file is saved again. A key that does not belong to the type
+   other keys. ``info`` is a free note, kept when the file is saved again. ``read`` is optional and ``true`` by
+   default: with ``false`` the channel is in the task but its samples are not in the data (to watch a trigger
+   without reading it). A key that does not belong to the type
    is an error, so that a typo cannot go unnoticed.
 
 The names of the keys are the names of the arguments of the channels of the Python API

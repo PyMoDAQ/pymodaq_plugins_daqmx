@@ -9,7 +9,7 @@ from typing import List
 from pymodaq_gui.parameter.pymodaq_ptypes import GroupParameter, registerParameterType
 
 from pymodaq_plugins_daqmx.hardware.national_instruments.api import AIVoltage, ChannelKind, NIDAQSystem
-from pymodaq_plugins_daqmx.hardware.national_instruments.channel_tree import channel_from_params, channel_params
+from pymodaq_plugins_daqmx.hardware.national_instruments.channel_tree import channel_from_params, channel_params, is_read
 from pymodaq_plugins_daqmx.hardware.national_instruments.config_files import CHANNEL_TYPES
 
 
@@ -51,12 +51,13 @@ class ChannelGroup(GroupParameter):
         keeps its own add list up to date when it adds or removes a channel, the plugin cannot do it for it."""
         self.setOpts(available=list(limits))
 
-    def setChannels(self, channels) -> None:
-        """Replace the channels of the group by these channels of the API, in this order."""
+    def setChannels(self, channels, unread=()) -> None:
+        """Replace the channels of the group by these channels of the API, in this order; the ones named in
+        ``unread`` are not read (they are in the task but not in the data)."""
         for child in list(self.children()):
             self.removeChild(child)
         for channel in channels:
-            self.addChild(channel_params(self.kind, channel))
+            self.addChild(channel_params(self.kind, channel, read=channel.name not in unread))
 
     def addNew(self, typ=None) -> None:
         """Add the channel named ``typ`` (``Dev1/ai0``), unless it is already in the group."""
@@ -90,6 +91,11 @@ _MEASURES = {'voltage': 'voltage', 'current': 'current', 'thermocouple': 'temper
 
 
 registerParameterType('ni_channels', ChannelGroup, override=True)
+
+
+def unread_of(group) -> List[str]:
+    """The names of the channels of the group that are not read, in its order."""
+    return [child.opts['title'] for child in group.children() if not is_read(child)]
 
 
 def channels_of(group) -> list:
