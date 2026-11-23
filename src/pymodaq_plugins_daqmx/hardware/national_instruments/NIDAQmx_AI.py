@@ -108,6 +108,11 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
     hardware_averaging = True
     live_mode_available = True  # with live=True: one continuous task, one data per block of samples
     data_name = 'NI AI'
+    task_class = AnalogInputTask  # the kind of task of an acquisition; a subclass for other inputs gives its own
+
+    def read_block(self, task) -> np.ndarray:
+        """Run the finite acquisition of a started task: its samples as floats, shaped (nchannels, Nsamples)."""
+        return task.read_analog()
 
     def ini_attributes(self):
         self.controller = None  # the task of this plugin, or the group of its tasks when it has several
@@ -188,7 +193,7 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
         try:
             for acquisition in acquisitions:
                 clock = ClockSettings(rate=acquisition.frequency, samples=samples, source=acquisition.clock)
-                tasks.append(AnalogInputTask(TaskConfig(channels=acquisition.channels, timing=clock,
+                tasks.append(self.task_class(TaskConfig(channels=acquisition.channels, timing=clock,
                                                         trigger=acquisition.trigger)))
         except Exception:
             for task in reversed(tasks):
@@ -215,7 +220,7 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
             for task in self.ordered_tasks():
                 task.start()
                 started.append(task)
-            return [task.read_analog() for task in self.tasks]
+            return [self.read_block(task) for task in self.tasks]
         finally:
             for task in reversed(started):
                 task.stop()

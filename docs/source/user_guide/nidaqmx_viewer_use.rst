@@ -117,3 +117,22 @@ written, and is back to normal when it worked. After a failure the menu goes bac
 that is not in the tree.
 
 A file that cannot be read gives an error that names the file and the entry that is wrong.
+
+Digital input lines (``NIDAQmx_DI``)
+------------------------------------
+
+``DAQ_1DViewer_NIDAQmx_DI`` (in the 1D viewers, as ``NIDAQmx_DI``) is the same viewer for the digital input lines of
+a device (``Dev1/port0/line0``), as 1D traces: a line is 0 or 1, so there is no mean and no 0D display. It differs
+from the analog viewer in a few points:
+
+* The group ``Lines`` replaces ``Channels``: *Add* lists the lines of the computer, and a line has no type nor range,
+  only its ``read`` box.
+* The group of each module (``Modules``) is the same, with the frequency and the clock, but the start trigger is
+  ``none`` or ``digital edge`` only: a digital input has no analog trigger. ``internal`` is the sample clock of the
+  digital task itself (``/Dev1/di/SampleClock``), which exists on the devices that can time their digital lines. If the
+  driver refuses it, choose a clock source: a PFI terminal wired to a clock, or the clock of another module. The
+  sample clock of an analog input (``/Dev1/ai/SampleClock``) is a different clock: it only runs while an analog
+  task of that device runs, at its rate, which is what you want to read lines in step with analog channels.
+* Each module has its own task and gives its own data, named ``NI DI <module>``, with the lines as traces labelled
+  with their names.
+* There is no live mode and no configuration file in this version.
