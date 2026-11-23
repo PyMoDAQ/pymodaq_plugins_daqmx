@@ -45,8 +45,8 @@ Format
 ``[trigger]``
    Optional: what starts the tasks. A digital trigger starts the task of every module; an analog one watches a channel of
    the file and starts only the task of its module. ``type`` is ``digital edge`` (``terminal``, such as
-   ``/cDAQ1/PFI0``, and ``edge``) or ``analog edge`` (``channel``, such as ``cDAQ1Mod3/ai0``, ``level`` in volts
-   and ``edge``). ``edge`` is ``rising`` (the default) or ``falling``. Without this table the tasks start at once.
+   ``/cDAQ1/PFI0``, and ``edge``) or ``analog edge`` (``channel``, a channel of the file such as ``cDAQ1Mod3/ai0`` or a dedicated analog trigger
+   terminal such as ``/Dev1/APFI0``, ``level`` in volts, inside the range of the channel, and ``edge``). ``edge`` is ``rising`` (the default) or ``falling``. Without this table the tasks start at once.
 
 ``[modules.<name>.ai.<key>]``
    One table for each analog input channel. The channel is ``<module>/<key>`` (``cDAQ1Mod3/ai0``) and the order of

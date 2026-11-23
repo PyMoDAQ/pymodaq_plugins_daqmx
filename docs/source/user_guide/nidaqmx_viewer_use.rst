@@ -30,9 +30,11 @@ How to use it
 
 The channels are acquired by one task for each module (the device their name starts with, ``cDAQ1Mod1`` for
 ``cDAQ1Mod1/ai0``), because the modules of a chassis cannot always share a clock (the delta-sigma modules such as the
-NI 9211 and NI 9217 cannot be timed with others). Each task gives its own data, named after its module, and the tasks
+NI 9211 and NI 9217 cannot be timed with others). Each task gives its own data, named ``NI AI <module>`` (``NI AI cDAQ1Mod1``), and the tasks
 start one after the other, without any alignment of their samples. A start trigger shared by the tasks (see below) is
-the way to align them when the hardware allows it.
+the way to align them when the hardware allows it. The driver refuses to put in one task modules that cannot share a clock
+(error -201425, which the plugin turns into a message naming the devices): the generic viewer avoids it, as each
+module has its own task.
 
 In each data the channels follow the order of the channels in the group, and are labelled with their names.
 
