@@ -8,6 +8,7 @@ from pymodaq.utils.data import DataActuator
 from pymodaq.utils.plugin_testing import make_actuator
 
 from pymodaq_plugins_daqmx.daq_move_plugins.daq_move_NIDAQmx import DAQ_Move_NIDAQmx
+from pymodaq_plugins_daqmx.daq_move_plugins.daq_move_NIDAQmx_DO import DAQ_Move_NIDAQmx_DO
 
 from nidaqmx_double import driver, system_driver  # noqa: F401  (pytest fixtures)
 
@@ -16,11 +17,15 @@ def output_tasks(driver):
     return [t for t in driver if t.channels and t.channels[0][0] in ('ao_voltage', 'ao_current', 'do')]
 
 
-def test_the_list_offers_the_analog_outputs_and_the_digital_lines(qapp, driver, system_driver):
-    plugin = make_actuator(DAQ_Move_NIDAQmx, channel='Dev2/ao0')
-    offered = plugin.settings.child('channel').opts['limits']
-    assert 'Dev2/ao0' in offered and 'Dev2/port0/line0' in offered and 'Dev2/ai0' not in offered
-    plugin.close()
+def test_the_analog_actuator_offers_the_analog_outputs_and_the_digital_one_the_lines(qapp, driver, system_driver):
+    analog = make_actuator(DAQ_Move_NIDAQmx, channel='Dev2/ao0')
+    digital = make_actuator(DAQ_Move_NIDAQmx_DO, channel='Dev2/port0/line0')
+    assert 'Dev2/ao0' in analog.settings.child('channel').opts['limits']
+    assert not [c for c in analog.settings.child('channel').opts['limits'] if '/port' in c]
+    assert 'Dev2/port0/line0' in digital.settings.child('channel').opts['limits']
+    assert not [c for c in digital.settings.child('channel').opts['limits'] if '/ao' in c]
+    analog.close()
+    digital.close()
 
 
 def test_an_analog_output_is_set_to_zero_at_start_and_moves_to_a_level(qapp, driver, system_driver):
@@ -68,7 +73,7 @@ def test_changing_the_channel_zeroes_the_old_output_and_drives_the_new_one(qapp,
 
 
 def test_a_digital_line_is_driven_to_a_level_and_has_no_unit(qapp, driver, system_driver):
-    plugin = make_actuator(DAQ_Move_NIDAQmx, channel='Dev2/port0/line1')
+    plugin = make_actuator(DAQ_Move_NIDAQmx_DO, channel='Dev2/port0/line1')
     task = output_tasks(driver)[0]
     assert task.channels[0][0] == 'do' and task.writes == [(False, True)]
     assert plugin.axis_unit == ''
@@ -79,7 +84,7 @@ def test_a_digital_line_is_driven_to_a_level_and_has_no_unit(qapp, driver, syste
 
 
 def test_a_pulse_sets_the_line_high_for_a_while_then_low_again(qapp, driver, system_driver):
-    plugin = make_actuator(DAQ_Move_NIDAQmx, channel='Dev2/port0/line1', pulse=True, pulse_width=1.)
+    plugin = make_actuator(DAQ_Move_NIDAQmx_DO, channel='Dev2/port0/line1', pulse=True, pulse_width=1.)
     task = output_tasks(driver)[0]
     plugin.move_abs(DataActuator(data=1., units=''))
     assert [w[0] for w in task.writes] == [False, True, False]
@@ -87,6 +92,7 @@ def test_a_pulse_sets_the_line_high_for_a_while_then_low_again(qapp, driver, sys
     plugin.close()
 
 
-def test_the_actuator_asks_for_the_simple_user_interface():
+def test_each_actuator_asks_for_its_user_interface():
     from pymodaq.control_modules.daq_move_ui.utils import UiType
     assert DAQ_Move_NIDAQmx.ui_type == UiType.SIMPLE
+    assert DAQ_Move_NIDAQmx_DO.ui_type == UiType.BINARY
