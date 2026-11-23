@@ -2,14 +2,14 @@ Details about the implementation of the NIDAQmx_RampOutput move
 ===============================================================
 
 Several channels are needed for a movement: an analog output and a counter used as a clock. As in the case of the
-counter (see :doc:`counter_details`), they are separate tasks and a single ``NIDAQmx`` object is not enough. In
+counter (see :doc:`counter_details`), they are separate tasks and a single task is not enough. In
 addition, with several axes, all the outputs must be in the same task, driven by the same clock, and each axis is a
 different instrument plugin: they share a controller, ``RampOutputController`` (``ramp_output.py``).
 
 The controller
 --------------
 
-It has two ``NIDAQmx`` objects, ``clock`` and ``analog``, and one ``AOChannel`` per axis. For each move:
+It has two tasks, ``clock`` (a ``CounterOutputTask``) and ``analog`` (an ``AnalogOutputTask``), and one ``AOVoltage`` channel per axis. For each move:
 
 * the clock task generates ``n + 1`` pulses at the frequency ``1 / step time``;
 * the analog task has one output channel per axis, its sample clock is the internal output of the clock channel, and

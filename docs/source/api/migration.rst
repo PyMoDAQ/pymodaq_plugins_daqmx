@@ -2,9 +2,8 @@ Migrating from the previous objects
 ===================================
 
 The ``NIDAQmx`` object of ``hardware/national_instruments/daqmxni.py`` (one object, one task, channels described by
-mutable classes with a ``source`` attribute, ``update_task`` with several ``if`` on the type) is replaced by the API of
-this section. There is no compatibility layer: the old names disappear with the old module, once the plugins of the
-package use the new API.
+mutable classes with a ``source`` attribute, ``update_task`` with several ``if`` on the type) was replaced by the API of
+this section, and the module has been removed. There is no compatibility layer: the old names do not exist any more.
 
 Two lines of releases exist:
 
@@ -151,7 +150,7 @@ In a PyMoDAQ plugin
 State of the package
 --------------------
 
-The AI, counter and ramp-output plugins already use the new API. The generic plugins (``NIDAQmx`` viewers and
-actuator, which read ``config_daqmx.toml``) still use the old module ``daqmxni.py`` and are ported next, together with
-the removal of the old module: until then, both may be found in the same checkout, but nothing new should be built on
-``daqmxni.py``.
+All the plugins of the package use the new API: the AI, counter and ramp-output plugins, the generic viewers
+(``NIDAQmx`` analog and ``NIDAQmx_DI`` digital) and the generic actuators (``NIDAQmx`` analog and ``NIDAQmx_DO``
+digital). The old modules (``daqmxni.py``, ``NIDAQmx_base.py``, ``NIDAQmx_Viewer.py`` and ``NIDAQmx_Move.py``) have been
+removed; code that still needs them has to stay on the ``pydaqmx`` line or be rewritten as shown above.
