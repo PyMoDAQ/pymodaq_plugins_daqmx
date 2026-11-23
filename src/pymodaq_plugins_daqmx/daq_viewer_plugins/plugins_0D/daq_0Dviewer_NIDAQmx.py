@@ -109,12 +109,17 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
          'limits': [], 'children': []},
     ]
     data_name = 'NI AI'
-    # what distinguishes the subclasses for other inputs (the digital lines): the channels of the tree, the subsystem
-    # that exports the clock and the trigger of a module, the types of start trigger, and whether there are files
+    # what distinguishes the subclasses for other inputs (the digital lines): the kind of channels of the tree (it
+    # also names the subsystem of the driver that exports the clock and the trigger of a module: ``/Dev1/ai/...``),
+    # the types of start trigger, and whether there are files
     kind = ChannelKind.AI
-    subsystem = 'ai'
     trigger_types = TRIGGER_TYPES
     has_configuration = True
+
+    @property
+    def subsystem(self) -> str:
+        """The part of the terminal names that the driver gives to the subsystem of the channels (``ai``, ``di``)."""
+        return self.kind.value
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

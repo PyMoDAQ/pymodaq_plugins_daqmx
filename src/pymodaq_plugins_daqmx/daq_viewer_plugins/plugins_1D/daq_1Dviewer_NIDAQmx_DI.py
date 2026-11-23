@@ -31,7 +31,6 @@ class DAQ_1DViewer_NIDAQmx_DI(DAQ_0DViewer_NIDAQmx):
     params = _digital_params()
     data_name = 'NI DI'
     kind = ChannelKind.DI
-    subsystem = 'di'
     trigger_types = ['none', 'digital edge']  # there is no analog start trigger on a digital input
     has_configuration = False
     live_mode_available = False
