@@ -158,45 +158,53 @@ def test_the_example_of_the_user_guide_is_a_file_the_loader_accepts(tmp_path):
         'cDAQ1Mod3/ai0', terminal_config=TerminalConfiguration.RSE)
 
 
-def test_the_frequency_of_a_module_and_the_start_trigger_survive_a_round_trip(folder):
+def test_the_frequency_clock_and_trigger_of_a_module_survive_a_round_trip(folder):
     files = ConfigFiles(folder)
-    configuration = files.load('').with_frequency('cDAQ1Mod1', 14).with_trigger(
-        {'type': 'digital edge', 'terminal': '/cDAQ1/PFI0', 'edge': 'falling'})
+    configuration = (files.load('').with_frequency('cDAQ1Mod1', 14).with_clock('cDAQ1Mod1', '/cDAQ1/PFI1')
+                     .with_trigger('cDAQ1Mod1', {'type': 'digital edge', 'terminal': '/cDAQ1/PFI0', 'edge': 'falling'}))
     files.save('timed', configuration)
 
     loaded = files.load('timed')
 
     assert loaded.frequency('cDAQ1Mod1') == 14 and loaded.frequency('cDAQ1Mod3') is None
-    assert loaded.trigger == {'type': 'digital edge', 'terminal': '/cDAQ1/PFI0', 'edge': 'falling'}
+    assert loaded.clock('cDAQ1Mod1') == '/cDAQ1/PFI1' and loaded.clock('cDAQ1Mod3') == ''  # '' is the onboard clock
+    assert loaded.trigger('cDAQ1Mod1') == {'type': 'digital edge', 'terminal': '/cDAQ1/PFI0', 'edge': 'falling'}
+    assert loaded.trigger('cDAQ1Mod3') is None
     assert loaded.channels('cDAQ1Mod1') == files.load('').channels('cDAQ1Mod1')
 
 
-def test_changing_the_channels_of_a_module_keeps_its_frequency(folder):
-    configuration = ConfigFiles(folder).load('').with_frequency('cDAQ1Mod3', 250)
+def test_changing_the_channels_of_a_module_keeps_its_frequency_clock_and_trigger(folder):
+    trigger = {'type': 'analog edge', 'channel': 'cDAQ1Mod3/ai0', 'level': 1.0, 'edge': 'rising'}
+    configuration = (ConfigFiles(folder).load('').with_frequency('cDAQ1Mod3', 250).with_clock('cDAQ1Mod3', '/x/PFI0')
+                     .with_trigger('cDAQ1Mod3', trigger))
     channels = configuration.channels('cDAQ1Mod3')[:1]
 
-    assert configuration.with_channels('cDAQ1Mod3', channels).frequency('cDAQ1Mod3') == 250
+    changed = configuration.with_channels('cDAQ1Mod3', channels)
+
+    assert (changed.frequency('cDAQ1Mod3'), changed.clock('cDAQ1Mod3'), changed.trigger('cDAQ1Mod3')) == (
+        250, '/x/PFI0', trigger)
 
 
-def test_a_file_without_frequency_nor_trigger_loads_as_before_and_is_saved_without_them(folder):
+def test_a_file_without_frequency_clock_nor_trigger_loads_as_before_and_is_saved_without_them(folder):
     files = ConfigFiles(folder)
     files.save('plain', files.load(''))
 
     text = files.path('plain').read_text()
 
-    assert 'frequency' not in text and '[trigger]' not in text
-    assert files.load('plain').trigger is None
+    assert 'frequency' not in text and 'clock' not in text and 'trigger' not in text
+    assert files.load('plain').trigger('cDAQ1Mod1') is None
 
 
 @pytest.mark.parametrize('text, where', [
     ('[modules.Dev1]\nfrequency = 0\n', "frequency"),
     ('[modules.Dev1]\nfrequency = "fast"\n', "frequency"),
-    ('[trigger]\ntype = "magic"\n', "type"),
-    ('[trigger]\ntype = "digital edge"\n', "terminal"),
-    ('[trigger]\ntype = "analog edge"\nchannel = "Dev1/ai0"\n', "level"),
-    ('[trigger]\ntype = "digital edge"\nterminal = "/Dev1/PFI0"\nedge = "sideways"\n', "edge"),
+    ('[modules.Dev1]\nclock = 3\n', "clock"),
+    ('[modules.Dev1.trigger]\ntype = "magic"\n', "type"),
+    ('[modules.Dev1.trigger]\ntype = "digital edge"\n', "terminal"),
+    ('[modules.Dev1.trigger]\ntype = "analog edge"\nchannel = "Dev1/ai0"\n', "level"),
+    ('[modules.Dev1.trigger]\ntype = "digital edge"\nterminal = "/Dev1/PFI0"\nedge = "sideways"\n', "edge"),
 ])
-def test_a_wrong_frequency_or_trigger_is_reported_with_the_file_and_the_key(tmp_path, text, where):
+def test_a_wrong_frequency_clock_or_trigger_is_reported_with_the_file_and_the_key(tmp_path, text, where):
     (tmp_path / 'config_daqmx.toml').write_text('version = 1\n' + text)
 
     with pytest.raises(ConfigFileError, match=where) as error:

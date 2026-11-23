@@ -45,8 +45,8 @@ def test_the_channels_of_the_group_are_channels_of_the_api_in_the_order_of_the_g
     group.addNew('Dev1/ai0')
     set_type(ChannelKind.AI, group.children()[1], 'thermocouple')  # what the plugin does when the type changes
 
-    # the range of the voltage channel, which the two types share, is kept
-    assert channels_of(group) == [AIVoltage('Dev1/ai1'), AIThermocouple('Dev1/ai0', min_val=-10., max_val=10.)]
+    # a range in volts means nothing in degrees: the thermocouple gets its own default range
+    assert channels_of(group) == [AIVoltage('Dev1/ai1'), AIThermocouple('Dev1/ai0')]
 
 
 def test_the_group_takes_new_limits(qtbot):

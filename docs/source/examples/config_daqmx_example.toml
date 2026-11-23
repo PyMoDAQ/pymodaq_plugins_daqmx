@@ -29,6 +29,13 @@ product = "NI 9217"
 
 [modules.cDAQ1Mod3]
 product = "NI 9205"
+frequency = 1000
+clock = "/cDAQ1/PFI1"
+
+[modules.cDAQ1Mod3.trigger]
+type = "digital edge"
+terminal = "/cDAQ1/PFI0"
+edge = "rising"
 
 [modules.cDAQ1Mod3.ai.ai0]
 type = "voltage"
@@ -46,8 +53,3 @@ info = "Example of AI voltage channel"
 
 [modules.cDAQ1Mod4]
 product = "NI 9203"
-
-[trigger]
-type = "digital edge"
-terminal = "/cDAQ1/PFI0"
-edge = "rising"

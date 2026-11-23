@@ -322,15 +322,17 @@ def test_switching_configurations_chosen_in_the_gui_is_replayed_by_the_gui(qapp,
     plugin.close()
 
 
-def test_the_frequencies_of_the_modules_and_the_trigger_are_saved_and_loaded_with_the_channels(
+def test_the_frequency_clock_and_trigger_of_each_module_are_saved_and_loaded_with_the_channels(
         qapp, driver, system_driver, folder):
     plugin = make_detector(DAQ_0DViewer_NIDAQmx)
     group = plugin.settings.child('channels')
     group.addNew('Dev1/ai0')
     group.addNew('Dev2/ai3')
     plugin.commit_settings(group)
-    plugin.settings.child('frequencies', 'Dev2').setValue(500)
-    trigger = plugin.settings.child('trigger')
+    modules = plugin.settings.child('modules')
+    modules.child('Dev2', 'frequency').setValue(500)
+    modules.child('Dev2', 'clock').setValue('/Dev1/ai/SampleClock')
+    trigger = modules.child('Dev1', 'trigger')
     trigger.child('type').setValue('analog edge')
     plugin.commit_settings(trigger.child('type'))
     trigger.child('channel').setValue('Dev1/ai0')
@@ -338,16 +340,20 @@ def test_the_frequencies_of_the_modules_and_the_trigger_are_saved_and_loaded_wit
     trigger.child('edge').setValue('falling')
     plugin.settings.child('config', 'save').opts.update(suffix='timed')
     press(plugin, 'config', 'save')
-    assert ConfigFiles(folder).load('timed').frequency('Dev2') == 500
+    saved = ConfigFiles(folder).load('timed')
+    assert saved.frequency('Dev2') == 500 and saved.clock('Dev2') == '/Dev1/ai/SampleClock'
+    assert saved.clock('Dev1') == '' and saved.trigger('Dev2') is None
 
-    plugin.settings.child('frequencies', 'Dev2').setValue(10)
+    modules.child('Dev2', 'frequency').setValue(10)
     trigger.child('type').setValue('none')
     plugin.commit_settings(trigger.child('type'))
-    choose(plugin, 'configuration', 'lab')  # another file, with other channels and no frequency nor trigger
+    choose(plugin, 'configuration', 'lab')  # another file, with other channels and no frequency, clock nor trigger
     choose(plugin, 'configuration', 'timed')
 
-    assert [(c.name(), c.value()) for c in plugin.settings.child('frequencies').children()] == [
-        ('Dev1', 1000), ('Dev2', 500)]
+    assert plugin.settings['modules', 'Dev2', 'frequency'] == 500
+    assert plugin.settings['modules', 'Dev2', 'clock'] == '/Dev1/ai/SampleClock'
+    assert plugin.settings['modules', 'Dev1', 'clock'] == 'internal'
+    trigger = plugin.settings.child('modules', 'Dev1', 'trigger')
     assert trigger['type'] == 'analog edge' and trigger['channel'] == 'Dev1/ai0'
     assert trigger['level'] == 2.5 and trigger['edge'] == 'falling'
     assert trigger.child('level').opts['visible']
@@ -356,26 +362,26 @@ def test_the_frequencies_of_the_modules_and_the_trigger_are_saved_and_loaded_wit
 
 def test_loading_a_file_without_trigger_clears_the_trigger(qapp, driver, system_driver, folder):
     plugin = make_detector(DAQ_0DViewer_NIDAQmx)
-    trigger = plugin.settings.child('trigger')
-    trigger.child('type').setValue('digital edge')
-    plugin.commit_settings(trigger.child('type'))
+    plugin.settings.child('channels').addNew('cDAQ1Mod3/ai0')
+    plugin.commit_settings(plugin.settings.child('channels'))
+    trigger = plugin.settings.child('modules', 'cDAQ1Mod3', 'trigger', 'type')
+    trigger.setValue('digital edge')
+    plugin.commit_settings(trigger)
     choose(plugin, 'configuration', 'lab')
-    assert trigger['type'] == 'none'
+    assert plugin.settings['modules', 'cDAQ1Mod3', 'trigger', 'type'] == 'none'
     plugin.close()
 
 
-def test_the_menu_goes_back_to_manual_when_a_frequency_or_the_trigger_is_changed(qapp, driver, system_driver, folder):
+def test_the_menu_goes_back_to_manual_when_a_frequency_a_clock_or_a_trigger_is_changed(
+        qapp, driver, system_driver, folder):
     plugin = make_detector(DAQ_0DViewer_NIDAQmx)
     choose(plugin, 'configuration', 'lab')
-    frequency = plugin.settings.child('frequencies', 'cDAQ1Mod3')
-    frequency.setValue(frequency.value() + 1)
-    plugin.commit_settings(frequency)
-    assert menu(plugin) == '(manual)'
-    choose(plugin, 'configuration', 'lab')
-    trigger = plugin.settings.child('trigger', 'type')
-    trigger.setValue('digital edge')
-    plugin.commit_settings(trigger)
-    assert menu(plugin) == '(manual)'
+    for path, value in ((('frequency',), 7), (('clock',), '/Dev1/PFI0'), (('trigger', 'type'), 'digital edge')):
+        changed = plugin.settings.child('modules', 'cDAQ1Mod3', *path)
+        changed.setValue(value)
+        plugin.commit_settings(changed)
+        assert menu(plugin) == '(manual)'
+        choose(plugin, 'configuration', 'lab')
     plugin.close()
 
 
