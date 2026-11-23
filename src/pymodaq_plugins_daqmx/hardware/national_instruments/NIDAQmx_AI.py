@@ -39,6 +39,9 @@ class Acquisition:
     channels: list
     frequency: int
     unread: tuple = ()  # names of the channels that are in the task but not in the data
+    clock: str = ''  # terminal of the sample clock, empty for the onboard clock of the module
+    trigger: Optional[object] = None  # what starts the task (a trigger of the API), None to start it at once
+    waits_for: tuple = ()  # the other modules whose signals the task waits for (their clock, their trigger...)
 
     @property
     def rows(self) -> List[int]:
@@ -49,6 +52,31 @@ class Acquisition:
     def labels(self) -> List[str]:
         """The names of the channels of the data."""
         return [self.channels[i].name for i in self.rows]
+
+
+def trace_axis(acquisition: 'Acquisition', points: int, index: int) -> Axis:
+    """The axis along a trace: time in seconds, or the number of the sample if the clock is external, as the rate that
+    is given to the driver is then only the highest the clock may have, so a time computed with it could be false."""
+    if acquisition.clock:
+        return Axis('sample', '', data=np.arange(points, dtype=float), index=index)
+    return Axis('time', 's', data=np.arange(points) / acquisition.frequency, index=index)
+
+
+def start_order(acquisitions: List['Acquisition']) -> List[int]:
+    """The order in which to start the tasks: a task that waits for a signal of another module (its clock, its
+    trigger) is armed before the module that gives it. A loop of such waits is a ``ValueError`` naming the modules."""
+    names = [a.name for a in acquisitions]
+    pending = list(range(len(acquisitions)))
+    order = []
+    while pending:
+        # a task can start once no pending task waits for it
+        ready = [i for i in pending if not any(names[i] in acquisitions[j].waits_for for j in pending if j != i)]
+        if not ready:
+            raise ValueError('The modules ' + ', '.join(names[i] for i in pending) + ' wait for each other\'s signals '
+                             '(clock or trigger): one of them has to use its own clock')
+        order.append(ready[0])
+        pending.remove(ready[0])
+    return order
 
 
 class DAQ_Viewer_AIBase(DAQ_Viewer_base):
@@ -72,6 +100,7 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
     def ini_attributes(self):
         self.controller = None  # the task of this plugin, or the group of its tasks when it has several
         self.tasks: List[AnalogInputTask] = []  # one per acquisition
+        self.start_order: List[int] = []  # the indexes of the tasks in the order they start
         self.acquisitions_done: List[Acquisition] = []  # what each task acquires, in the order of the tasks
         self._signature = None  # what the tasks were built for, to rebuild them when the settings changed
         self.live: bool = False
@@ -97,10 +126,6 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
         channels = self.channels()
         return [Acquisition('', channels, self.settings['frequency'])] if channels else []
 
-    def trigger_for(self, acquisition: Acquisition):
-        """What starts the task of ``acquisition`` (a trigger of the API), or None to start it at once."""
-        return None
-
     def data_names(self, acquisitions: List[Acquisition]) -> List[str]:
         return [f'{self.data_name} {a.name}' if a.name else self.data_name for a in acquisitions]
 
@@ -111,6 +136,7 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
         else:  # a slave uses the task of its master, which owns it: it neither replaces nor closes it
             self.controller = controller
             self.tasks = [controller]
+            self.start_order = [0]
             self.acquisitions_done = [Acquisition('', self.channels(), self.settings['frequency'])]
             self._signature = self.signature()
         return 'Analog input ready', True
@@ -132,8 +158,7 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
     def signature(self, streaming: bool = False):
         """What the tasks are built for: the channels and the frequency of each, and the samples of finite tasks."""
         samples = None if streaming else self.task_samples()
-        return tuple((tuple(a.channels), a.frequency, samples, self.trigger_for(a), a.unread)
-                     for a in self.acquisitions())
+        return tuple(self.acquisitions()), samples
 
     def update_tasks(self, streaming: bool = False) -> None:
         """Replace the tasks by ones that follow the settings: finite for a snap, continuous for the live mode."""
@@ -142,25 +167,31 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
         if not acquisitions:  # a task needs a channel: they are built when the first one is added
             return
         samples = None if streaming else self.task_samples()
+        order = start_order(acquisitions)  # before the tasks: a loop of waits must not leave tasks open
         tasks = []
         try:
             for acquisition in acquisitions:
-                clock = ClockSettings(rate=acquisition.frequency, samples=samples)
+                clock = ClockSettings(rate=acquisition.frequency, samples=samples, source=acquisition.clock)
                 tasks.append(AnalogInputTask(TaskConfig(channels=acquisition.channels, timing=clock,
-                                                        trigger=self.trigger_for(acquisition))))
+                                                        trigger=acquisition.trigger)))
         except Exception:
             for task in reversed(tasks):
                 task.close()
             raise
         self.tasks, self.acquisitions_done = tasks, acquisitions
+        self.start_order = order
         self.controller = tasks[0] if len(tasks) == 1 else TaskGroup(*tasks)
         self._signature = self.signature(streaming)
+
+    def ordered_tasks(self) -> List[AnalogInputTask]:
+        """The tasks in the order they start: the ones that wait for the signal of another module come first."""
+        return [self.tasks[i] for i in self.start_order]
 
     def read_samples(self) -> List[np.ndarray]:
         """Run one finite acquisition of each task, together, and return their arrays (nchannels, Nsamples)."""
         started = []
         try:
-            for task in self.tasks:
+            for task in self.ordered_tasks():
                 task.start()
                 started.append(task)
             return [task.read_analog() for task in self.tasks]
@@ -200,7 +231,7 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
             self._bridges.append(bridge)
         started = []
         try:
-            for task in self.tasks:
+            for task in self.ordered_tasks():
                 task.start(notify_every=self.samples_per_block())
                 started.append(task)
         except Exception:
@@ -250,17 +281,17 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
             if not acquisition.rows:
                 continue
             series = [trace[acquisition.rows] for trace in series]  # the channels that are read
-            times = np.arange(series[0].shape[1]) / acquisition.frequency
+            points = series[0].shape[1]
             if len(series) == 1:  # nothing to average, so no error either
                 data.append(DataFromPlugins(name=names[index], data=[row for row in series[0]], dim='Data1D',
                                             labels=acquisition.labels,
-                                            axes=[Axis('time', 's', data=times, index=0)]))
+                                            axes=[trace_axis(acquisition, points, 0)]))
                 continue
             stack = np.stack(series)  # (traces, channels, points): the traces are the first, navigation, axis
             acquisitions = Axis('acquisition', data=np.arange(float(len(series))), index=0)
             averaged = DataFromPlugins(name=names[index], data=[stack[:, ch, :] for ch in range(stack.shape[1])],
                                        dim='DataND', nav_indexes=(0,), labels=acquisition.labels,
-                                       axes=[acquisitions, Axis('time', 's', data=times, index=1)])
+                                       axes=[acquisitions, trace_axis(acquisition, points, 1)])
             data.append(averaged.mean_with_errors(axis=0))
         self.dte_signal.emit(DataToExport(self.data_name, data=data))
 

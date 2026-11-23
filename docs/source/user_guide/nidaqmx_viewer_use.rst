@@ -31,7 +31,7 @@ How to use it
 The channels are acquired by one task for each module (the device their name starts with, ``cDAQ1Mod1`` for
 ``cDAQ1Mod1/ai0``), because the modules of a chassis cannot always share a clock (the delta-sigma modules such as the
 NI 9211 and NI 9217 cannot be timed with others). Each task gives its own data, named ``NI AI <module>`` (``NI AI cDAQ1Mod1``), and the tasks
-start one after the other, without any alignment of their samples. A start trigger shared by the tasks (see below) is
+start one after the other, without any alignment of their samples. A common clock or start trigger (see below) is
 the way to align them when the hardware allows it. The driver refuses to put in one task modules that cannot share a clock
 (error -201425, which the plugin turns into a message naming the devices): the generic viewer avoids it, as each
 module has its own task.
@@ -44,14 +44,25 @@ Settings
 * **Display type**: ``0D`` gives the mean of the samples of each channel (with its standard error), ``1D`` gives the
   trace as a function of time.
 * **Frequency Acq.**: the sampling rate that a module starts with.
-* **Module frequencies**: one frequency for each module of the channels (they appear and disappear with the
-  channels), as a module can need a rate of its own. Each module is acquired at its frequency.
-* **Start trigger**: ``none`` (the tasks start at once), ``digital edge`` (a *Terminal* such as ``/Dev1/PFI0`` and
-  an *Edge*) or ``analog edge`` (a *Channel*, a *Level* in volts and an *Edge*). A digital trigger starts the task of
-  every module. An analog trigger watches one of the channels of the tree, which the driver requires to be a channel of
-  the task, so it starts only the task of that channel's module (the others start at once); the channel is acquired
-  like the others. The list also offers the dedicated analog trigger terminals (``/Dev1/APFI0``) of the devices of the
-  channels, for the devices that have some: such a terminal is not acquired, and starts the task of its device.
+* **Modules**: one group for each module of the channels (they appear and disappear with the channels), as a module
+  can need a rate, a clock and a start of its own. Each module is acquired by its own task, with:
+
+  * **Frequency**: the sampling rate of the module. With an external clock it is the highest frequency that clock
+    can have (the driver needs it to size its buffer), not the real one.
+  * **Clock**: ``internal`` (the module times itself), a terminal wired to the device (``/Dev1/PFI1``), or the clock
+    exported by another module (``/Dev1/ai/SampleClock``), which makes the modules share one clock. Any module may
+    follow an external clock. A module cannot be offered its own clock.
+  * **Start trigger**: ``none`` (the task starts at once), ``digital edge`` (a *Terminal* such as ``/Dev1/PFI0``, or
+    the start trigger exported by another module, and an *Edge*) or ``analog edge`` (a *Channel*, a *Level* in volts
+    and an *Edge*). An analog trigger watches one of the channels of the module, which the driver requires to be a
+    channel of the task (set its ``read`` box off if you do not want its samples); the list also offers the dedicated
+    analog trigger terminals (``/Dev1/APFI0``) of the module, if it has some: such a terminal is not acquired.
+
+  The tasks start in the order that their sources require: a module that waits for the clock or the trigger of another
+  one starts first and the one that provides the signal starts last. Two modules that wait for each other cannot be
+  started: the plugin says so, and one of them has to use its own clock.
+  With an external clock the time between samples is not known, so the 1D axis is the sample index (no unit) and not
+  the time in seconds.
 * **Nsamples** (``1D`` only): the length of the trace. In ``0D`` the number of points averaged is the *Naverage* of the
   viewer, and in ``1D`` *Naverage* is the number of traces averaged. The driver needs at least two samples for a
   clocked acquisition: *Nsamples* cannot be below 2, and with *Naverage* = 1 two samples are acquired and the first
@@ -77,16 +88,16 @@ The parameters below are in the ``NIDAQmx config`` group of the settings.
   the state manager of the Dashboard, which sets the menu again, and so loads the same file. The list is read
   when the plugin starts, and again after a save.
 * **Configuration** also loads the channels: choosing a file replaces the channels of the tree by the ones of the
-  file, in the order of the file (which is the order of the data), the frequency of each module and the start trigger
-  (none if the file has none). You can then add, remove or change channels as
+  file, in the order of the file (which is the order of the data), the frequency, the clock and the start trigger of each module
+  (internal clock and no trigger if the file has none). You can then add, remove or change channels as
   usual, also from several devices: the file is only read, never changed, unless you save. One file is one
   configuration: to work with another set of channels, save it under another suffix.
-* As soon as the tree is not what the file describes any more (a channel added, removed or changed, a frequency or
-  the trigger modified), the menu goes back to ``(manual)``, so that it never shows a configuration that is not in the tree. To get the
+* As soon as the tree is not what the file describes any more (a channel added, removed or changed, a frequency, a clock or
+  a trigger modified), the menu goes back to ``(manual)``, so that it never shows a configuration that is not in the tree. To get the
   file back, choose it again in the menu.
 * **Save as...**: a button with a LED. A click opens a small dialog asking the *Suffix* of the file
   (``config_daqmx_<suffix>.toml``; ``default`` is the file without suffix), proposed with the configuration loaded.
-  The file then describes exactly the channels of the tree, the frequency of each module and the start trigger
+  The file then describes exactly the channels of the tree, the frequency, the clock and the start trigger of each module
   (those of an existing file that are not in the tree are
   removed). The format of the file groups the channels by module, so each channel is written in the module its name
   starts with (``Dev1`` for ``Dev1/ai1``, ``cDAQ1Mod3`` for ``cDAQ1Mod3/ai0``): channels of several devices can be

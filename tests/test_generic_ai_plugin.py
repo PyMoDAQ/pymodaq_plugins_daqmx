@@ -79,100 +79,16 @@ def test_each_module_is_acquired_by_its_own_task_and_gives_its_own_data(qapp, dr
     plugin.close()
 
 
-def test_each_module_has_its_own_frequency_that_starts_at_the_global_one(qapp, driver, system_driver):
-    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
-    group = plugin.settings.child('channels')
-    group.addNew('Dev1/ai0')
-    group.addNew('Dev2/ai3')
-    plugin.commit_settings(group)
-    frequencies = plugin.settings.child('frequencies')
-    assert [(c.name(), c.value()) for c in frequencies.children()] == [('Dev1', 1000), ('Dev2', 1000)]
-    frequencies.child('Dev2').setValue(500)
-    plugin.commit_settings(frequencies.child('Dev2'))
-    grab_and_wait(plugin)
-    assert [task.timing_calls[0][1] for task in driver] == [1000, 500]
-    group.removeChild(group.child('Dev1_ai0'))
-    plugin.commit_settings(group)
-    assert [c.name() for c in frequencies.children()] == ['Dev2']
-    plugin.close()
 
 
-def test_the_1d_viewer_gives_a_trace_per_module_at_the_frequency_of_the_module(qapp, driver, system_driver):
-    from pymodaq_plugins_daqmx.daq_viewer_plugins.plugins_1D.daq_1Dviewer_NIDAQmx import DAQ_1DViewer_NIDAQmx
-    plugin = make_detector(DAQ_1DViewer_NIDAQmx, Nsamples=10)
-    group = plugin.settings.child('channels')
-    group.addNew('Dev1/ai0')
-    group.addNew('Dev2/ai3')
-    plugin.commit_settings(group)
-    plugin.settings.child('frequencies', 'Dev2').setValue(500)
-    dte = grab_and_wait(plugin)
-    assert [data.dim for data in dte] == ['Data1D', 'Data1D']
-    assert [data.axes[0].get_data()[1] for data in dte] == pytest.approx([1 / 1000, 1 / 500])
-    plugin.close()
 
 
-def test_a_digital_edge_trigger_starts_every_task(qapp, driver, system_driver):
-    from nidaqmx.constants import Edge
-    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
-    group = plugin.settings.child('channels')
-    group.addNew('Dev1/ai0')
-    group.addNew('Dev2/ai3')
-    trigger = plugin.settings.child('trigger')
-    trigger.child('type').setValue('digital edge')
-    plugin.commit_settings(trigger.child('type'))
-    assert trigger.child('terminal').opts['visible'] and not trigger.child('level').opts['visible']
-    trigger.child('terminal').setValue('/Dev1/PFI1')
-    trigger.child('edge').setValue('falling')
-    grab_and_wait(plugin)
-    assert [task.trigger_calls for task in driver] == [[('dig_edge', '/Dev1/PFI1', Edge.FALLING)]] * 2
-    plugin.close()
 
 
-def test_an_analog_edge_trigger_waits_for_the_level_of_a_channel_of_the_tree_and_starts_the_task_of_its_module(
-        qapp, driver, system_driver):
-    from nidaqmx.constants import Slope
-    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
-    group = plugin.settings.child('channels')
-    group.addNew('Dev1/ai0')
-    group.addNew('Dev1/ai1')
-    group.addNew('Dev2/ai3')
-    plugin.commit_settings(group)
-    trigger = plugin.settings.child('trigger')
-    trigger.child('type').setValue('analog edge')
-    plugin.commit_settings(trigger.child('type'))
-    assert trigger.child('channel').opts['visible'] and not trigger.child('terminal').opts['visible']
-    assert trigger.child('channel').opts['limits'][:3] == ['Dev1/ai0', 'Dev1/ai1', 'Dev2/ai3']  # the channels first
-    trigger.child('channel').setValue('Dev1/ai1')
-    trigger.child('level').setValue(1.5)
-    grab_and_wait(plugin)
-    assert [task.trigger_calls for task in driver] == [[('anlg_edge', 'Dev1/ai1', Slope.RISING, 1.5)], []]
-    plugin.close()
 
 
-def test_without_trigger_the_tasks_start_at_once(qapp, driver, system_driver):
-    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
-    plugin.settings.child('channels').addNew('Dev1/ai0')
-    grab_and_wait(plugin)
-    assert driver[0].trigger_calls == []
-    plugin.close()
 
 
-def test_a_dedicated_analog_trigger_terminal_can_be_the_source_and_starts_the_task_of_its_device(
-        qapp, driver, system_driver):
-    from nidaqmx.constants import Slope
-    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
-    group = plugin.settings.child('channels')
-    group.addNew('Dev1/ai0')
-    group.addNew('Dev2/ai3')
-    plugin.commit_settings(group)
-    trigger = plugin.settings.child('trigger')
-    trigger.child('type').setValue('analog edge')
-    plugin.commit_settings(trigger.child('type'))
-    assert trigger.child('channel').opts['limits'] == ['Dev1/ai0', 'Dev2/ai3', '/Dev2/APFI0', '/Dev2/APFI1']
-    trigger.child('channel').setValue('/Dev2/APFI0')
-    grab_and_wait(plugin)
-    assert [task.trigger_calls for task in driver] == [[], [('anlg_edge', '/Dev2/APFI0', Slope.RISING, 0.)]]
-    plugin.close()
 
 
 def test_a_channel_that_is_not_read_stays_in_the_task_but_not_in_the_data(qapp, driver, system_driver):
@@ -209,4 +125,114 @@ def test_changing_the_type_of_a_channel_keeps_whether_it_is_read(qapp, driver, s
     group.child('Dev1_ai0', 'type').setValue('current')
     plugin.commit_settings(group.child('Dev1_ai0', 'type'))
     assert group.child('Dev1_ai0', 'read').value() is False
+    plugin.close()
+
+
+def two_modules(plugin, display=None):
+    group = plugin.settings.child('channels')
+    group.addNew('Dev1/ai0')
+    group.addNew('Dev2/ai3')
+    plugin.commit_settings(group)
+    return plugin.settings.child('modules')
+
+
+def test_each_module_has_its_own_settings_that_start_at_the_defaults(qapp, driver, system_driver):
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    modules = two_modules(plugin)
+    assert [child.name() for child in modules.children()] == ['Dev1', 'Dev2']
+    assert modules['Dev1', 'frequency'] == 1000 and modules['Dev1', 'clock'] == 'internal'
+    assert modules['Dev1', 'trigger', 'type'] == 'none'
+    modules.child('Dev2', 'frequency').setValue(500)
+    plugin.commit_settings(modules.child('Dev2', 'frequency'))
+    grab_and_wait(plugin)
+    assert [task.timing_calls[0][1] for task in driver] == [1000, 500]
+    plugin.settings.child('channels').removeChild(plugin.settings.child('channels', 'Dev1_ai0'))
+    plugin.commit_settings(plugin.settings.child('channels'))
+    assert [child.name() for child in modules.children()] == ['Dev2']
+    plugin.close()
+
+
+def test_a_digital_edge_trigger_starts_the_task_of_its_module_only(qapp, driver, system_driver):
+    from nidaqmx.constants import Edge
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    modules = two_modules(plugin)
+    trigger = modules.child('Dev1', 'trigger')
+    trigger.child('type').setValue('digital edge')
+    plugin.commit_settings(trigger.child('type'))
+    assert trigger.child('terminal').opts['visible'] and not trigger.child('level').opts['visible']
+    trigger.child('terminal').setValue('/Dev1/PFI1')
+    trigger.child('edge').setValue('falling')
+    grab_and_wait(plugin)
+    assert [task.trigger_calls for task in driver] == [[('dig_edge', '/Dev1/PFI1', Edge.FALLING)], []]
+    plugin.close()
+
+
+def test_an_analog_edge_trigger_watches_a_channel_or_an_apfi_terminal_of_its_own_module(qapp, driver, system_driver):
+    from nidaqmx.constants import Slope
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    modules = two_modules(plugin)
+    trigger = modules.child('Dev2', 'trigger')
+    trigger.child('type').setValue('analog edge')
+    plugin.commit_settings(trigger.child('type'))
+    assert trigger.child('channel').opts['visible'] and not trigger.child('terminal').opts['visible']
+    assert trigger.child('channel').opts['limits'] == ['Dev2/ai3', '/Dev2/APFI0', '/Dev2/APFI1']
+    trigger.child('channel').setValue('/Dev2/APFI0')
+    trigger.child('level').setValue(1.5)
+    grab_and_wait(plugin)
+    assert [task.trigger_calls for task in driver] == [[], [('anlg_edge', '/Dev2/APFI0', Slope.RISING, 1.5)]]
+    plugin.close()
+
+
+def test_a_module_can_be_timed_by_the_clock_of_another_which_then_starts_last(qapp, driver, system_driver):
+    from nidaqmx_double import DoubleTask
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    modules = two_modules(plugin)
+    clock = modules.child('Dev2', 'clock')
+    assert '/Dev1/ai/SampleClock' in clock.opts['limits'] and '/Dev2/ai/SampleClock' not in clock.opts['limits']
+    clock.setValue('/Dev1/ai/SampleClock')
+    grab_and_wait(plugin)
+    assert [call[2]['source'] for call in (task.timing_calls[0] for task in driver)] == ['', '/Dev1/ai/SampleClock']
+    starts = [name for what, name in DoubleTask.log if what == 'start']
+    assert starts == ['Dev2/ai3', 'Dev1/ai0']  # the one that waits for the clock is armed before the one that gives it
+    plugin.close()
+
+
+def test_all_the_modules_can_follow_an_external_clock_in_any_order(qapp, driver, system_driver):
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    modules = two_modules(plugin)
+    for module in ('Dev1', 'Dev2'):
+        modules.child(module, 'clock').setValue('/Dev1/PFI0')
+    grab_and_wait(plugin)
+    assert [task.timing_calls[0][2]['source'] for task in driver] == ['/Dev1/PFI0'] * 2
+    plugin.close()
+
+
+def test_modules_that_wait_for_each_other_are_refused_with_a_message_naming_them(qapp, driver, system_driver):
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    modules = two_modules(plugin)
+    modules.child('Dev1', 'clock').setValue('/Dev2/ai/SampleClock')
+    modules.child('Dev2', 'clock').setValue('/Dev1/ai/SampleClock')
+    with pytest.raises(ValueError, match='Dev1.*Dev2'):
+        plugin.grab_data()
+    plugin.close()
+
+
+def test_the_1d_axis_is_in_samples_with_an_external_clock_and_in_seconds_otherwise(qapp, driver, system_driver):
+    from pymodaq_plugins_daqmx.daq_viewer_plugins.plugins_1D.daq_1Dviewer_NIDAQmx import DAQ_1DViewer_NIDAQmx
+    plugin = make_detector(DAQ_1DViewer_NIDAQmx, Nsamples=10)
+    modules = two_modules(plugin)
+    modules.child('Dev2', 'frequency').setValue(500)
+    modules.child('Dev2', 'clock').setValue('/Dev2/PFI0')
+    dte = grab_and_wait(plugin)
+    seconds, samples = dte[0].axes[0], dte[1].axes[0]
+    assert seconds.get_data()[1] == pytest.approx(1 / 1000) and seconds.units == 's'
+    assert list(samples.get_data()[:3]) == [0, 1, 2] and samples.label == 'sample'
+    plugin.close()
+
+
+def test_without_trigger_the_tasks_start_at_once(qapp, driver, system_driver):
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    plugin.settings.child('channels').addNew('Dev1/ai0')
+    grab_and_wait(plugin)
+    assert driver[0].trigger_calls == []
     plugin.close()

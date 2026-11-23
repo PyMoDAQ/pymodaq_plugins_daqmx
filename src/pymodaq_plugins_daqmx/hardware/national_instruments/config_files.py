@@ -19,7 +19,7 @@ from pymodaq_plugins_daqmx.hardware.national_instruments.api import (
 
 FORMAT_VERSION = 1
 
-#: the keys of the ``[trigger]`` table for each type of start trigger (``edge`` is optional)
+#: the keys of the ``trigger`` table of a module for each type of start trigger (``edge`` is optional)
 TRIGGER_KEYS = {'digital edge': ('terminal', 'edge'), 'analog edge': ('channel', 'level', 'edge')}
 
 #: channel types of a configuration file, by the ``type`` key, for each kind of channel
@@ -45,6 +45,8 @@ class _Module:
     notes: Dict[str, str] = field(default_factory=dict)   # channel name -> free text of the file
     frequency: Optional[int] = None                       # sampling frequency of the module, None if not given
     unread: set = field(default_factory=set)              # names of the channels in the task but not in the data
+    clock: str = ''                                       # terminal of the sample clock, '' for the onboard clock
+    trigger: Optional[dict] = None                        # the start trigger, as the keys of its table, or None
 
 
 class Configuration:
@@ -54,7 +56,6 @@ class Configuration:
         self.description = description
         self.devices: Dict[str, str] = {}        # device name -> product
         self.modules: Dict[str, _Module] = {}    # module name -> its content
-        self.trigger: Optional[dict] = None      # the start trigger, as the keys of the [trigger] table, or None
 
     def channels(self, module: str) -> list:
         return list(self.modules[module].channels) if module in self.modules else []
@@ -65,19 +66,19 @@ class Configuration:
         new.modules = {name: dataclasses.replace(mod, channels=list(mod.channels), notes=dict(mod.notes),
                                                  unread=set(mod.unread))
                        for name, mod in self.modules.items()}
-        new.trigger = self.trigger
         return new
 
     def with_channels(self, module: str, channels: list, product: str = '', unread=None) -> 'Configuration':
         """A copy where ``module`` has these channels (the notes of the channels that stay, and its frequency, are
-        kept). ``unread`` names the channels that are in the task but not in the data; by default the ones that were
+        kept, and so are its clock and trigger). ``unread`` names the channels that are in the task but not in the data; by default the ones that were
         not read stay so."""
         new = self._copy()
         previous = new.modules.get(module, _Module(product))
         kept = {channel.name: previous.notes.get(channel.name, '') for channel in channels}
         names = {channel.name for channel in channels}
         not_read = {name for name in (previous.unread if unread is None else unread) if name in names}
-        new.modules[module] = _Module(product or previous.product, list(channels), kept, previous.frequency, not_read)
+        new.modules[module] = _Module(product or previous.product, list(channels), kept, previous.frequency, not_read,
+                                      previous.clock, previous.trigger)
         return new
 
     def unread(self, module: str) -> set:
@@ -94,11 +95,24 @@ class Configuration:
         new.modules[module].frequency = frequency
         return new
 
-    def with_trigger(self, trigger: Optional[dict]) -> 'Configuration':
-        """A copy with the start trigger ``trigger`` (``None``, or the keys of the ``[trigger]`` table), shared by
-        the tasks of all the modules."""
-        new = self._copy()
-        new.trigger = trigger
+    def clock(self, module: str) -> str:
+        """The terminal of the sample clock of ``module`` (such as ``/Dev1/PFI1``); empty for its onboard clock."""
+        return self.modules[module].clock if module in self.modules else ''
+
+    def with_clock(self, module: str, clock: str) -> 'Configuration':
+        """A copy where ``module`` is timed by the terminal ``clock`` (empty for its onboard clock)."""
+        new = self.with_channels(module, self.channels(module))
+        new.modules[module].clock = clock
+        return new
+
+    def trigger(self, module: str) -> Optional[dict]:
+        """The start trigger of ``module`` as the keys of its ``trigger`` table, ``None`` if it starts at once."""
+        return self.modules[module].trigger if module in self.modules else None
+
+    def with_trigger(self, module: str, trigger: Optional[dict]) -> 'Configuration':
+        """A copy where ``module`` starts on ``trigger`` (``None``, or the keys of its ``trigger`` table)."""
+        new = self.with_channels(module, self.channels(module))
+        new.modules[module].trigger = trigger
         return new
 
 
@@ -216,11 +230,13 @@ class ConfigFiles:
             module = configuration.modules[name] = _Module(entry.get('product', ''))
             if 'frequency' in entry:
                 module.frequency = self._frequency(path, name, entry['frequency'])
+            if 'clock' in entry:
+                module.clock = self._clock(path, name, entry['clock'])
+            if 'trigger' in entry:
+                module.trigger = self._trigger(path, name, entry['trigger'])
             for kind in ChannelKind:
                 for key, channel_entry in entry.get(kind.value, {}).items():
                     self._add(path, module, name, kind, key, channel_entry)
-        if 'trigger' in content:
-            configuration.trigger = self._trigger(path, content['trigger'])
         return configuration
 
     @staticmethod
@@ -230,26 +246,32 @@ class ConfigFiles:
         return value
 
     @staticmethod
-    def _trigger(path, table: dict) -> Optional[dict]:
-        """The ``[trigger]`` table, checked: the keys of its type are required and the others are dropped."""
+    def _clock(path, module, value) -> str:
+        if not isinstance(value, str):
+            raise ConfigFileError(f'{path}: [modules.{module}] clock must be the text of a terminal, got {value!r}')
+        return value
+
+    @staticmethod
+    def _trigger(path, module, table: dict) -> Optional[dict]:
+        """The ``[modules.<name>.trigger]`` table, checked: the keys of its type are required and the others are dropped."""
         kind = table.get('type')
         if kind not in TRIGGER_KEYS:
-            raise ConfigFileError(f"{path}: [trigger] type must be one of {sorted(TRIGGER_KEYS)}, got {kind!r}")
+            raise ConfigFileError(f"{path}: [modules.{module}.trigger] type must be one of {sorted(TRIGGER_KEYS)}, got {kind!r}")
         trigger = {'type': kind}
         for key in TRIGGER_KEYS[kind]:
             if key not in table:
                 if key == 'edge':
                     continue  # rising by default
-                raise ConfigFileError(f'{path}: [trigger] of type {kind!r} needs a {key!r}')
+                raise ConfigFileError(f'{path}: [modules.{module}.trigger] of type {kind!r} needs a {key!r}')
             trigger[key] = table[key]
         if trigger.get('edge', 'rising') not in ('rising', 'falling'):
-            raise ConfigFileError(f"{path}: [trigger] edge must be 'rising' or 'falling', got {trigger['edge']!r}")
+            raise ConfigFileError(f"{path}: [modules.{module}.trigger] edge must be 'rising' or 'falling', got {trigger['edge']!r}")
         for key in ('terminal', 'channel'):
             if key in trigger and not isinstance(trigger[key], str):
-                raise ConfigFileError(f'{path}: [trigger] {key} must be a text, got {trigger[key]!r}')
+                raise ConfigFileError(f'{path}: [modules.{module}.trigger] {key} must be a text, got {trigger[key]!r}')
         if 'level' in trigger:
             if isinstance(trigger['level'], bool) or not isinstance(trigger['level'], (int, float)):
-                raise ConfigFileError(f"{path}: [trigger] level must be a number, got {trigger['level']!r}")
+                raise ConfigFileError(f"{path}: [modules.{module}.trigger] level must be a number, got {trigger['level']!r}")
             trigger['level'] = float(trigger['level'])
         return trigger
 
@@ -301,13 +323,15 @@ class ConfigFiles:
             entry = content['modules'][name] = {'product': module.product}
             if module.frequency is not None:
                 entry['frequency'] = module.frequency
+            if module.clock:
+                entry['clock'] = module.clock
+            if module.trigger is not None:
+                entry['trigger'] = module.trigger
             if module.channels:
                 entry[ChannelKind.AI.value] = {
                     channel.name.split('/')[-1]: _encode(channel, module.notes.get(channel.name, ''),
                                                          channel.name not in module.unread)
                     for channel in module.channels}
-        if configuration.trigger is not None:
-            content['trigger'] = configuration.trigger
         self.folder.mkdir(parents=True, exist_ok=True)
         self.path(suffix).write_text(toml.dumps(content))
 

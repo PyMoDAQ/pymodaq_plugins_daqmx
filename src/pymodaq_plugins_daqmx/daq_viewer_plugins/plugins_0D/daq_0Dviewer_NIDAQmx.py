@@ -18,7 +18,34 @@ from pymodaq_gui.utils.status_palette import Status
 
 MANUAL = '(manual)'    # no configuration file: the channels are the ones of the tree
 TRIGGER_TYPES = ['none', 'digital edge', 'analog edge']
+CLOCK_INTERNAL = 'internal'  # the sample clock of the module itself
 DEFAULT = 'default'    # the name of the configuration of the file without suffix
+
+
+def _exporting_module(terminal: str) -> Optional[str]:
+    """The module that produces the signal ``terminal`` (``/Dev1/ai/SampleClock``), None for any other terminal."""
+    parts = (terminal or '').split('/')
+    return parts[1] if len(parts) > 3 and parts[0] == '' and parts[2] == 'ai' else None
+
+
+def module_group(module: str, frequency: int, clocks: List[str], terminals: List[str], channels: List[str]) -> dict:
+    """The settings of a module: its frequency, its clock and its start trigger."""
+    return {'title': module, 'name': module, 'type': 'group', 'children': [
+        {'title': 'Frequency:', 'name': 'frequency', 'type': 'int', 'value': frequency, 'min': 1,
+         'tip': 'Sampling rate; with an external clock, the real frequency of that clock (the highest it may have)'},
+        {'title': 'Clock:', 'name': 'clock', 'type': 'list', 'limits': clocks, 'value': CLOCK_INTERNAL,
+         'tip': 'The clock of the module, or a terminal (a clock wired in, or the clock that another module exports)'},
+        {'title': 'Start trigger:', 'name': 'trigger', 'type': 'group', 'children': [
+            {'title': 'Type:', 'name': 'type', 'type': 'list', 'limits': TRIGGER_TYPES, 'value': 'none'},
+            {'title': 'Terminal:', 'name': 'terminal', 'type': 'list', 'limits': terminals, 'visible': False},
+            {'title': 'Channel:', 'name': 'channel', 'type': 'list', 'limits': channels, 'visible': False,
+             'tip': 'A channel of this module (it is acquired) or a dedicated analog trigger terminal'},
+            {'title': 'Edge:', 'name': 'edge', 'type': 'list', 'limits': ['rising', 'falling'], 'value': 'rising',
+             'visible': False},
+            {'title': 'Level (V):', 'name': 'level', 'type': 'float', 'value': 0., 'visible': False,
+             'tip': 'Inside the range of the channel'},
+        ]},
+    ]}
 
 
 def _label(suffix: str) -> str:
@@ -40,15 +67,7 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
              'value': MANUAL},
             save_param(),
         ]},
-        {'title': 'Start trigger:', 'name': 'trigger', 'type': 'group', 'children': [
-            {'title': 'Type:', 'name': 'type', 'type': 'list', 'limits': TRIGGER_TYPES, 'value': 'none'},
-            {'title': 'Terminal:', 'name': 'terminal', 'type': 'list', 'limits': [], 'visible': False},
-            {'title': 'Channel:', 'name': 'channel', 'type': 'list', 'limits': [], 'visible': False},
-            {'title': 'Edge:', 'name': 'edge', 'type': 'list', 'limits': ['rising', 'falling'], 'value': 'rising',
-             'visible': False},
-            {'title': 'Level (V):', 'name': 'level', 'type': 'float', 'value': 0., 'visible': False},
-        ]},
-        {'title': 'Module frequencies:', 'name': 'frequencies', 'type': 'group', 'children': []},
+        {'title': 'Modules:', 'name': 'modules', 'type': 'group', 'children': []},
         {'title': 'Channels:', 'name': 'channels', 'type': 'ni_channels', 'kind': ChannelKind.AI.value,
          'limits': [], 'children': []},
     ]
@@ -58,8 +77,7 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         super().__init__(*args, **kwargs)
         system = NIDAQSystem()
         self.settings.child('channels').setLimits(system.all_channels(ChannelKind.AI))
-        self.settings.child('trigger', 'terminal').setLimits(
-            [terminal for device in system.devices() for terminal in system.terminals(device)])
+        self.terminals = [terminal for device in system.devices() for terminal in system.terminals(device)]
         self.files = ConfigFiles()
         self.loaded = MANUAL  # the configuration whose channels are in the tree
         self.in_file = ()  # what the file describes (see `snapshot`), to tell if the tree still is the file
@@ -91,12 +109,12 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         channels = [channel for module in configuration.modules for channel in configuration.channels(module)]
         unread = {name for module in configuration.modules for name in configuration.unread(module)}
         self.settings.child('channels').setChannels(channels, unread)
-        self.sync_frequencies()
-        self.sync_trigger_channels()
-        for module in self.modules():  # a module that the file gives no frequency to goes back to the global one
-            frequency = configuration.frequency(module) or self.settings['frequency']
-            self.settings.child('frequencies', module).setValue(frequency)
-        self.set_trigger(configuration.trigger)
+        self.sync_modules()
+        for module in self.modules():  # what the file does not give goes back to the default
+            group = self.settings.child('modules', module)
+            group.child('frequency').setValue(configuration.frequency(module) or self.settings['frequency'])
+            group.child('clock').setValue(configuration.clock(module) or CLOCK_INTERNAL)
+            self.set_module_trigger(module, configuration.trigger(module))
         self.loaded = label
         self.in_file = self.snapshot()
         self.settings.child('config', 'save').setOpts(suffix=label)  # what the dialog of the save button proposes
@@ -110,7 +128,7 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         existing file the description, the devices and the notes of the channels that stay are kept.
         """
         suffix = _suffix(button.opts['suffix'])
-        self.sync_frequencies()
+        self.sync_modules()
         channels = self.channels()
         if not channels:
             raise ValueError('There is no channel to save')
@@ -124,8 +142,11 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         for module, module_channels in by_module.items():
             configuration = configuration.with_channels(
                 module, module_channels, unread=[c.name for c in module_channels if c.name in unread])
-            configuration = configuration.with_frequency(module, self.settings['frequencies', module])
-        self.files.save(suffix, configuration.with_trigger(self.trigger_keys()))
+            group = self.settings.child('modules', module)
+            configuration = configuration.with_frequency(module, group['frequency'])
+            configuration = configuration.with_clock(module, '' if group['clock'] == CLOCK_INTERNAL else group['clock'])
+            configuration = configuration.with_trigger(module, self.trigger_keys(module))
+        self.files.save(suffix, configuration)
         self.refresh_menu()
         self.loaded, self.in_file = _label(suffix), self.snapshot()  # the tree is that file now
         self.settings.child('config', 'configuration').setValue(self.loaded)
@@ -147,47 +168,55 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         names = [child.opts['title'].split('/')[0] for child in self.settings.child('channels').children()]
         return list(dict.fromkeys(names))
 
-    def sync_trigger_channels(self) -> None:
-        """What an analog trigger can watch: the channels of the tree (the driver only accepts a channel of the task)
-        and the dedicated analog trigger terminals (``/Dev1/APFI0``) of the devices of the tree, which are not read."""
-        names = [child.opts['title'] for child in self.settings.child('channels').children()]
-        system = NIDAQSystem()
-        for module in self.modules():
-            try:
-                names += [t for t in system.terminals(module) if '/APFI' in t]
-            except ValueError:  # a module that is not a device of the system
-                pass
-        channel = self.settings.child('trigger', 'channel')
-        if channel.opts['limits'] != names:
-            channel.setLimits(names)
-
-    def sync_frequencies(self) -> None:
-        """One frequency for each module of the channels: a new module starts at the global frequency."""
-        group = self.settings.child('frequencies')
+    def sync_modules(self) -> None:
+        """One group of settings for each module of the channels (frequency, clock, start trigger): a new module
+        starts at the global frequency, on its own clock, without trigger. The lists of terminals follow the modules:
+        a module can use the clock or the start trigger that another module of the tree exports."""
+        group = self.settings.child('modules')
         modules = self.modules()
         for child in group.children():
             if child.name() not in modules:
                 group.removeChild(child)
         for module in modules:
+            lists = self.module_lists(module)
             if module not in group.names:
-                group.addChild({'title': f'{module}:', 'name': module, 'type': 'int', 'min': 1,
-                                'value': self.settings['frequency']})
+                group.addChild(module_group(module, self.settings['frequency'], **lists))
+                continue
+            self.set_limits(group.child(module, 'clock'), lists['clocks'])
+            self.set_limits(group.child(module, 'trigger', 'terminal'), lists['terminals'])
+            self.set_limits(group.child(module, 'trigger', 'channel'), lists['channels'])
 
-    def trigger_for(self, acquisition: Acquisition):
-        """The start trigger chosen in the settings for the task of ``acquisition``, or None. A digital trigger starts
-        every task; an analog one watches a channel of its task, so it starts only the task of that channel."""
-        settings = self.settings.child('trigger')
-        kind = settings['type']
-        if kind == 'digital edge':
-            return DigitalEdgeTrigger(settings['terminal'], Edge[settings['edge'].upper()])
-        source = settings['channel']
-        if kind == 'analog edge' and (source in acquisition.labels or source.startswith(f'/{acquisition.name}/')):
-            return AnalogEdgeTrigger(settings['channel'], settings['level'], Slope[settings['edge'].upper()])
-        return None
+    @staticmethod
+    def set_limits(param: Parameter, limits: List[str]) -> None:
+        if param.opts['limits'] != limits:
+            param.setLimits(limits)
 
-    def trigger_keys(self) -> Optional[dict]:
-        """The start trigger of the tree as the keys of the ``[trigger]`` table of a file, or None."""
-        settings = self.settings.child('trigger')
+    def module_lists(self, module: str) -> dict:
+        """What the settings of ``module`` choose among. A terminal of its own ``ai`` subsystem cannot time it."""
+        others = [m for m in self.modules() if m != module]
+        own = f'/{module}/ai/'
+        terminals = [t for t in self.terminals if not t.startswith(own)]
+        names = [child.opts['title'] for child in self.settings.child('channels').children()
+                 if child.opts['title'].split('/')[0] == module]
+        try:  # the dedicated analog trigger terminals of the device, which are not read
+            apfi = [t for t in NIDAQSystem().terminals(module) if '/APFI' in t]
+        except ValueError:  # a module that is not a device of the system
+            apfi = []
+        return {'clocks': [CLOCK_INTERNAL] + terminals + [f'/{m}/ai/SampleClock' for m in others],
+                'terminals': terminals + [f'/{m}/ai/StartTrigger' for m in others], 'channels': names + apfi}
+
+    def module_trigger(self, module: str):
+        """The start trigger of ``module`` as the API describes it, None if it starts at once."""
+        keys = self.trigger_keys(module)
+        if keys is None:
+            return None
+        if keys['type'] == 'digital edge':
+            return DigitalEdgeTrigger(keys['terminal'], Edge[keys['edge'].upper()])
+        return AnalogEdgeTrigger(keys['channel'], keys['level'], Slope[keys['edge'].upper()])
+
+    def trigger_keys(self, module: str) -> Optional[dict]:
+        """The start trigger of ``module`` as the keys of the ``trigger`` table of a file, or None."""
+        settings = self.settings.child('modules', module, 'trigger')
         if settings['type'] == 'digital edge':
             return {'type': 'digital edge', 'terminal': settings['terminal'], 'edge': settings['edge']}
         if settings['type'] == 'analog edge':
@@ -195,27 +224,20 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
                     'edge': settings['edge']}
         return None
 
-    def set_trigger(self, keys: Optional[dict]) -> None:
+    def set_module_trigger(self, module: str, keys: Optional[dict]) -> None:
         """Put the trigger of a file in the tree (no trigger if the file has none)."""
-        settings = self.settings.child('trigger')
+        settings = self.settings.child('modules', module, 'trigger')
         keys = keys or {'type': 'none'}
         settings.child('type').setValue(keys['type'])
         for key in ('terminal', 'channel', 'level'):
             if key in keys:
                 settings.child(key).setValue(keys[key])
         settings.child('edge').setValue(keys.get('edge', 'rising'))
-        self.show_trigger()
+        self.show_trigger(module)
 
-    def snapshot(self) -> tuple:
-        """What a configuration file describes in the tree: the channels, the frequency of each module and the
-        trigger."""
-        self.sync_frequencies()
-        frequencies = tuple((child.name(), child.value()) for child in self.settings.child('frequencies').children())
-        return tuple(self.channels()), tuple(unread_of(self.settings.child('channels'))), frequencies, self.trigger_keys()
-
-    def show_trigger(self) -> None:
+    def show_trigger(self, module: str) -> None:
         """Only the parameters of the chosen type of trigger are visible."""
-        settings = self.settings.child('trigger')
+        settings = self.settings.child('modules', module, 'trigger')
         kind = settings['type']
         settings.child('terminal').setOpts(visible=kind == 'digital edge')
         settings.child('channel').setOpts(visible=kind == 'analog edge')
@@ -223,16 +245,34 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         settings.child('edge').setOpts(visible=kind != 'none')
 
     def acquisitions(self) -> List[Acquisition]:
-        """One task for each module: the channels of a module are acquired together, at its own frequency."""
-        self.sync_frequencies()  # the channels may have been added without the GUI telling the plugin
-        self.sync_trigger_channels()
+        """One task for each module: its channels are acquired together, at its frequency, on its clock, started by
+        its trigger."""
+        self.sync_modules()  # the channels may have been added without the GUI telling the plugin
         by_module = {}
         for channel in self.channels():
             by_module.setdefault(channel.name.split('/')[0], []).append(channel)
         unread = unread_of(self.settings.child('channels'))
-        return [Acquisition(module, channels, self.settings['frequencies', module],
-                            tuple(c.name for c in channels if c.name in unread))
-                for module, channels in by_module.items()]
+        acquisitions = []
+        for module, channels in by_module.items():
+            group = self.settings.child('modules', module)
+            clock = '' if group['clock'] == CLOCK_INTERNAL else group['clock']
+            trigger = self.module_trigger(module)
+            key = {'digital edge': 'terminal', 'analog edge': 'channel'}.get(group['trigger', 'type'])
+            sources = [clock] + ([group['trigger', key]] if key is not None else [])
+            waits = tuple(dict.fromkeys(m for m in (_exporting_module(source) for source in sources)
+                                        if m not in (None, module) and m in by_module))
+            acquisitions.append(Acquisition(module, channels, group['frequency'],
+                                            tuple(c.name for c in channels if c.name in unread), clock, trigger, waits))
+        return acquisitions
+
+    def snapshot(self) -> tuple:
+        """What a configuration file describes in the tree: the channels and, for each module, its frequency, clock
+        and trigger."""
+        self.sync_modules()
+        modules = tuple((module, self.settings['modules', module, 'frequency'],
+                         self.settings['modules', module, 'clock'], self.trigger_keys(module))
+                        for module in self.modules())
+        return tuple(self.channels()), tuple(unread_of(self.settings.child('channels'))), modules
 
     def leave_configuration_if_modified(self) -> None:
         """The menu goes back to ``(manual)`` as soon as the tree is not what the file describes any more: its
@@ -281,11 +321,10 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         if param.name() == 'type' and param.parent() is not None and param.parent().parent() is self.settings.child(
                 'channels'):  # the type of a channel: its group is rebuilt
             set_type(ChannelKind.AI, param.parent(), param.value())
-        if param.name() == 'type' and param.parent() is self.settings.child('trigger'):
-            self.show_trigger()
+        if param.name() == 'type' and param.parent() is not None and param.parent().name() == 'trigger':
+            self.show_trigger(param.parent().parent().name())
         self.leave_configuration_if_modified()
-        self.sync_frequencies()
-        self.sync_trigger_channels()
+        self.sync_modules()
         super().commit_settings(param)
 
 
