@@ -333,7 +333,7 @@ def test_the_frequencies_of_the_modules_and_the_trigger_are_saved_and_loaded_wit
     trigger = plugin.settings.child('trigger')
     trigger.child('type').setValue('analog edge')
     plugin.commit_settings(trigger.child('type'))
-    trigger.child('channel').setValue('Dev1/ai1')
+    trigger.child('channel').setValue('Dev1/ai0')
     trigger.child('level').setValue(2.5)
     trigger.child('edge').setValue('falling')
     plugin.settings.child('config', 'save').opts.update(suffix='timed')
@@ -348,7 +348,7 @@ def test_the_frequencies_of_the_modules_and_the_trigger_are_saved_and_loaded_wit
 
     assert [(c.name(), c.value()) for c in plugin.settings.child('frequencies').children()] == [
         ('Dev1', 1000), ('Dev2', 500)]
-    assert trigger['type'] == 'analog edge' and trigger['channel'] == 'Dev1/ai1'
+    assert trigger['type'] == 'analog edge' and trigger['channel'] == 'Dev1/ai0'
     assert trigger['level'] == 2.5 and trigger['edge'] == 'falling'
     assert trigger.child('level').opts['visible']
     plugin.close()

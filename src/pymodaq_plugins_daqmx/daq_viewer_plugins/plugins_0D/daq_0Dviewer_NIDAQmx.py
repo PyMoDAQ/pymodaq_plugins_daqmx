@@ -60,7 +60,6 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         self.settings.child('channels').setLimits(system.all_channels(ChannelKind.AI))
         self.settings.child('trigger', 'terminal').setLimits(
             [terminal for device in system.devices() for terminal in system.terminals(device)])
-        self.settings.child('trigger', 'channel').setLimits(system.all_channels(ChannelKind.AI))
         self.files = ConfigFiles()
         self.loaded = MANUAL  # the configuration whose channels are in the tree
         self.in_file = ()  # what the file describes (see `snapshot`), to tell if the tree still is the file
@@ -92,6 +91,7 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         channels = [channel for module in configuration.modules for channel in configuration.channels(module)]
         self.settings.child('channels').setChannels(channels)
         self.sync_frequencies()
+        self.sync_trigger_channels()
         for module in self.modules():  # a module that the file gives no frequency to goes back to the global one
             frequency = configuration.frequency(module) or self.settings['frequency']
             self.settings.child('frequencies', module).setValue(frequency)
@@ -144,6 +144,14 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         names = [child.opts['title'].split('/')[0] for child in self.settings.child('channels').children()]
         return list(dict.fromkeys(names))
 
+    def sync_trigger_channels(self) -> None:
+        """The channels that an analog trigger can watch are the ones of the tree (the driver only accepts a channel
+        of the task)."""
+        names = [child.opts['title'] for child in self.settings.child('channels').children()]
+        channel = self.settings.child('trigger', 'channel')
+        if channel.opts['limits'] != names:
+            channel.setLimits(names)
+
     def sync_frequencies(self) -> None:
         """One frequency for each module of the channels: a new module starts at the global frequency."""
         group = self.settings.child('frequencies')
@@ -156,13 +164,14 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
                 group.addChild({'title': f'{module}:', 'name': module, 'type': 'int', 'min': 1,
                                 'value': self.settings['frequency']})
 
-    def trigger(self):
-        """The start trigger chosen in the settings, or None."""
+    def trigger_for(self, acquisition: Acquisition):
+        """The start trigger chosen in the settings for the task of ``acquisition``, or None. A digital trigger starts
+        every task; an analog one watches a channel of its task, so it starts only the task of that channel."""
         settings = self.settings.child('trigger')
         kind = settings['type']
         if kind == 'digital edge':
             return DigitalEdgeTrigger(settings['terminal'], Edge[settings['edge'].upper()])
-        if kind == 'analog edge':
+        if kind == 'analog edge' and settings['channel'] in acquisition.labels:
             return AnalogEdgeTrigger(settings['channel'], settings['level'], Slope[settings['edge'].upper()])
         return None
 
@@ -206,6 +215,7 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
     def acquisitions(self) -> List[Acquisition]:
         """One task for each module: the channels of a module are acquired together, at its own frequency."""
         self.sync_frequencies()  # the channels may have been added without the GUI telling the plugin
+        self.sync_trigger_channels()
         by_module = {}
         for channel in self.channels():
             by_module.setdefault(channel.name.split('/')[0], []).append(channel)
@@ -263,6 +273,7 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
             self.show_trigger()
         self.leave_configuration_if_modified()
         self.sync_frequencies()
+        self.sync_trigger_channels()
         super().commit_settings(param)
 
 

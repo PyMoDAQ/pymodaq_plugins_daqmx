@@ -90,8 +90,8 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
         channels = self.channels()
         return [Acquisition('', channels, self.settings['frequency'])] if channels else []
 
-    def trigger(self):
-        """What starts the tasks (a trigger of the API), or None to start them at once."""
+    def trigger_for(self, acquisition: Acquisition):
+        """What starts the task of ``acquisition`` (a trigger of the API), or None to start it at once."""
         return None
 
     def data_names(self, acquisitions: List[Acquisition]) -> List[str]:
@@ -125,7 +125,7 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
     def signature(self, streaming: bool = False):
         """What the tasks are built for: the channels and the frequency of each, and the samples of finite tasks."""
         samples = None if streaming else self.task_samples()
-        return tuple((tuple(a.channels), a.frequency, samples, self.trigger()) for a in self.acquisitions())
+        return tuple((tuple(a.channels), a.frequency, samples, self.trigger_for(a)) for a in self.acquisitions())
 
     def update_tasks(self, streaming: bool = False) -> None:
         """Replace the tasks by ones that follow the settings: finite for a snap, continuous for the live mode."""
@@ -139,7 +139,7 @@ class DAQ_Viewer_AIBase(DAQ_Viewer_base):
             for acquisition in acquisitions:
                 clock = ClockSettings(rate=acquisition.frequency, samples=samples)
                 tasks.append(AnalogInputTask(TaskConfig(channels=acquisition.channels, timing=clock,
-                                                        trigger=self.trigger())))
+                                                        trigger=self.trigger_for(acquisition))))
         except Exception:
             for task in reversed(tasks):
                 task.close()

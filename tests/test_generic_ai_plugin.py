@@ -128,18 +128,24 @@ def test_a_digital_edge_trigger_starts_every_task(qapp, driver, system_driver):
     plugin.close()
 
 
-def test_an_analog_edge_trigger_waits_for_the_level_of_a_channel(qapp, driver, system_driver):
+def test_an_analog_edge_trigger_waits_for_the_level_of_a_channel_of_the_tree_and_starts_the_task_of_its_module(
+        qapp, driver, system_driver):
     from nidaqmx.constants import Slope
     plugin = make_detector(DAQ_0DViewer_NIDAQmx)
-    plugin.settings.child('channels').addNew('Dev1/ai0')
+    group = plugin.settings.child('channels')
+    group.addNew('Dev1/ai0')
+    group.addNew('Dev1/ai1')
+    group.addNew('Dev2/ai3')
+    plugin.commit_settings(group)
     trigger = plugin.settings.child('trigger')
     trigger.child('type').setValue('analog edge')
     plugin.commit_settings(trigger.child('type'))
     assert trigger.child('channel').opts['visible'] and not trigger.child('terminal').opts['visible']
+    assert trigger.child('channel').opts['limits'] == ['Dev1/ai0', 'Dev1/ai1', 'Dev2/ai3']  # the channels of the tasks
     trigger.child('channel').setValue('Dev1/ai1')
     trigger.child('level').setValue(1.5)
     grab_and_wait(plugin)
-    assert driver[0].trigger_calls == [('anlg_edge', 'Dev1/ai1', Slope.RISING, 1.5)]
+    assert [task.trigger_calls for task in driver] == [[('anlg_edge', 'Dev1/ai1', Slope.RISING, 1.5)], []]
     plugin.close()
 
 

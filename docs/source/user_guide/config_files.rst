@@ -43,7 +43,8 @@ Format
    integer. The generic viewer acquires each module with its own task, so each has its own frequency.
 
 ``[trigger]``
-   Optional: what starts the task of every module. ``type`` is ``digital edge`` (``terminal``, such as
+   Optional: what starts the tasks. A digital trigger starts the task of every module; an analog one watches a channel of
+   the file and starts only the task of its module. ``type`` is ``digital edge`` (``terminal``, such as
    ``/cDAQ1/PFI0``, and ``edge``) or ``analog edge`` (``channel``, such as ``cDAQ1Mod3/ai0``, ``level`` in volts
    and ``edge``). ``edge`` is ``rising`` (the default) or ``falling``. Without this table the tasks start at once.
 

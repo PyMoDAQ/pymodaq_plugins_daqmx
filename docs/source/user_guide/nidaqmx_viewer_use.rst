@@ -45,8 +45,10 @@ Settings
 * **Module frequencies**: one frequency for each module of the channels (they appear and disappear with the
   channels), as a module can need a rate of its own. Each module is acquired at its frequency.
 * **Start trigger**: ``none`` (the tasks start at once), ``digital edge`` (a *Terminal* such as ``/Dev1/PFI0`` and
-  an *Edge*) or ``analog edge`` (a *Channel*, a *Level* in volts and an *Edge*). The trigger is shared by the task of
-  every module.
+  an *Edge*) or ``analog edge`` (a *Channel*, a *Level* in volts and an *Edge*). A digital trigger starts the task of
+  every module. An analog trigger watches one of the channels of the tree, which the driver requires to be a channel of
+  the task, so it starts only the task of that channel's module (the others start at once); the channel is acquired
+  like the others.
 * **Nsamples** (``1D`` only): the length of the trace. In ``0D`` the number of points averaged is the *Naverage* of the
   viewer, and in ``1D`` *Naverage* is the number of traces averaged. The driver needs at least two samples for a
   clocked acquisition: *Nsamples* cannot be below 2, and with *Naverage* = 1 two samples are acquired and the first
