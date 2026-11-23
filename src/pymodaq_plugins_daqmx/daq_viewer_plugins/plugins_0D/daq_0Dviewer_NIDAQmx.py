@@ -1,3 +1,4 @@
+import re
 from typing import List, Optional
 
 from pymodaq.control_modules.thread_commands import ThreadStatus
@@ -26,6 +27,15 @@ def _exporting_module(terminal: str) -> Optional[str]:
     """The module that produces the signal ``terminal`` (``/Dev1/ai/SampleClock``), None for any other terminal."""
     parts = (terminal or '').split('/')
     return parts[1] if len(parts) > 3 and parts[0] == '' and parts[2] == 'ai' else None
+
+
+_NOT_A_SOURCE = re.compile(r'^/[^/]+/((ai|ao)\d+|ctr\d+|port\d+(/line\d+)?|APFI\d+)$', re.IGNORECASE)
+
+
+def is_signal_terminal(terminal: str) -> bool:
+    """Whether ``terminal`` carries a signal that can be a clock or a trigger: not a channel (``/Dev1/ai0``), nor an
+    analog trigger terminal (``/Dev1/APFI0``), which has its own list."""
+    return _NOT_A_SOURCE.match(terminal) is None
 
 
 def module_group(module: str, frequency: int, clocks: List[str], terminals: List[str], channels: List[str]) -> dict:
@@ -195,15 +205,17 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         """What the settings of ``module`` choose among. A terminal of its own ``ai`` subsystem cannot time it."""
         others = [m for m in self.modules() if m != module]
         own = f'/{module}/ai/'
-        terminals = [t for t in self.terminals if not t.startswith(own)]
+        terminals = [t for t in self.terminals if not t.startswith(own) and is_signal_terminal(t)]
         names = [child.opts['title'] for child in self.settings.child('channels').children()
                  if child.opts['title'].split('/')[0] == module]
         try:  # the dedicated analog trigger terminals of the device, which are not read
             apfi = [t for t in NIDAQSystem().terminals(module) if '/APFI' in t]
         except ValueError:  # a module that is not a device of the system
             apfi = []
-        return {'clocks': [CLOCK_INTERNAL] + terminals + [f'/{m}/ai/SampleClock' for m in others],
-                'terminals': terminals + [f'/{m}/ai/StartTrigger' for m in others], 'channels': names + apfi}
+        clocks = [CLOCK_INTERNAL] + terminals + [f'/{m}/ai/SampleClock' for m in others]
+        starts = terminals + [f'/{m}/ai/StartTrigger' for m in others]
+        return {'clocks': list(dict.fromkeys(clocks)), 'terminals': list(dict.fromkeys(starts)),
+                'channels': names + apfi}
 
     def module_trigger(self, module: str):
         """The start trigger of ``module`` as the API describes it, None if it starts at once."""

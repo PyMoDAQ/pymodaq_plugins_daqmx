@@ -152,6 +152,17 @@ def test_each_module_has_its_own_settings_that_start_at_the_defaults(qapp, drive
     plugin.close()
 
 
+def test_the_clock_and_terminal_lists_offer_terminals_not_channels(qapp, driver, system_driver):
+    plugin = make_detector(DAQ_0DViewer_NIDAQmx)
+    modules = two_modules(plugin)
+    for module in ('Dev1', 'Dev2'):
+        for offered in (modules.child(module, 'clock').opts['limits'],
+                        modules.child(module, 'trigger', 'terminal').opts['limits']):
+            assert '/Dev1/PFI1' in offered or '/Dev2/PFI1' in offered
+            assert not [t for t in offered if t.split('/')[-1].startswith(('ai0', 'ao0', 'ctr0', 'line0', 'APFI'))]
+    plugin.close()
+
+
 def test_a_digital_edge_trigger_starts_the_task_of_its_module_only(qapp, driver, system_driver):
     from nidaqmx.constants import Edge
     plugin = make_detector(DAQ_0DViewer_NIDAQmx)
