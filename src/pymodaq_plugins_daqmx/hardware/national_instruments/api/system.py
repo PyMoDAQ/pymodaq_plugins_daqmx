@@ -86,10 +86,14 @@ class NIDAQSystem:
         """Maximum update rate (Hz) of the analog outputs; ``None`` if the device has none."""
         return self._device_property(device, 'ao_max_rate', float, None)
 
+    def ao_min_rate(self, device):
+        """Minimum update rate (Hz) of the analog outputs; ``None`` if the device has none."""
+        return self._device_property(device, 'ao_min_rate', float, None)
+
     def supports_start_trigger(self, device, kind):
-        """Whether a ``kind`` (``ChannelKind.AI`` or ``ChannelKind.DI``) task on ``device`` can wait for a start trigger."""
-        if kind not in (ChannelKind.AI, ChannelKind.DI):
-            raise ValueError(f"unknown kind {kind!r}: triggers are supported by AI and DI tasks")
+        """Whether a ``kind`` (``ChannelKind.AI``, ``AO`` or ``DI``) task on ``device`` can wait for a start trigger."""
+        if kind not in (ChannelKind.AI, ChannelKind.AO, ChannelKind.DI):
+            raise ValueError(f"unknown kind {kind!r}: triggers are supported by AI, AO and DI tasks")
         usage = self._device_property(device, f'{kind}_trig_usage', list, [])
         return TriggerUsage.START in usage
 

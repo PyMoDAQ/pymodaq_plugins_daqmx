@@ -20,6 +20,7 @@ This user guide will first explain how to use these plugins, and then detail how
    user_guide/ramp_output_use
    user_guide/nidaqmx_viewer_use
    user_guide/nidaqmx_actuator_use
+   user_guide/waveform_output_use
    user_guide/config_files
 
 For any other use, you will need to create your own move or viewer based on this plugin. See the :ref:`create_plugin` guide for a detailed procedure.
