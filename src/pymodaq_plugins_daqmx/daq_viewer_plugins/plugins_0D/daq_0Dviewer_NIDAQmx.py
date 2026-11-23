@@ -12,7 +12,7 @@ from nidaqmx.constants import Edge, Slope
 from pymodaq_plugins_daqmx.hardware.national_instruments.api import (
     AnalogEdgeTrigger, ChannelKind, DigitalEdgeTrigger, NIDAQSystem)
 from pymodaq_plugins_daqmx.hardware.national_instruments.channel_group import channels_of, unread_of
-from pymodaq_plugins_daqmx.hardware.national_instruments.channel_tree import set_type
+from pymodaq_plugins_daqmx.hardware.national_instruments.channel_tree import set_type, update_suffixes
 from pymodaq_plugins_daqmx.hardware.national_instruments.config_files import Configuration, ConfigFiles
 from pymodaq_plugins_daqmx.hardware.national_instruments.save_button import save_param
 from pymodaq_gui.utils.status_palette import Status
@@ -333,6 +333,9 @@ class DAQ_0DViewer_NIDAQmx(DAQ_Viewer_AIBase):
         if param.name() == 'type' and param.parent() is not None and param.parent().parent() is self.settings.child(
                 'channels'):  # the type of a channel: its group is rebuilt
             set_type(ChannelKind.AI, param.parent(), param.value())
+        if param.name() == 'units' and param.parent() is not None and param.parent().parent() is self.settings.child(
+                'channels'):  # the units of a temperature: the range follows
+            update_suffixes(param.parent())
         if param.name() == 'type' and param.parent() is not None and param.parent().name() == 'trigger':
             self.show_trigger(param.parent().parent().name())
         self.leave_configuration_if_modified()

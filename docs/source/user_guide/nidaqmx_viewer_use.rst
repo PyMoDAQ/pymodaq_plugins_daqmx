@@ -70,7 +70,7 @@ Settings
 * **Channels**: the group described above. Each channel has a ``read`` box (checked by default): unchecked, the
   channel stays in the task but its samples are not in the data, which is what an analog trigger on that channel needs.
   A module whose channels are all unchecked gives no data. The parameters of a channel are the fields of its channel class of the
-  API (``AIVoltage``, ``AICurrent``, ``AIThermocouple``, ``AIRtd``), with the same names; see :doc:`config_files`
+  API (``AIVoltage``, ``AICurrent``, ``AIThermocouple``, ``AIRtd``), with the same names (the range, ``min_val`` and ``max_val``, is shown in the unit of its quantity: V, A or the temperature units). Changing the type of a channel keeps the values that still make sense: the range is kept only between types that measure the same quantity (thermocouple and RTD), and takes the default of the new type otherwise; see :doc:`config_files`
   for the list.
 
 Loading and saving a configuration

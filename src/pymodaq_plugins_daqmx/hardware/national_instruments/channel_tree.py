@@ -15,24 +15,53 @@ def _is_enum(field) -> bool:
     return isinstance(field.type, type) and issubclass(field.type, enum.Enum)
 
 
-def _parameter(field, value=None) -> dict:
+_TEMPERATURE_SUFFIXES = {'DEG_C': '°C', 'DEG_F': '°F', 'K': 'K', 'DEG_R': '°R'}
+_RANGE = ('min_val', 'max_val')
+
+
+def _quantity(type_: str) -> str:
+    """What the range of a type of channel measures: a range is meaningful only for that quantity."""
+    return {'voltage': 'V', 'current': 'A'}.get(type_, 'temperature')
+
+
+def _suffix(type_: str, units: str = None) -> str:
+    quantity = _quantity(type_)
+    return _TEMPERATURE_SUFFIXES.get(units, '') if quantity == 'temperature' else quantity
+
+
+def _parameter(field, value=None, suffix: str = '') -> dict:
     """The settings parameter of a field of a channel, valued by ``value`` or the default of the field."""
     if value is None:
         value = field.default
     if _is_enum(field):
         return {'title': field.name, 'name': field.name, 'type': 'list',
                 'limits': [member.name for member in field.type], 'value': value.name}
-    return {'title': field.name, 'name': field.name, 'type': 'float', 'value': float(value)}
+    parameter = {'title': field.name, 'name': field.name, 'type': 'float', 'value': float(value)}
+    if field.name in _RANGE and suffix:
+        parameter['suffix'] = suffix
+    return parameter
 
 
 def _children(kind: ChannelKind, type_: str, channel=None, previous: dict = None, read: bool = True) -> List[dict]:
     types = CHANNEL_TYPES[kind]
     children = [{'title': 'type', 'name': 'type', 'type': 'list', 'limits': list(types), 'value': type_},
                 {'title': 'read', 'name': 'read', 'type': 'bool', 'value': read}]  # in the data, or only in the task
-    for field in channel_fields(types[type_]):
+    fields = channel_fields(types[type_])
+    units = next((getattr(channel, f.name).name if channel is not None else
+                  (previous or {}).get(f.name) for f in fields if f.name == 'units'), None)
+    if units is None:  # a temperature channel that is new has the default units of its class
+        units = next((f.default.name for f in fields if f.name == 'units'), None)
+    for field in fields:
         value = getattr(channel, field.name) if channel is not None else (previous or {}).get(field.name)
-        children.append(_parameter(field, value))
+        children.append(_parameter(field, value, _suffix(type_, units)))
     return children
+
+
+def update_suffixes(group) -> None:
+    """Put the unit of the range (the temperature units can be changed) on the range of the channel of ``group``."""
+    suffix = _suffix(group.child('type').value(), group.child('units').value() if group.names.get('units') else None)
+    for name in _RANGE:
+        group.child(name).setOpts(suffix=suffix)
 
 
 def channel_params(kind: ChannelKind, channel, read: bool = True) -> dict:
@@ -68,6 +97,9 @@ def set_type(kind: ChannelKind, group, type_: str) -> None:
     are kept."""
     kept = {child.name(): child.value() for child in group.children() if child.name() != 'type'}
     read = kept.pop('read', True)
+    if _quantity(type_) != _quantity(group.child('type').value()):  # a range in volts means nothing in amperes
+        for name in _RANGE:
+            kept.pop(name, None)
     for child in list(group.children()):
         group.removeChild(child)
     previous = {}
