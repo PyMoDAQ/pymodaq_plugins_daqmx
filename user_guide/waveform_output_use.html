@@ -1,0 +1,179 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Waveform output NIDAQmx_Waveform &mdash; pymodaq_plugins_daqmx 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Configuration files" href="config_files.html" />
+    <link rel="prev" title="Generic actuators NIDAQmx and NIDAQmx_DO" href="nidaqmx_actuator_use.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pymodaq_plugins_daqmx
+              <img src="../_static/splash.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../user_guide.html">User guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="counter_use.html">0D viewer DAQmx_Counter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ai_use.html">0D viewers DAQmxAI and DAQmxDualAI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ramp_output_use.html">NIDAQmx_RampOutput move</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nidaqmx_viewer_use.html">Generic viewer NIDAQmx</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nidaqmx_actuator_use.html">Generic actuators NIDAQmx and NIDAQmx_DO</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Waveform output NIDAQmx_Waveform</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#how-to-use-it">How to use it</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#limits">Limits</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="config_files.html">Configuration files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide.html#working-principle-of-the-plugins">Working principle of the plugins</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">Python API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../library.html">Library Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../creating_plugin.html">Creating a plugin for your specific needs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pymodaq_plugins_daqmx</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../user_guide.html">User guide</a></li>
+      <li class="breadcrumb-item active">Waveform output NIDAQmx_Waveform</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/user_guide/waveform_output_use.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="waveform-output-nidaqmx-waveform">
+<h1>Waveform output NIDAQmx_Waveform<a class="headerlink" href="#waveform-output-nidaqmx-waveform" title="Link to this heading"></a></h1>
+<p>The actuator <code class="docutils literal notranslate"><span class="pre">NIDAQmx_Waveform</span></code> (<code class="docutils literal notranslate"><span class="pre">DAQ_Move_NIDAQmx_Waveform</span></code>) plays <strong>waveforms</strong>, arrays of samples, on several
+analog outputs of one NI device at once. The outputs are driven by one task, so they share a sample clock and start
+together. For one output set a level at a time, see <code class="docutils literal notranslate"><span class="pre">NIDAQmx</span></code>; for voltage ramps timed by a counter, see
+<code class="docutils literal notranslate"><span class="pre">NIDAQmx_RampOutput</span></code>.</p>
+<p>The position of the actuator is a <code class="docutils literal notranslate"><span class="pre">DataActuator</span></code> holding one array of samples (in volts) for each chosen output, all
+of the same length. The arrays are given in the order of the chosen outputs. The plugin follows the contract of
+<code class="docutils literal notranslate"><span class="pre">pymodaq_plugins_utils.hardware.waveform_output</span></code>: the applications that design waveforms, such as the extension of
+<code class="docutils literal notranslate"><span class="pre">pymodaq_plugins_waveform</span></code>, read what this device can do and check what they send before they send it.</p>
+<section id="how-to-use-it">
+<h2>How to use it<a class="headerlink" href="#how-to-use-it" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>Choose the <strong>Outputs</strong> (the analog outputs of one device, ticked in the list) and their range (<strong>Min</strong>, <strong>Max</strong>).
+Outputs of several devices cannot be in one task: the plugin refuses them. Change them while the actuator runs and
+the outputs go to 0 V before the new ones are driven.</p></li>
+<li><p>In <strong>Waveform output</strong> choose the <strong>Sample rate</strong>, the <strong>Mode</strong> and the number of <strong>Repetitions</strong>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">finite</span></code>: the samples are generated once;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">repeat</span></code>: the samples are generated <em>Repetitions</em> times;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">continuous</span></code>: the samples are generated again and again until the actuator is stopped. The driver repeats the
+samples that were written, so the waveform should hold a whole number of periods.</p></li>
+</ul>
+</li>
+<li><p>Optionally give an external <strong>Sample clock</strong> (a terminal such as <code class="docutils literal notranslate"><span class="pre">/Dev1/PFI1</span></code>) and a <strong>Start trigger</strong> (a PFI
+terminal and its edge): the generation then waits for the edge. Without trigger it starts at once.</p></li>
+<li><p>Move the actuator to the samples.</p></li>
+</ol>
+<p>The move is done when the generation has started. The end of a finite or repeated generation is announced by the status
+command <code class="docutils literal notranslate"><span class="pre">generation_done</span></code> (0 if all went well, else the code of the driver error). The outputs are at 0 V when the
+actuator starts, after <strong>stop</strong> and when it closes. When a finite waveform ends, the outputs keep its last sample until
+the next waveform or the stop.</p>
+</section>
+<section id="limits">
+<h2>Limits<a class="headerlink" href="#limits" title="Link to this heading"></a></h2>
+<p>The settings group <strong>Waveform capabilities</strong> (read only) shows what the plugin tells to the applications: the
+number of outputs, the range of sample rates (<code class="docutils literal notranslate"><span class="pre">ao_min_rate</span></code> and <code class="docutils literal notranslate"><span class="pre">ao_max_rate</span></code> of the device), the voltage range
+(the intersection of <strong>Min</strong>, <strong>Max</strong> and the ranges of the device), the modes, the PFI terminals if the device accepts a
+start trigger, and <strong>Max samples</strong>.</p>
+<ul class="simple">
+<li><p>The device may be slower than its <code class="docutils literal notranslate"><span class="pre">ao_max_rate</span></code> when several outputs are used (some modules share their converter
+between outputs): the driver then refuses the rate and its message is shown.</p></li>
+<li><p><strong>Max samples</strong> is a limit of the plugin (samples per output, to protect the memory), not a figure of the device.
+Set it as you need; a longer waveform is refused with a message.</p></li>
+<li><p>A new waveform replaces the one being played <strong>with a break</strong>: the outputs go through 0 V in between
+(<code class="docutils literal notranslate"><span class="pre">live_update</span></code> is False). To change a waveform without a break, a device that can update its buffer on the fly is
+needed.</p></li>
+<li><p>The samples are written to the buffer of the driver before the generation starts: there is no streaming of waveforms
+longer than the buffer.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="nidaqmx_actuator_use.html" class="btn btn-neutral float-left" title="Generic actuators NIDAQmx and NIDAQmx_DO" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="config_files.html" class="btn btn-neutral float-right" title="Configuration files" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Sébastien Weber, Aurore Finco, Sébastien Guerrero.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

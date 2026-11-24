@@ -1,0 +1,463 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pymodaq_plugins_daqmx.hardware.national_instruments.api.tasks &mdash; pymodaq_plugins_daqmx 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            pymodaq_plugins_daqmx
+              <img src="../../../../../_static/splash.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../user_guide.html">User guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/index.html">Python API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../library.html">Library Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../creating_plugin.html">Creating a plugin for your specific needs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">pymodaq_plugins_daqmx</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pymodaq_plugins_daqmx.hardware.national_instruments.api.tasks</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pymodaq_plugins_daqmx.hardware.national_instruments.api.tasks</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Typed tasks, created from a ``TaskConfig``.&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">nidaqmx</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">TaskConfig</span>
+
+
+<div class="viewcode-block" id="TaskListener">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.TaskListener">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TaskListener</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;What a task can tell: derive from it and register the object with ``task.add_listener``.</span>
+
+<span class="sd">    Both methods are called from driver threads, never from the thread that started the task, one thread per call</span>
+<span class="sd">    and without any order between them. Do only what is thread-safe here, or hand the event over to the thread</span>
+<span class="sd">    that should handle it (see ``QtTaskBridge``).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="TaskListener.on_samples_ready">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.TaskListener.on_samples_ready">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_samples_ready</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;A block of samples shaped (channels, samples); only if the task was started with ``notify_every=n``.</span>
+
+<span class="sd">        To be reimplemented: the default does nothing.</span>
+<span class="sd">        &quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="TaskListener.on_done">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.TaskListener.on_done">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_done</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">status</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The task is done. ``status`` is 0 on success, else a driver error code.</span>
+
+<span class="sd">        To be reimplemented: the default does nothing.</span>
+<span class="sd">        &quot;&quot;&quot;</span></div>
+</div>
+
+
+
+<span class="n">_CANNOT_SYNCHRONIZE</span> <span class="o">=</span> <span class="o">-</span><span class="mi">201425</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_not_synchronizable</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">TaskConfig</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span> <span class="n">nidaqmx</span><span class="o">.</span><span class="n">DaqError</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The message of the driver, told in terms of the channels: which devices were put in the same task.&quot;&quot;&quot;</span>
+    <span class="n">devices</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">channel</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">channels</span><span class="p">})</span>
+    <span class="k">return</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The devices </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">devices</span><span class="p">)</span><span class="si">}</span><span class="s2"> cannot be synchronized in a single task (</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">error</span><span class="p">)</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">). Use &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;separate tasks for the devices that cannot share a clock (the delta-sigma modules, such as the &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;NI 9211 or NI 9217, cannot be timed with other modules).&quot;</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_Task</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;What every typed task shares: a ``nidaqmx.Task`` built from a config, released on error and on close.&quot;&quot;&quot;</span>
+    <span class="n">needs_timing</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">TaskConfig</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">needs_timing</span> <span class="ow">and</span> <span class="n">config</span><span class="o">.</span><span class="n">timing</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s1"> needs a timing in its configuration&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">:</span> <span class="n">TaskConfig</span> <span class="o">=</span> <span class="n">config</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_listeners</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">TaskListener</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_callbacks</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># the driver does not keep the callbacks it is given: the task must</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_done_registered</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_samples_interval</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># block size of the registered samples event, if any</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_task</span> <span class="o">=</span> <span class="n">nidaqmx</span><span class="o">.</span><span class="n">Task</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">channels</span><span class="p">:</span>
+                <span class="n">channel</span><span class="o">.</span><span class="n">add_to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_task</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">timing</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">config</span><span class="o">.</span><span class="n">timing</span><span class="o">.</span><span class="n">apply_to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_task</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">trigger</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">config</span><span class="o">.</span><span class="n">trigger</span><span class="o">.</span><span class="n">apply_to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_task</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">nidaqmx</span><span class="o">.</span><span class="n">DaqError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_task</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">error</span><span class="o">.</span><span class="n">error_code</span> <span class="o">==</span> <span class="n">_CANNOT_SYNCHRONIZE</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">nidaqmx</span><span class="o">.</span><span class="n">DaqError</span><span class="p">(</span><span class="n">_not_synchronizable</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">error</span><span class="p">),</span> <span class="n">error</span><span class="o">.</span><span class="n">error_code</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">error</span>
+            <span class="k">raise</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_task</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="k">raise</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_listener</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">listener</span><span class="p">:</span> <span class="n">TaskListener</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Tell ``listener`` (a `TaskListener`) about the blocks of samples and the end of the task.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_listeners</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">listener</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">remove_listener</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">listener</span><span class="p">:</span> <span class="n">TaskListener</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_listeners</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">listener</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_done</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">status</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Called from a driver thread when the task is done. ``status`` is 0 on success. Override it, or better,</span>
+<span class="sd">        register a `TaskListener`.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_samples_ready</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Called from a driver thread with each block of samples shaped (channels, samples). Override it, or</span>
+<span class="sd">        better, register a `TaskListener`.</span>
+
+<span class="sd">        Called only if the task was started with ``start(notify_every=n)``: each block of n samples per channel is</span>
+<span class="sd">        read in the driver callback registered by ``_register_samples_event`` (analog input tasks only for now,</span>
+<span class="sd">        the other tasks raise ``NotImplementedError``).</span>
+<span class="sd">        The driver runs each callback on its own thread: do not assume an order between this and ``on_done``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">notify_every</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Start the task. With ``notify_every=n``, ``on_samples_ready`` gets each block of n samples per channel.</span>
+
+<span class="sd">        The task can be started again after ``stop()``, with another ``notify_every``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_register_done_event</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">notify_every</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_samples_interval</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_set_samples_event</span><span class="p">(</span><span class="n">notify_every</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_task</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_register_done_event</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_done_registered</span><span class="p">:</span>  <span class="c1"># the driver refuses to register an event twice</span>
+            <span class="k">return</span>
+
+        <span class="c1"># the driver calls back with (task handle, status, callback_data); the last one is a user pointer</span>
+        <span class="c1"># that we never use, the public hook is ``on_done``</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">done</span><span class="p">(</span><span class="n">task_handle</span><span class="p">,</span> <span class="n">status</span><span class="p">,</span> <span class="n">callback_data</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">on_done</span><span class="p">(</span><span class="n">status</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">listener</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_listeners</span><span class="p">):</span>
+                <span class="n">listener</span><span class="o">.</span><span class="n">on_done</span><span class="p">(</span><span class="n">status</span><span class="p">)</span>
+            <span class="k">return</span> <span class="mi">0</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_callbacks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">done</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_task</span><span class="o">.</span><span class="n">register_done_event</span><span class="p">(</span><span class="n">done</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_done_registered</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_set_samples_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">notify_every</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_samples_interval</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_unregister_samples_event</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_samples_interval</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_samples_interval</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">notify_every</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_register_samples_event</span><span class="p">(</span><span class="n">notify_every</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_samples_interval</span> <span class="o">=</span> <span class="n">notify_every</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_unregister_samples_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interval</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_task</span><span class="o">.</span><span class="n">register_every_n_samples_acquired_into_buffer_event</span><span class="p">(</span><span class="n">interval</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_register_samples_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">notify_every</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s1"> cannot notify about samples&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Stop the task, which can then be started again.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_task</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Release the task for good. A closed task cannot run again: it forgets its listeners.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_listeners</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_task</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">exc</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="AnalogInputTask">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.AnalogInputTask">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AnalogInputTask</span><span class="p">(</span><span class="n">_Task</span><span class="p">):</span>
+    <span class="n">needs_timing</span> <span class="o">=</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="AnalogInputTask.read_analog">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.AnalogInputTask.read_analog">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">read_analog</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read the configured number of samples as a float64 array shaped (channels, samples).</span>
+
+<span class="sd">        ``timeout`` (s) is how long to wait for the samples: by default the duration of the acquisition plus 5 s.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">timing</span><span class="o">.</span><span class="n">samples</span>
+        <span class="k">if</span> <span class="n">samples</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;a continuous acquisition cannot be read in one go: use start(notify_every=n) &#39;</span>
+                             <span class="s1">&#39;and on_samples_ready&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">timeout</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">timeout</span> <span class="o">=</span> <span class="n">samples</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">timing</span><span class="o">.</span><span class="n">rate</span> <span class="o">+</span> <span class="mf">5.</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_task</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">number_of_samples_per_channel</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">channels</span><span class="p">),</span> <span class="n">samples</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_register_samples_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">notify_every</span><span class="p">):</span>
+        <span class="c1"># same driver signature as ``done``; the public hook is ``on_samples_ready``</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">samples_acquired</span><span class="p">(</span><span class="n">task_handle</span><span class="p">,</span> <span class="n">event_type</span><span class="p">,</span> <span class="n">number_of_samples</span><span class="p">,</span> <span class="n">callback_data</span><span class="p">):</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_task</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">number_of_samples_per_channel</span><span class="o">=</span><span class="n">number_of_samples</span><span class="p">)</span>
+            <span class="n">block</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">channels</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">on_samples_ready</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">listener</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_listeners</span><span class="p">):</span>
+                <span class="n">listener</span><span class="o">.</span><span class="n">on_samples_ready</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
+            <span class="k">return</span> <span class="mi">0</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_callbacks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">samples_acquired</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_task</span><span class="o">.</span><span class="n">register_every_n_samples_acquired_into_buffer_event</span><span class="p">(</span><span class="n">notify_every</span><span class="p">,</span> <span class="n">samples_acquired</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="AnalogOutputTask">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.AnalogOutputTask">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AnalogOutputTask</span><span class="p">(</span><span class="n">_Task</span><span class="p">):</span>
+<div class="viewcode-block" id="AnalogOutputTask.write_analog">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.AnalogOutputTask.write_analog">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">write_analog</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write a DC level (scalar, single channel) or samples: 1D for one channel, 2D (channels, samples).</span>
+
+<span class="sd">        A scalar is written and started at once; samples are written without starting the task.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">nch</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">channels</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_task</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="n">auto_start</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">array</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">nch</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">array</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">array</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">array</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">nch</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;the task has </span><span class="si">{</span><span class="n">nch</span><span class="si">}</span><span class="s1"> channels: data must be shaped (</span><span class="si">{</span><span class="n">nch</span><span class="si">}</span><span class="s1">, samples), &#39;</span>
+                             <span class="sa">f</span><span class="s1">&#39;got </span><span class="si">{</span><span class="n">array</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="c1"># a single channel takes a 1D sequence: the driver refuses a 2D array on a one-channel task</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_task</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">array</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="k">if</span> <span class="n">nch</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">array</span><span class="p">,</span> <span class="n">auto_start</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="AnalogOutputTask.write_levels">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.AnalogOutputTask.write_levels">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">write_levels</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">levels</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set every output to a DC level at once, and start the task.</span>
+
+<span class="sd">        ``levels`` holds one level (volts or amperes) per channel, in the order of the channels of the task.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">nch</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">channels</span><span class="p">)</span>
+        <span class="n">levels</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">level</span><span class="p">)</span> <span class="k">for</span> <span class="n">level</span> <span class="ow">in</span> <span class="n">levels</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">levels</span><span class="p">)</span> <span class="o">!=</span> <span class="n">nch</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;the task has </span><span class="si">{</span><span class="n">nch</span><span class="si">}</span><span class="s1"> channels: give </span><span class="si">{</span><span class="n">nch</span><span class="si">}</span><span class="s1"> levels, got </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">levels</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">nch</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_task</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">levels</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">auto_start</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_task</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">levels</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">nch</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">auto_start</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="CounterInputTask">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.CounterInputTask">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CounterInputTask</span><span class="p">(</span><span class="n">_Task</span><span class="p">):</span>
+<div class="viewcode-block" id="CounterInputTask.read_counter">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.CounterInputTask.read_counter">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">read_counter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read counter values as a float64 array shaped (counters, samples).</span>
+
+<span class="sd">        ``samples`` defaults to the number of samples of the clock, or 1 when the task has no clock.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">samples</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">samples</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">timing</span><span class="p">,</span> <span class="s1">&#39;samples&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">1</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_task</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">number_of_samples_per_channel</span><span class="o">=</span><span class="n">samples</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">channels</span><span class="p">),</span> <span class="n">samples</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="CounterOutputTask">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.CounterOutputTask">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CounterOutputTask</span><span class="p">(</span><span class="n">_Task</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generates pulses: ``start()`` it, ``close()`` it to stop.&quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="DigitalTask">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.DigitalTask">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DigitalTask</span><span class="p">(</span><span class="n">_Task</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Reads digital input lines or drives digital output lines (not both in one task).&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="DigitalTask.__init__">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.DigitalTask.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">TaskConfig</span><span class="p">):</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.channels</span><span class="w"> </span><span class="kn">import</span> <span class="n">DigitalIn</span><span class="p">,</span> <span class="n">DigitalOut</span>
+        <span class="n">kinds</span> <span class="o">=</span> <span class="p">{</span><span class="nb">type</span><span class="p">(</span><span class="n">channel</span><span class="p">)</span> <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">channels</span><span class="p">}</span>
+        <span class="k">if</span> <span class="n">kinds</span> <span class="o">-</span> <span class="p">{</span><span class="n">DigitalIn</span><span class="p">,</span> <span class="n">DigitalOut</span><span class="p">}:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;a DigitalTask takes DigitalIn or DigitalOut channels only&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">kinds</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;a DigitalTask cannot mix inputs and outputs: use one task for each&#39;</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">config</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DigitalTask.read_digital">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.DigitalTask.read_digital">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">read_digital</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read the levels as a boolean array shaped (lines, samples).&quot;&quot;&quot;</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_task</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">number_of_samples_per_channel</span><span class="o">=</span><span class="n">samples</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">bool_</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">channels</span><span class="p">),</span> <span class="n">samples</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DigitalTask.write_digital">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.DigitalTask.write_digital">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">write_digital</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">levels</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">bool</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Drive the lines now: a bool for a single line, else one bool per line.&quot;&quot;&quot;</span>
+        <span class="n">nch</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">channels</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">levels</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">nch</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;the task has </span><span class="si">{</span><span class="n">nch</span><span class="si">}</span><span class="s1"> lines: give one level for each&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_task</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">bool</span><span class="p">(</span><span class="n">levels</span><span class="p">),</span> <span class="n">auto_start</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="n">levels</span> <span class="o">=</span> <span class="p">[</span><span class="nb">bool</span><span class="p">(</span><span class="n">level</span><span class="p">)</span> <span class="k">for</span> <span class="n">level</span> <span class="ow">in</span> <span class="n">levels</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">levels</span><span class="p">)</span> <span class="o">!=</span> <span class="n">nch</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;the task has </span><span class="si">{</span><span class="n">nch</span><span class="si">}</span><span class="s1"> lines, got </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">levels</span><span class="p">)</span><span class="si">}</span><span class="s1"> levels&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_task</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">levels</span><span class="p">,</span> <span class="n">auto_start</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="TaskGroup">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.TaskGroup">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TaskGroup</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Tasks that run together, such as a task waiting for a clock and the counter that generates it.</span>
+
+<span class="sd">    One task cannot mix subsystems (analog in, analog out, digital, counters): to acquire and generate at the same</span>
+<span class="sd">    time, use one task per subsystem, synchronised by a shared clock or trigger (``ClockSettings.source``,</span>
+<span class="sd">    ``DigitalEdgeTrigger``). The group starts them in the order given, so put first the tasks that wait for a signal</span>
+<span class="sd">    and last the one that produces it, and stops and closes them in the reverse order.</span>
+
+<span class="sd">    If a task cannot start, the ones already started are stopped and the error is raised. All the tasks are closed</span>
+<span class="sd">    even if one of them cannot be, then the first error is raised.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="TaskGroup.__init__">
+<a class="viewcode-back" href="../../../../../api/reference.html#pymodaq_plugins_daqmx.hardware.national_instruments.api.TaskGroup.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">tasks</span><span class="p">:</span> <span class="n">_Task</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span> <span class="o">=</span> <span class="n">tasks</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">started</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">:</span>
+                <span class="n">task</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+                <span class="n">started</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">started</span><span class="p">):</span>
+                <span class="n">task</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+            <span class="k">raise</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">):</span>
+            <span class="n">task</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">task</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+                <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">errors</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">errors</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">exc</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Sébastien Weber, Aurore Finco, Sébastien Guerrero.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,161 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Generic actuators NIDAQmx and NIDAQmx_DO &mdash; pymodaq_plugins_daqmx 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Waveform output NIDAQmx_Waveform" href="waveform_output_use.html" />
+    <link rel="prev" title="Generic viewer NIDAQmx" href="nidaqmx_viewer_use.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pymodaq_plugins_daqmx
+              <img src="../_static/splash.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../user_guide.html">User guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="counter_use.html">0D viewer DAQmx_Counter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ai_use.html">0D viewers DAQmxAI and DAQmxDualAI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ramp_output_use.html">NIDAQmx_RampOutput move</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nidaqmx_viewer_use.html">Generic viewer NIDAQmx</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Generic actuators NIDAQmx and NIDAQmx_DO</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#how-to-use-it">How to use it</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#digital-lines-nidaqmx-do">Digital lines (<code class="docutils literal notranslate"><span class="pre">NIDAQmx_DO</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#using-the-same-device-with-other-plugins">Using the same device with other plugins</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="waveform_output_use.html">Waveform output NIDAQmx_Waveform</a></li>
+<li class="toctree-l2"><a class="reference internal" href="config_files.html">Configuration files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide.html#working-principle-of-the-plugins">Working principle of the plugins</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">Python API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../library.html">Library Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../creating_plugin.html">Creating a plugin for your specific needs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pymodaq_plugins_daqmx</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../user_guide.html">User guide</a></li>
+      <li class="breadcrumb-item active">Generic actuators NIDAQmx and NIDAQmx_DO</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/user_guide/nidaqmx_actuator_use.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="generic-actuators-nidaqmx-and-nidaqmx-do">
+<h1>Generic actuators NIDAQmx and NIDAQmx_DO<a class="headerlink" href="#generic-actuators-nidaqmx-and-nidaqmx-do" title="Link to this heading"></a></h1>
+<p>Two actuators drive <strong>one output</strong> of an NI device: <code class="docutils literal notranslate"><span class="pre">NIDAQmx</span></code> (<code class="docutils literal notranslate"><span class="pre">DAQ_Move_NIDAQmx</span></code>), an analog output (a level in
+volts or amperes), and <code class="docutils literal notranslate"><span class="pre">NIDAQmx_DO</span></code> (<code class="docutils literal notranslate"><span class="pre">DAQ_Move_NIDAQmx_DO</span></code>), a digital line (0 or 1). They set the output to a value
+on demand, one point at a time: there is no clock and no waveform (for voltage ramps, see <code class="docutils literal notranslate"><span class="pre">NIDAQmx_RampOutput</span></code>). To
+drive several outputs, use one actuator for each. The analog one has the <em>Simple</em> user interface (a value and a button);
+the digital one has the <em>Binary</em> interface (one button for each level).</p>
+<section id="how-to-use-it">
+<h2>How to use it<a class="headerlink" href="#how-to-use-it" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>Choose the <strong>Output</strong> in the list: the analog outputs (<code class="docutils literal notranslate"><span class="pre">Dev1/ao0</span></code>) of the computer for <code class="docutils literal notranslate"><span class="pre">NIDAQmx</span></code>, the digital
+lines (<code class="docutils literal notranslate"><span class="pre">Dev1/port0/line0</span></code>) for <code class="docutils literal notranslate"><span class="pre">NIDAQmx_DO</span></code>.</p></li>
+<li><p>For an analog output, choose the <strong>Type</strong> (<code class="docutils literal notranslate"><span class="pre">voltage</span></code> or <code class="docutils literal notranslate"><span class="pre">current</span></code>) and the range of the output (<strong>Min</strong> and
+<strong>Max</strong>, in V or A). The unit of the actuator follows the type.</p></li>
+<li><p>Move the actuator to the level you need. A level outside the range is cut to it, and the plugin says so.</p></li>
+</ol>
+<p>The level of an output cannot be read back from the device, so the value shown is the last level written. The output is
+set to 0 (0 V, 0 A or low) when the actuator starts, when you choose another output or another type (the previous
+output goes to 0 before the new one is driven) and when the actuator closes.</p>
+</section>
+<section id="digital-lines-nidaqmx-do">
+<h2>Digital lines (<code class="docutils literal notranslate"><span class="pre">NIDAQmx_DO</span></code>)<a class="headerlink" href="#digital-lines-nidaqmx-do" title="Link to this heading"></a></h2>
+<p>A line is high for a value of 1 and low for 0. The <em>Pulse</em> option is for triggering something: a move to 1 then sets
+the line high for the <strong>Pulse width</strong> (in ms) and sets it low again, so the position is 0 again afterwards (it is the real level of the line). As that is too fast to see, each pulse is written in the log and counted in the read-only <strong>Pulses sent</strong>. Wire the line
+to a PFI terminal of the device (or of the chassis) and use that terminal as the <em>Terminal</em> of the start trigger of a
+module of the generic viewers (<a class="reference internal" href="nidaqmx_viewer_use.html"><span class="doc">Generic viewer NIDAQmx</span></a>) to start an acquisition with it.</p>
+</section>
+<section id="using-the-same-device-with-other-plugins">
+<h2>Using the same device with other plugins<a class="headerlink" href="#using-the-same-device-with-other-plugins" title="Link to this heading"></a></h2>
+<p>An output is used by one task only: the same channel cannot be driven by two actuators, and the driver tells so (the
+resource is reserved). Other channels, and the inputs of the same device, remain free.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="nidaqmx_viewer_use.html" class="btn btn-neutral float-left" title="Generic viewer NIDAQmx" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="waveform_output_use.html" class="btn btn-neutral float-right" title="Waveform output NIDAQmx_Waveform" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Sébastien Weber, Aurore Finco, Sébastien Guerrero.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,266 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Generic viewer NIDAQmx &mdash; pymodaq_plugins_daqmx 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Generic actuators NIDAQmx and NIDAQmx_DO" href="nidaqmx_actuator_use.html" />
+    <link rel="prev" title="NIDAQmx_RampOutput move" href="ramp_output_use.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pymodaq_plugins_daqmx
+              <img src="../_static/splash.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../user_guide.html">User guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="counter_use.html">0D viewer DAQmx_Counter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ai_use.html">0D viewers DAQmxAI and DAQmxDualAI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ramp_output_use.html">NIDAQmx_RampOutput move</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Generic viewer NIDAQmx</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#how-to-use-it">How to use it</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#settings">Settings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#loading-and-saving-a-configuration">Loading and saving a configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#digital-input-lines-nidaqmx-di">Digital input lines (<code class="docutils literal notranslate"><span class="pre">NIDAQmx_DI</span></code>)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="nidaqmx_actuator_use.html">Generic actuators NIDAQmx and NIDAQmx_DO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="waveform_output_use.html">Waveform output NIDAQmx_Waveform</a></li>
+<li class="toctree-l2"><a class="reference internal" href="config_files.html">Configuration files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide.html#working-principle-of-the-plugins">Working principle of the plugins</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">Python API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../library.html">Library Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../creating_plugin.html">Creating a plugin for your specific needs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pymodaq_plugins_daqmx</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../user_guide.html">User guide</a></li>
+      <li class="breadcrumb-item active">Generic viewer NIDAQmx</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/user_guide/nidaqmx_viewer_use.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="generic-viewer-nidaqmx">
+<h1>Generic viewer NIDAQmx<a class="headerlink" href="#generic-viewer-nidaqmx" title="Link to this heading"></a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">NIDAQmx</span></code> is the generic viewer for the analog inputs of any NI device (a card, or the modules of a cDAQ). It is
+listed with the 0D viewers (<code class="docutils literal notranslate"><span class="pre">DAQ_0DViewer_NIDAQmx</span></code>) and with the 1D viewers (<code class="docutils literal notranslate"><span class="pre">DAQ_1DViewer_NIDAQmx</span></code>): they are the
+same plugin, the 1D one only starts with the <code class="docutils literal notranslate"><span class="pre">1D</span></code> display. The channels are not fixed in the plugin, you add the ones
+you need, each with the parameters of its type.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Stay aware of the maximum quantity measurable, which depends on what your device supports. The plugin has been
+tested against a fake of the <code class="docutils literal notranslate"><span class="pre">nidaqmx</span></code> layer, and still needs tests on hardware.</p>
+</div>
+<section id="how-to-use-it">
+<h2>How to use it<a class="headerlink" href="#how-to-use-it" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p><strong>Initialize the detector first.</strong> The list of the channels of the computer is read by the plugin when it starts,
+so the <em>Add</em> button of the <code class="docutils literal notranslate"><span class="pre">Channels</span></code> group has nothing to offer before the initialization. The plugin
+initializes without any channel (there is nothing to configure yet) and a grab without a channel only writes
+<em>No channel to acquire</em> in the log.</p></li>
+<li><p><strong>Add the channels.</strong> The <em>Add</em> button of <code class="docutils literal notranslate"><span class="pre">Channels</span></code> lists the channels of the computer that are not in the
+group yet (<code class="docutils literal notranslate"><span class="pre">Dev1/ai0</span></code>, <code class="docutils literal notranslate"><span class="pre">cDAQ1Mod1/ai0</span></code>…). Each one is added as a group named after it, with the first type
+its device can measure (<code class="docutils literal notranslate"><span class="pre">voltage</span></code>, then <code class="docutils literal notranslate"><span class="pre">current</span></code>, <code class="docutils literal notranslate"><span class="pre">thermocouple</span></code> and <code class="docutils literal notranslate"><span class="pre">rtd</span></code>) and its default parameters; a
+voltage channel gets the widest voltage range of the device.</p></li>
+<li><p><strong>Choose the type of each channel</strong> (<code class="docutils literal notranslate"><span class="pre">voltage</span></code>, <code class="docutils literal notranslate"><span class="pre">current</span></code>, <code class="docutils literal notranslate"><span class="pre">thermocouple</span></code>, <code class="docutils literal notranslate"><span class="pre">rtd</span></code>). The group is rebuilt with
+only the parameters of the new type. The range is kept only between types that measure the same quantity
+(thermocouple and RTD): changing from a voltage to a current or a temperature gives the default range of the new
+type, as a range in volts means nothing in amperes. Remove a channel with the remove button of its group.</p></li>
+<li><p><strong>Set the acquisition</strong>: the display, the frequency and, for the traces, the number of samples (see below).</p></li>
+<li><p><strong>Grab or start the live mode.</strong> The task is built from the channels when the first one is available, and rebuilt
+at the next grab when the channels changed (in live mode, at the next start).</p></li>
+</ol>
+<p>The channels are acquired by one task for each module (the device their name starts with, <code class="docutils literal notranslate"><span class="pre">cDAQ1Mod1</span></code> for
+<code class="docutils literal notranslate"><span class="pre">cDAQ1Mod1/ai0</span></code>), because the modules of a chassis cannot always share a clock (the delta-sigma modules such as the
+NI 9211 and NI 9217 cannot be timed with others). Each task gives its own data, named <code class="docutils literal notranslate"><span class="pre">NI</span> <span class="pre">AI</span> <span class="pre">&lt;module&gt;</span></code> (<code class="docutils literal notranslate"><span class="pre">NI</span> <span class="pre">AI</span> <span class="pre">cDAQ1Mod1</span></code>), and the tasks
+start one after the other, without any alignment of their samples. A common clock or start trigger (see below) is
+the way to align them when the hardware allows it. The driver refuses to put in one task modules that cannot share a clock
+(error -201425, which the plugin turns into a message naming the devices): the generic viewer avoids it, as each
+module has its own task.</p>
+<p>In each data the channels follow the order of the channels in the group, and are labelled with their names.</p>
+</section>
+<section id="settings">
+<h2>Settings<a class="headerlink" href="#settings" title="Link to this heading"></a></h2>
+<ul>
+<li><p><strong>Display type</strong>: <code class="docutils literal notranslate"><span class="pre">0D</span></code> gives the mean of the samples of each channel (with its standard error), <code class="docutils literal notranslate"><span class="pre">1D</span></code> gives the
+trace as a function of time.</p></li>
+<li><p><strong>Frequency Acq.</strong>: the sampling rate that a module starts with.</p></li>
+<li><p><strong>Modules</strong>: one group for each module of the channels (they appear and disappear with the channels), as a module
+can need a rate, a clock and a start of its own. Each module is acquired by its own task, with:</p>
+<ul class="simple">
+<li><p><strong>Frequency</strong>: the sampling rate of the module. With an external clock it is the highest frequency that clock
+can have (the driver needs it to size its buffer), not the real one.</p></li>
+<li><p><strong>Clock</strong>: <code class="docutils literal notranslate"><span class="pre">internal</span></code> (the module times itself) or a clock source, which makes the modules share one clock.
+Any module may follow an external clock. The list offers only real clock sources: the terminals wired to the
+device (<code class="docutils literal notranslate"><span class="pre">/Dev1/PFI1</span></code>, RTSI, PXI), the sample clocks and timebases of the subsystems of the device
+(<code class="docutils literal notranslate"><span class="pre">/Dev1/ao/SampleClock</span></code>) and the sample clock that another module exports (<code class="docutils literal notranslate"><span class="pre">/Dev1/ai/SampleClock</span></code>). A module
+is never offered its own sample clock.</p></li>
+<li><p><strong>Reach of the sources</strong>: a clock source or a digital trigger terminal has to be reachable by the module. The
+lists offer the terminals of the device of the module and, for a module of a cDAQ chassis, the terminals of the
+chassis (<code class="docutils literal notranslate"><span class="pre">/cDAQ1/PFI0</span></code>) and of the other modules of the same chassis. A card or a USB device only has its own
+terminals, as a device cannot be wired to another one by software.</p></li>
+<li><p><strong>Start trigger</strong>: <code class="docutils literal notranslate"><span class="pre">none</span></code> (the task starts at once), <code class="docutils literal notranslate"><span class="pre">digital</span> <span class="pre">edge</span></code> (a <em>Terminal</em> such as <code class="docutils literal notranslate"><span class="pre">/Dev1/PFI0</span></code>, or
+the start trigger exported by another module of the same chassis, and an <em>Edge</em>) or <code class="docutils literal notranslate"><span class="pre">analog</span> <span class="pre">edge</span></code> (a <em>Channel</em>, a <em>Level</em> in volts
+and an <em>Edge</em>). An analog trigger watches one of the channels of the module, which the driver requires to be a
+channel of the task (set its <code class="docutils literal notranslate"><span class="pre">read</span></code> box off if you do not want its samples); the list also offers the dedicated
+analog trigger terminals (<code class="docutils literal notranslate"><span class="pre">/Dev1/APFI0</span></code>) of the module, if it has some: such a terminal is not acquired.</p></li>
+</ul>
+<p>The tasks start in the order that their sources require: a module that waits for the clock or the trigger of another
+one starts first and the one that provides the signal starts last. Two modules that wait for each other cannot be
+started: the plugin says so, and one of them has to use its own clock.
+With an external clock the time between samples is not known, so the 1D axis is the sample index (no unit) and not
+the time in seconds.</p>
+</li>
+<li><p><strong>Nsamples</strong> (<code class="docutils literal notranslate"><span class="pre">1D</span></code> only): the length of the trace. In <code class="docutils literal notranslate"><span class="pre">0D</span></code> the number of points averaged is the <em>Naverage</em> of the
+viewer, and in <code class="docutils literal notranslate"><span class="pre">1D</span></code> <em>Naverage</em> is the number of traces averaged. The driver needs at least two samples for a
+clocked acquisition: <em>Nsamples</em> cannot be below 2, and with <em>Naverage</em> = 1 two samples are acquired and the first
+one is kept.</p></li>
+<li><p><strong>Channels</strong>: the group described above. Each channel has a <code class="docutils literal notranslate"><span class="pre">read</span></code> box (checked by default): unchecked, the
+channel stays in the task but its samples are not in the data, which is what an analog trigger on that channel needs.
+A module whose channels are all unchecked gives no data. The parameters of a channel are the fields of its channel class of the
+API (<code class="docutils literal notranslate"><span class="pre">AIVoltage</span></code>, <code class="docutils literal notranslate"><span class="pre">AICurrent</span></code>, <code class="docutils literal notranslate"><span class="pre">AIThermocouple</span></code>, <code class="docutils literal notranslate"><span class="pre">AIRtd</span></code>), with the same names; the range (<code class="docutils literal notranslate"><span class="pre">min_val</span></code> and <code class="docutils literal notranslate"><span class="pre">max_val</span></code>) is shown in the unit of its quantity: V, A, or the
+temperature units of the channel. See <a class="reference internal" href="config_files.html"><span class="doc">Configuration files</span></a> for the list.</p></li>
+</ul>
+</section>
+<section id="loading-and-saving-a-configuration">
+<h2>Loading and saving a configuration<a class="headerlink" href="#loading-and-saving-a-configuration" title="Link to this heading"></a></h2>
+<p>Entering the channels again at each start is tedious, and the state manager of the Dashboard cannot restore them,
+because they exist only once the plugin has started. The way to restore them is to <strong>load a configuration file</strong>
+(<a class="reference internal" href="config_files.html"><span class="doc">Configuration files</span></a>), which describes the channels of a setup: it is a form of state manager built into the plugin
+and dedicated to DAQmx.</p>
+<p>The parameters below are in the <code class="docutils literal notranslate"><span class="pre">NIDAQmx</span> <span class="pre">config</span></code> group of the settings.</p>
+<ul class="simple">
+<li><p><strong>Configuration</strong>: a drop-down list with <code class="docutils literal notranslate"><span class="pre">(manual)</span></code> (the channels are the ones you add) and the configuration
+files of the folder, <code class="docutils literal notranslate"><span class="pre">default</span></code> being <code class="docutils literal notranslate"><span class="pre">config_daqmx.toml</span></code>. As it is a plain parameter, the choice is saved by
+the state manager of the Dashboard, which sets the menu again, and so loads the same file. The list is read
+when the plugin starts, and again after a save.</p></li>
+<li><p><strong>Configuration</strong> also loads the channels: choosing a file replaces the channels of the tree by the ones of the
+file, in the order of the file (which is the order of the data), the frequency, the clock and the start trigger of each module
+(internal clock and no trigger if the file has none). You can then add, remove or change channels as
+usual, also from several devices: the file is only read, never changed, unless you save. One file is one
+configuration: to work with another set of channels, save it under another suffix.</p></li>
+<li><p>As soon as the tree is not what the file describes any more (a channel added, removed or changed, a frequency, a clock or
+a trigger modified), the menu goes back to <code class="docutils literal notranslate"><span class="pre">(manual)</span></code>, so that it never shows a configuration that is not in the tree. To get the
+file back, choose it again in the menu.</p></li>
+<li><p><strong>Save as…</strong>: a button with a LED. A click opens a small dialog asking the <em>Suffix</em> of the file
+(<code class="docutils literal notranslate"><span class="pre">config_daqmx_&lt;suffix&gt;.toml</span></code>; <code class="docutils literal notranslate"><span class="pre">default</span></code> is the file without suffix), proposed with the configuration loaded.
+The file then describes exactly the channels of the tree, the frequency, the clock and the start trigger of each module
+(those of an existing file that are not in the tree are
+removed). The format of the file groups the channels by module, so each channel is written in the module its name
+starts with (<code class="docutils literal notranslate"><span class="pre">Dev1</span></code> for <code class="docutils literal notranslate"><span class="pre">Dev1/ai1</span></code>, <code class="docutils literal notranslate"><span class="pre">cDAQ1Mod3</span></code> for <code class="docutils literal notranslate"><span class="pre">cDAQ1Mod3/ai0</span></code>): channels of several devices can be
+mixed. Only the suffix is given, never a path: the file always goes to the folder of the configuration files. After a save the menu shows the file that was just written, which is what the tree now is. The LED of the button
+is grey until you save, green once the file is written, and orange if it failed.</p></li>
+</ul>
+<p>The loading is done as soon as the choice is made, whether it comes from you or from the state manager. The
+status LED of the viewer tells how it went: it shows an error, with the message, when the file cannot be read or
+written, and is back to normal when it worked. After a failure the menu goes back to the configuration that is really loaded, so that it never shows something
+that is not in the tree.</p>
+<p>A file that cannot be read gives an error that names the file and the entry that is wrong.</p>
+</section>
+<section id="digital-input-lines-nidaqmx-di">
+<h2>Digital input lines (<code class="docutils literal notranslate"><span class="pre">NIDAQmx_DI</span></code>)<a class="headerlink" href="#digital-input-lines-nidaqmx-di" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">DAQ_1DViewer_NIDAQmx_DI</span></code> (in the 1D viewers, as <code class="docutils literal notranslate"><span class="pre">NIDAQmx_DI</span></code>) is the same viewer for the digital input lines of
+a device (<code class="docutils literal notranslate"><span class="pre">Dev1/port0/line0</span></code>), as 1D traces: a line is 0 or 1, so there is no mean and no 0D display. It differs
+from the analog viewer in a few points:</p>
+<ul class="simple">
+<li><p>The group <code class="docutils literal notranslate"><span class="pre">Lines</span></code> replaces <code class="docutils literal notranslate"><span class="pre">Channels</span></code>: <em>Add</em> lists the lines of the computer, and a line has no type nor range,
+only its <code class="docutils literal notranslate"><span class="pre">read</span></code> box.</p></li>
+<li><p>The group of each module (<code class="docutils literal notranslate"><span class="pre">Modules</span></code>) is the same, with the frequency and the clock, but the start trigger is
+<code class="docutils literal notranslate"><span class="pre">none</span></code> or <code class="docutils literal notranslate"><span class="pre">digital</span> <span class="pre">edge</span></code> only: a digital input has no analog trigger. <code class="docutils literal notranslate"><span class="pre">internal</span></code> is the sample clock of the
+digital task itself (<code class="docutils literal notranslate"><span class="pre">/Dev1/di/SampleClock</span></code>), which exists on the devices that can time their digital lines. If the
+driver refuses it, choose a clock source: a PFI terminal wired to a clock, or the clock of another module. The
+sample clock of an analog input (<code class="docutils literal notranslate"><span class="pre">/Dev1/ai/SampleClock</span></code>) is a different clock: it only runs while an analog
+task of that device runs, at its rate, which is what you want to read lines in step with analog channels.</p></li>
+<li><p>Each module has its own task and gives its own data, named <code class="docutils literal notranslate"><span class="pre">NI</span> <span class="pre">DI</span> <span class="pre">&lt;module&gt;</span></code>, with the lines as traces labelled
+with their names.</p></li>
+<li><p>There is no live mode and no configuration file in this version.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="ramp_output_use.html" class="btn btn-neutral float-left" title="NIDAQmx_RampOutput move" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="nidaqmx_actuator_use.html" class="btn btn-neutral float-right" title="Generic actuators NIDAQmx and NIDAQmx_DO" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Sébastien Weber, Aurore Finco, Sébastien Guerrero.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

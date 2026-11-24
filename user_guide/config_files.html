@@ -1,0 +1,349 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Configuration files &mdash; pymodaq_plugins_daqmx 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Details about the implementation of the 0D viewer DAQmx_Counter" href="counter_details.html" />
+    <link rel="prev" title="Waveform output NIDAQmx_Waveform" href="waveform_output_use.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pymodaq_plugins_daqmx
+              <img src="../_static/splash.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../user_guide.html">User guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="counter_use.html">0D viewer DAQmx_Counter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ai_use.html">0D viewers DAQmxAI and DAQmxDualAI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ramp_output_use.html">NIDAQmx_RampOutput move</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nidaqmx_viewer_use.html">Generic viewer NIDAQmx</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nidaqmx_actuator_use.html">Generic actuators NIDAQmx and NIDAQmx_DO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="waveform_output_use.html">Waveform output NIDAQmx_Waveform</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Configuration files</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#where-the-files-are">Where the files are</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#example">Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#format">Format</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#default-values">Default values</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#mistakes">Mistakes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#files-of-the-previous-versions">Files of the previous versions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide.html#working-principle-of-the-plugins">Working principle of the plugins</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">Python API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../library.html">Library Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../creating_plugin.html">Creating a plugin for your specific needs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pymodaq_plugins_daqmx</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../user_guide.html">User guide</a></li>
+      <li class="breadcrumb-item active">Configuration files</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/user_guide/config_files.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="configuration-files">
+<h1>Configuration files<a class="headerlink" href="#configuration-files" title="Link to this heading"></a></h1>
+<p>A configuration file describes the channels of the modules of a bench, so that you do not have to enter them again
+each time a plugin starts. It is a TOML file, and it works as a state manager built into the plugin and dedicated to
+DAQmx: the state manager of the Dashboard cannot restore the channels of a plugin, which exist only once it has
+started, whereas a configuration describes them. Each file is a <em>configuration</em>, and the plugin offers the list of the
+configurations in a drop-down menu, so that the choice is saved with the preset of the plugin.</p>
+<section id="where-the-files-are">
+<h2>Where the files are<a class="headerlink" href="#where-the-files-are" title="Link to this heading"></a></h2>
+<p>All the files live in the <code class="docutils literal notranslate"><span class="pre">daqmx</span></code> folder of the PyMoDAQ <strong>system</strong> configuration folder (for instance
+<code class="docutils literal notranslate"><span class="pre">C:\ProgramData\.pymodaq\daqmx</span></code> on Windows), so that every user of the computer sees the same configurations. A
+configuration is named by its <em>suffix</em>: <code class="docutils literal notranslate"><span class="pre">config_daqmx_&lt;suffix&gt;.toml</span></code> is the configuration <code class="docutils literal notranslate"><span class="pre">&lt;suffix&gt;</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">config_daqmx.toml</span></code> is the configuration shown as <code class="docutils literal notranslate"><span class="pre">default</span></code>. When you save a configuration from the plugin, you
+give the suffix only.</p>
+</section>
+<section id="example">
+<h2>Example<a class="headerlink" href="#example" title="Link to this heading"></a></h2>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span>
+<span class="n">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;The bench of config_daqmx_bench.toml, in the current format&quot;</span>
+
+<span class="k">[devices.cDAQ1]</span>
+<span class="n">product</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;cDAQ-9174&quot;</span>
+
+<span class="k">[modules.cDAQ1Mod1]</span>
+<span class="n">product</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;NI 9211&quot;</span>
+<span class="n">frequency</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span>
+
+<span class="k">[modules.cDAQ1Mod1.ai.ai2]</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;thermocouple&quot;</span>
+<span class="n">thermocouple_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;K&quot;</span>
+<span class="n">units</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;DEG_C&quot;</span>
+<span class="n">min_val</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span>
+<span class="n">max_val</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">50.0</span>
+<span class="n">info</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Example of AI thermocouple channel&quot;</span>
+
+<span class="k">[modules.cDAQ1Mod1.ai.ai1]</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;thermocouple&quot;</span>
+<span class="n">thermocouple_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;K&quot;</span>
+<span class="n">units</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;DEG_C&quot;</span>
+<span class="n">min_val</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span>
+<span class="n">max_val</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">50.0</span>
+<span class="n">info</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Example of AI thermocouple channel&quot;</span>
+
+<span class="k">[modules.cDAQ1Mod2]</span>
+<span class="n">product</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;NI 9217&quot;</span>
+
+<span class="k">[modules.cDAQ1Mod3]</span>
+<span class="n">product</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;NI 9205&quot;</span>
+<span class="n">frequency</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1000</span>
+<span class="n">clock</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/cDAQ1/PFI1&quot;</span>
+
+<span class="k">[modules.cDAQ1Mod3.trigger]</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;digital edge&quot;</span>
+<span class="n">terminal</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/cDAQ1/PFI0&quot;</span>
+<span class="n">edge</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rising&quot;</span>
+
+<span class="k">[modules.cDAQ1Mod3.ai.ai0]</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;voltage&quot;</span>
+<span class="n">terminal_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;RSE&quot;</span>
+<span class="n">min_val</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">-10.0</span>
+<span class="n">max_val</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">10.0</span>
+<span class="n">info</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Example of AI voltage channel&quot;</span>
+
+<span class="k">[modules.cDAQ1Mod3.ai.ai5]</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;voltage&quot;</span>
+<span class="n">terminal_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;RSE&quot;</span>
+<span class="n">min_val</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">-10.0</span>
+<span class="n">max_val</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">10.0</span>
+<span class="n">info</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Example of AI voltage channel&quot;</span>
+
+<span class="k">[modules.cDAQ1Mod4]</span>
+<span class="n">product</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;NI 9203&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="format">
+<h2>Format<a class="headerlink" href="#format" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">version</span></code></dt><dd><p>Required. The version of the format, <code class="docutils literal notranslate"><span class="pre">1</span></code>. Another value is refused.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">description</span></code></dt><dd><p>Free text.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">[devices.&lt;name&gt;]</span></code></dt><dd><p>Optional, one table for each device (a cDAQ chassis for instance). <code class="docutils literal notranslate"><span class="pre">product</span></code> is its product type, which is
+informative.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">[modules.&lt;name&gt;]</span></code></dt><dd><p>One table for each module, named as in NI MAX (<code class="docutils literal notranslate"><span class="pre">cDAQ1Mod3</span></code>, or <code class="docutils literal notranslate"><span class="pre">Dev1</span></code> for a board). The name of a channel is
+its module and its key: <code class="docutils literal notranslate"><span class="pre">[modules.cDAQ1Mod3.ai.ai0]</span></code> is the channel <code class="docutils literal notranslate"><span class="pre">cDAQ1Mod3/ai0</span></code>, so the module of a channel
+is the device its name starts with. <code class="docutils literal notranslate"><span class="pre">product</span></code> is the product
+type of the module, informative. <code class="docutils literal notranslate"><span class="pre">frequency</span></code> is optional: the sampling frequency of the module in Hz, a positive
+integer. The generic viewer acquires each module with its own task, so each has its own frequency (with an external
+clock, the highest frequency of that clock). <code class="docutils literal notranslate"><span class="pre">clock</span></code> is optional: a terminal such as <code class="docutils literal notranslate"><span class="pre">/cDAQ1/PFI1</span></code> or
+<code class="docutils literal notranslate"><span class="pre">/cDAQ1Mod1/ai/SampleClock</span></code> (the clock of another module); without it the module uses its own clock.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">[modules.&lt;name&gt;.trigger]</span></code></dt><dd><p>Optional: what starts the task of the module; without it the task starts at once. <code class="docutils literal notranslate"><span class="pre">type</span></code> is <code class="docutils literal notranslate"><span class="pre">digital</span> <span class="pre">edge</span></code>
+(<code class="docutils literal notranslate"><span class="pre">terminal</span></code>, such as <code class="docutils literal notranslate"><span class="pre">/cDAQ1/PFI0</span></code>, and <code class="docutils literal notranslate"><span class="pre">edge</span></code>) or <code class="docutils literal notranslate"><span class="pre">analog</span> <span class="pre">edge</span></code> (<code class="docutils literal notranslate"><span class="pre">channel</span></code>, a channel of the module such
+as <code class="docutils literal notranslate"><span class="pre">cDAQ1Mod3/ai0</span></code> or a dedicated analog trigger terminal such as <code class="docutils literal notranslate"><span class="pre">/Dev1/APFI0</span></code>, <code class="docutils literal notranslate"><span class="pre">level</span></code> in volts, inside the
+range of the channel, and <code class="docutils literal notranslate"><span class="pre">edge</span></code>). <code class="docutils literal notranslate"><span class="pre">edge</span></code> is <code class="docutils literal notranslate"><span class="pre">rising</span></code> (the default) or <code class="docutils literal notranslate"><span class="pre">falling</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">[modules.&lt;name&gt;.ai.&lt;key&gt;]</span></code></dt><dd><p>One table for each analog input channel. The channel is <code class="docutils literal notranslate"><span class="pre">&lt;module&gt;/&lt;key&gt;</span></code> (<code class="docutils literal notranslate"><span class="pre">cDAQ1Mod3/ai0</span></code>) and the order of
+the tables in the file is the order of the data of an acquisition. <code class="docutils literal notranslate"><span class="pre">type</span></code> selects the kind of channel and its
+other keys. <code class="docutils literal notranslate"><span class="pre">info</span></code> is a free note, kept when the file is saved again. <code class="docutils literal notranslate"><span class="pre">read</span></code> is optional and <code class="docutils literal notranslate"><span class="pre">true</span></code> by
+default: with <code class="docutils literal notranslate"><span class="pre">false</span></code> the channel is in the task but its samples are not in the data (to watch a trigger
+without reading it). A key that does not belong to the type
+is an error, so that a typo cannot go unnoticed.</p>
+</dd>
+</dl>
+<p>The names of the keys are the names of the arguments of the channels of the Python API
+(see <a class="reference internal" href="../api/reference.html"><span class="doc">Reference</span></a>), and a value that is a constant of the driver is written with its name.</p>
+<table class="docutils align-default" id="id1">
+<caption><span class="caption-text">Analog input channels</span><a class="headerlink" href="#id1" title="Link to this table"></a></caption>
+<thead>
+<tr class="row-odd"><th class="head"><p><code class="docutils literal notranslate"><span class="pre">type</span></code></p></th>
+<th class="head"><p>Key</p></th>
+<th class="head"><p>Value</p></th>
+<th class="head"><p>Default</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">voltage</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">min_val</span></code>, <code class="docutils literal notranslate"><span class="pre">max_val</span></code></p></td>
+<td><p>Volts, <code class="docutils literal notranslate"><span class="pre">min_val</span></code> &lt; <code class="docutils literal notranslate"><span class="pre">max_val</span></code></p></td>
+<td><p>-10, 10</p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">terminal_config</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">RSE</span></code>, <code class="docutils literal notranslate"><span class="pre">NRSE</span></code>, <code class="docutils literal notranslate"><span class="pre">DIFF</span></code>, <code class="docutils literal notranslate"><span class="pre">PSEUDO_DIFF</span></code>, <code class="docutils literal notranslate"><span class="pre">DEFAULT</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">DEFAULT</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">current</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">min_val</span></code>, <code class="docutils literal notranslate"><span class="pre">max_val</span></code></p></td>
+<td><p>Amperes, <code class="docutils literal notranslate"><span class="pre">min_val</span></code> &lt; <code class="docutils literal notranslate"><span class="pre">max_val</span></code></p></td>
+<td><p>-0.02, 0.02</p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">terminal_config</span></code></p></td>
+<td><p>same as <code class="docutils literal notranslate"><span class="pre">voltage</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">DEFAULT</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">thermocouple</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">thermocouple_type</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">J</span></code>, <code class="docutils literal notranslate"><span class="pre">K</span></code>, <code class="docutils literal notranslate"><span class="pre">N</span></code>, <code class="docutils literal notranslate"><span class="pre">R</span></code>, <code class="docutils literal notranslate"><span class="pre">S</span></code>, <code class="docutils literal notranslate"><span class="pre">T</span></code>, <code class="docutils literal notranslate"><span class="pre">B</span></code>, <code class="docutils literal notranslate"><span class="pre">E</span></code>, <code class="docutils literal notranslate"><span class="pre">A</span></code>, <code class="docutils literal notranslate"><span class="pre">C</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">K</span></code></p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">units</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">DEG_C</span></code>, <code class="docutils literal notranslate"><span class="pre">DEG_F</span></code>, <code class="docutils literal notranslate"><span class="pre">K</span></code>, <code class="docutils literal notranslate"><span class="pre">DEG_R</span></code>, <code class="docutils literal notranslate"><span class="pre">FROM_CUSTOM_SCALE</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">DEG_C</span></code></p></td>
+</tr>
+<tr class="row-even"><td></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">min_val</span></code>, <code class="docutils literal notranslate"><span class="pre">max_val</span></code></p></td>
+<td><p>In <code class="docutils literal notranslate"><span class="pre">units</span></code>, <code class="docutils literal notranslate"><span class="pre">min_val</span></code> &lt; <code class="docutils literal notranslate"><span class="pre">max_val</span></code></p></td>
+<td><p>0, 100</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">rtd</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">rtd_type</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">PT_3750</span></code>, <code class="docutils literal notranslate"><span class="pre">PT_3851</span></code>, <code class="docutils literal notranslate"><span class="pre">PT_3911</span></code>, <code class="docutils literal notranslate"><span class="pre">PT_3916</span></code>, <code class="docutils literal notranslate"><span class="pre">PT_3920</span></code>, <code class="docutils literal notranslate"><span class="pre">PT_3928</span></code>, <code class="docutils literal notranslate"><span class="pre">CUSTOM</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">PT_3851</span></code></p></td>
+</tr>
+<tr class="row-even"><td></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">resistance_config</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">TWO_WIRE</span></code>, <code class="docutils literal notranslate"><span class="pre">THREE_WIRE</span></code>, <code class="docutils literal notranslate"><span class="pre">FOUR_WIRE</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">THREE_WIRE</span></code></p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">excitation_current</span></code></p></td>
+<td><p>Amperes, positive</p></td>
+<td><p>0.0025</p></td>
+</tr>
+<tr class="row-even"><td></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">r_0</span></code></p></td>
+<td><p>Ohms at 0 °C</p></td>
+<td><p>100</p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">units</span></code>, <code class="docutils literal notranslate"><span class="pre">min_val</span></code>, <code class="docutils literal notranslate"><span class="pre">max_val</span></code></p></td>
+<td><p>as <code class="docutils literal notranslate"><span class="pre">thermocouple</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">DEG_C</span></code>, 0, 100</p></td>
+</tr>
+</tbody>
+</table>
+<p>Only the analog input channels are described for now.</p>
+</section>
+<section id="default-values">
+<h2>Default values<a class="headerlink" href="#default-values" title="Link to this heading"></a></h2>
+<p>Only <code class="docutils literal notranslate"><span class="pre">type</span></code> is required in a channel. <strong>A key you leave out takes the default value of the table above, which is the
+default of the Python API</strong>, and nothing tells you when it happens. In particular, a voltage channel without
+<code class="docutils literal notranslate"><span class="pre">min_val</span></code> and <code class="docutils literal notranslate"><span class="pre">max_val</span></code> is measured on the range -10 V to 10 V, and a thermocouple channel without them on 0 to
+100 degrees. The range is passed to the driver, which may round it to a range the module supports, so write the
+ranges you rely on explicitly:</p>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[modules.cDAQ1Mod3.ai.ai0]</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;voltage&quot;</span><span class="w">        </span><span class="c1"># measured from -10 V to 10 V, RSE not set: DEFAULT terminal configuration</span>
+
+<span class="k">[modules.cDAQ1Mod3.ai.ai1]</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;voltage&quot;</span>
+<span class="n">min_val</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">-1.0</span><span class="w">          </span><span class="c1"># explicit, nothing is left to the defaults</span>
+<span class="n">max_val</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span>
+<span class="n">terminal_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;RSE&quot;</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">terminal_config</span> <span class="pre">=</span> <span class="pre">&quot;DEFAULT&quot;</span></code> lets the driver choose the terminal configuration of the module. The settings tree of
+the plugin shows the values that were read, defaults included, once a configuration is chosen.</p>
+</section>
+<section id="mistakes">
+<h2>Mistakes<a class="headerlink" href="#mistakes" title="Link to this heading"></a></h2>
+<p>A file the plugin cannot use is refused with a message that names the file and the entry, for instance:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">config_daqmx</span><span class="o">.</span><span class="n">toml</span><span class="p">:</span> <span class="p">[</span><span class="n">cDAQ1Mod3</span><span class="o">.</span><span class="n">ai</span><span class="o">.</span><span class="n">ai0</span><span class="p">]</span> <span class="n">unknown</span> <span class="n">terminal_config</span> <span class="s1">&#39;FLOATING&#39;</span><span class="p">,</span> <span class="n">expected</span> <span class="n">one</span> <span class="n">of</span> <span class="p">[</span><span class="s1">&#39;DEFAULT&#39;</span><span class="p">,</span> <span class="s1">&#39;RSE&#39;</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+</pre></div>
+</div>
+</section>
+<section id="files-of-the-previous-versions">
+<h2>Files of the previous versions<a class="headerlink" href="#files-of-the-previous-versions" title="Link to this heading"></a></h2>
+<p>The files of the previous versions of the plugin (a <code class="docutils literal notranslate"><span class="pre">NIDAQ_Devices</span></code> table with <code class="docutils literal notranslate"><span class="pre">DEVICE01</span></code> and <code class="docutils literal notranslate"><span class="pre">MODULE01</span></code>
+tables) can still be read, with their voltage, current and thermocouple channels. Choosing such a file and saving it
+under a new suffix writes it in the current format; the original is never modified. The keys were renamed:
+<code class="docutils literal notranslate"><span class="pre">value_min</span></code> and <code class="docutils literal notranslate"><span class="pre">value_max</span></code> became <code class="docutils literal notranslate"><span class="pre">min_val</span></code> and <code class="docutils literal notranslate"><span class="pre">max_val</span></code>, <code class="docutils literal notranslate"><span class="pre">termination</span></code> became <code class="docutils literal notranslate"><span class="pre">terminal_config</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">thermo_type</span></code> became <code class="docutils literal notranslate"><span class="pre">thermocouple_type</span></code>. The keys <code class="docutils literal notranslate"><span class="pre">source</span></code> and <code class="docutils literal notranslate"><span class="pre">analog_type</span></code> are replaced by <code class="docutils literal notranslate"><span class="pre">type</span></code>.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="waveform_output_use.html" class="btn btn-neutral float-left" title="Waveform output NIDAQmx_Waveform" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="counter_details.html" class="btn btn-neutral float-right" title="Details about the implementation of the 0D viewer DAQmx_Counter" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Sébastien Weber, Aurore Finco, Sébastien Guerrero.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

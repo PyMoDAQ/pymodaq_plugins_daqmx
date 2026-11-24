@@ -1,0 +1,234 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Concepts &mdash; pymodaq_plugins_daqmx 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Examples" href="examples.html" />
+    <link rel="prev" title="Python API" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pymodaq_plugins_daqmx
+              <img src="../_static/splash.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide.html">User guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Python API</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Concepts</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#describe-then-run">Describe, then run</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#what-comes-back">What comes back</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#errors">Errors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hardware-discovery">Hardware discovery</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#clocks-and-triggers">Clocks and triggers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#several-tasks-together">Several tasks together</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#callbacks-and-threads">Callbacks and threads</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#good-to-know">Good to know</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference.html">Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="migration.html">Migrating from the previous objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#stability">Stability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#how-it-is-tested">How it is tested</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../library.html">Library Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../creating_plugin.html">Creating a plugin for your specific needs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pymodaq_plugins_daqmx</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Python API</a></li>
+      <li class="breadcrumb-item active">Concepts</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/concepts.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="concepts">
+<h1>Concepts<a class="headerlink" href="#concepts" title="Link to this heading"></a></h1>
+<section id="describe-then-run">
+<h2>Describe, then run<a class="headerlink" href="#describe-then-run" title="Link to this heading"></a></h2>
+<p>Everything that describes a task is a <strong>frozen dataclass</strong>: it is checked when you create it (a <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> says
+what is wrong, before any driver call), it can be compared, stored, shared between threads and written in a
+configuration file.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>What</p></th>
+<th class="head"><p>Objects</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Channels</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">AIVoltage</span></code>, <code class="docutils literal notranslate"><span class="pre">AICurrent</span></code>, <code class="docutils literal notranslate"><span class="pre">AIThermocouple</span></code>, <code class="docutils literal notranslate"><span class="pre">AIRtd</span></code>, <code class="docutils literal notranslate"><span class="pre">AOVoltage</span></code>, <code class="docutils literal notranslate"><span class="pre">AOCurrent</span></code>, <code class="docutils literal notranslate"><span class="pre">CICountEdges</span></code>,
+<code class="docutils literal notranslate"><span class="pre">COPulseFreq</span></code>, <code class="docutils literal notranslate"><span class="pre">DigitalIn</span></code>, <code class="docutils literal notranslate"><span class="pre">DigitalOut</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Timing</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ClockSettings</span></code> (a sample clock), <code class="docutils literal notranslate"><span class="pre">ImplicitTiming</span></code> (no sample clock), <code class="docutils literal notranslate"><span class="pre">ChangeDetectionSettings</span></code>
+(digital change detection)</p></td>
+</tr>
+<tr class="row-even"><td><p>Start trigger</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">DigitalEdgeTrigger</span></code>, <code class="docutils literal notranslate"><span class="pre">AnalogEdgeTrigger</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Whole task</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">TaskConfig(channels,</span> <span class="pre">timing=None,</span> <span class="pre">trigger=None)</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<p>A <strong>typed task</strong> is built from a <code class="docutils literal notranslate"><span class="pre">TaskConfig</span></code>. One class per kind of task: <code class="docutils literal notranslate"><span class="pre">AnalogInputTask</span></code>,
+<code class="docutils literal notranslate"><span class="pre">AnalogOutputTask</span></code>, <code class="docutils literal notranslate"><span class="pre">CounterInputTask</span></code>, <code class="docutils literal notranslate"><span class="pre">CounterOutputTask</span></code>, <code class="docutils literal notranslate"><span class="pre">DigitalTask</span></code>. Each has the verbs that make
+sense for it (<code class="docutils literal notranslate"><span class="pre">read_analog</span></code>, <code class="docutils literal notranslate"><span class="pre">write_analog</span></code>, <code class="docutils literal notranslate"><span class="pre">write_levels</span></code>, <code class="docutils literal notranslate"><span class="pre">read_counter</span></code>, <code class="docutils literal notranslate"><span class="pre">read_digital</span></code>,
+<code class="docutils literal notranslate"><span class="pre">write_digital</span></code>) and all share <code class="docutils literal notranslate"><span class="pre">start</span></code>, <code class="docutils literal notranslate"><span class="pre">stop</span></code> and <code class="docutils literal notranslate"><span class="pre">close</span></code>. A task is also a context manager that closes
+itself. To change a setting, close the task and build another one: a configuration never changes.</p>
+</section>
+<section id="what-comes-back">
+<h2>What comes back<a class="headerlink" href="#what-comes-back" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">read_analog</span></code> returns a <code class="docutils literal notranslate"><span class="pre">float64</span></code> array shaped <code class="docutils literal notranslate"><span class="pre">(channels,</span> <span class="pre">samples)</span></code>, always 2D, whatever the number of
+channels and samples (the driver itself returns a float, a list or a list of lists depending on the case).
+<code class="docutils literal notranslate"><span class="pre">read_counter</span></code> does the same for counters and <code class="docutils literal notranslate"><span class="pre">read_digital</span></code> returns booleans.</p>
+</section>
+<section id="errors">
+<h2>Errors<a class="headerlink" href="#errors" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Wrong values in a description are a <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> raised when you create it, or when you pass the wrong data to a
+task (for instance data for two channels on a one-channel task).</p></li>
+<li><p>Anything the driver refuses is a <code class="docutils literal notranslate"><span class="pre">nidaqmx.DaqError</span></code>, with its <code class="docutils literal notranslate"><span class="pre">error_code</span></code>. A read that waits too long is a
+<code class="docutils literal notranslate"><span class="pre">nidaqmx.DaqReadError</span></code> (code -200284). There is no <code class="docutils literal notranslate"><span class="pre">IOError</span></code>.</p></li>
+<li><p>Without the NI-DAQmx driver, <code class="docutils literal notranslate"><span class="pre">NIDAQSystem</span></code> lists no device, and creating a task raises
+<code class="docutils literal notranslate"><span class="pre">nidaqmx.errors.DaqNotFoundError</span></code>.</p></li>
+</ul>
+</section>
+<section id="hardware-discovery">
+<h2>Hardware discovery<a class="headerlink" href="#hardware-discovery" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">NIDAQSystem</span></code> tells what the computer’s NI hardware offers: devices, channels by kind, terminals, voltage ranges,
+maximum rates, whether a start trigger is available. It asks the driver once and remembers the answer until you call
+<code class="docutils literal notranslate"><span class="pre">refresh()</span></code>. It returns plain strings, numbers and tuples, so nothing of the driver leaks out.</p>
+</section>
+<section id="clocks-and-triggers">
+<h2>Clocks and triggers<a class="headerlink" href="#clocks-and-triggers" title="Link to this heading"></a></h2>
+<p>A task with a sample clock takes the clock in <code class="docutils literal notranslate"><span class="pre">ClockSettings</span></code>. <code class="docutils literal notranslate"><span class="pre">source</span></code> is a terminal: empty means the onboard
+clock, <code class="docutils literal notranslate"><span class="pre">/Dev2/PFI0</span></code> an external signal, and <code class="docutils literal notranslate"><span class="pre">counter_output_terminal('Dev2/ctr1')</span></code> the pulses of a counter output
+(see the <code class="docutils literal notranslate"><span class="pre">counter_rate</span></code> example). A digital line such as <code class="docutils literal notranslate"><span class="pre">Dev2/port0/line0</span></code> cannot be used as a trigger source
+(the driver refuses it): use a PFI terminal.</p>
+</section>
+<section id="several-tasks-together">
+<h2>Several tasks together<a class="headerlink" href="#several-tasks-together" title="Link to this heading"></a></h2>
+<p>A task cannot mix subsystems (analog in, analog out, digital, counters). To acquire and generate at the same time,
+use one task per subsystem and synchronise them with a shared clock or trigger (<code class="docutils literal notranslate"><span class="pre">ClockSettings.source</span></code>,
+<code class="docutils literal notranslate"><span class="pre">DigitalEdgeTrigger</span></code>). <code class="docutils literal notranslate"><span class="pre">TaskGroup(*tasks)</span></code> runs them as one: <code class="docutils literal notranslate"><span class="pre">start()</span></code> starts the tasks in the order given (put
+first those that wait for a signal, last the one that produces it), <code class="docutils literal notranslate"><span class="pre">stop()</span></code> and <code class="docutils literal notranslate"><span class="pre">close()</span></code> work in the reverse
+order. If a task cannot start, the ones already started are stopped before the error is raised; <code class="docutils literal notranslate"><span class="pre">close()</span></code> closes
+every task even if one fails, then raises the first error. A group is also a context manager that closes itself.
+See the <code class="docutils literal notranslate"><span class="pre">counter_rate</span></code> example.</p>
+</section>
+<section id="callbacks-and-threads">
+<h2>Callbacks and threads<a class="headerlink" href="#callbacks-and-threads" title="Link to this heading"></a></h2>
+<p>A task tells its <em>listeners</em> what happens. Derive from <code class="docutils literal notranslate"><span class="pre">TaskListener</span></code>, reimplement what you need and register the
+object with <code class="docutils literal notranslate"><span class="pre">task.add_listener</span></code>: <code class="docutils literal notranslate"><span class="pre">on_samples_ready(data)</span></code> is called for each block of <code class="docutils literal notranslate"><span class="pre">n</span></code> samples per channel when
+the task was started with <code class="docutils literal notranslate"><span class="pre">start(notify_every=n)</span></code> (analog input only for now), and <code class="docutils literal notranslate"><span class="pre">on_done(status)</span></code> when the task
+ends (<code class="docutils literal notranslate"><span class="pre">status</span></code> is 0 on success, else a driver error code). A closed task forgets its listeners.</p>
+<p><strong>The driver calls these from threads of its own</strong>, one per call, and does not guarantee any order between the two.
+Keep them short and hand the data over (a queue, an event); never touch a widget from them. The task keeps the
+callbacks alive for you: the driver only holds them weakly.</p>
+<p>A <code class="docutils literal notranslate"><span class="pre">ClockSettings</span></code> without <code class="docutils literal notranslate"><span class="pre">samples</span></code> is a <em>continuous</em> acquisition: the task runs until it is stopped and you get
+its data only through the listeners (<code class="docutils literal notranslate"><span class="pre">read_analog</span></code> raises an error, as there is no end to wait for).</p>
+<p>In a PyMoDAQ plugin, do not touch the plugin from the listener: use <code class="docutils literal notranslate"><span class="pre">QtTaskBridge</span></code>
+(<code class="docutils literal notranslate"><span class="pre">pymodaq_plugins_daqmx.hardware.national_instruments.qt_task_bridge</span></code>). It is a listener that relays each event, as a
+Qt signal (<code class="docutils literal notranslate"><span class="pre">samples_ready</span></code>, <code class="docutils literal notranslate"><span class="pre">done</span></code>), to the thread that created it, which is the plugin thread when it is created
+in a plugin method. Call its <code class="docutils literal notranslate"><span class="pre">close()</span></code> before closing the task.</p>
+<p>Other kinds of task do not notify about samples for now.</p>
+</section>
+<section id="good-to-know">
+<h2>Good to know<a class="headerlink" href="#good-to-know" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>The driver does not always check ranges (a simulated PCIe-6363 accepts a ±1000 V range). The description objects
+only check that <code class="docutils literal notranslate"><span class="pre">min_val</span> <span class="pre">&lt;</span> <span class="pre">max_val</span></code>: use <code class="docutils literal notranslate"><span class="pre">NIDAQSystem.ai_voltage_ranges</span></code> if you need more.</p></li>
+<li><p>A finite task can be started again after <code class="docutils literal notranslate"><span class="pre">stop()</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">read_analog</span></code> waits for the whole acquisition by default (duration plus 5 s); pass <code class="docutils literal notranslate"><span class="pre">timeout</span></code> to change it.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Python API" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="examples.html" class="btn btn-neutral float-right" title="Examples" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Sébastien Weber, Aurore Finco, Sébastien Guerrero.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

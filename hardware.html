@@ -1,0 +1,914 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hardware - National Instruments &mdash; pymodaq_plugins_daqmx 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pymodaq_plugins_daqmx
+              <img src="../_static/splash.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide.html">User guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nidaqmx.html">The NIDAQmx object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../library.html">Library Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../creating_plugin.html">Creating a plugin for your specific needs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pymodaq_plugins_daqmx</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">hardware - National Instruments</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/docstring/hardware.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="hardware-national-instruments">
+<h1>hardware - National Instruments<a class="headerlink" href="#hardware-national-instruments" title="Link to this heading"></a></h1>
+<section id="module-pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni">
+<span id="nidaqmx-object"></span><h2>NIDAQmx object<a class="headerlink" href="#module-pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni.NIDAQmx">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni.</span></span><span class="sig-name descname"><span class="pre">NIDAQmx</span></span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/daqmxni.html#NIDAQmx"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni.NIDAQmx" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Wrapper around the NIDAQmx package giving an easy-to-use object to instantiate channels and tasks</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni.NIDAQmx.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/daqmxni.html#NIDAQmx.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni.NIDAQmx.__init__" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni.NIDAQmx.close">
+<span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/daqmxni.html#NIDAQmx.close"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni.NIDAQmx.close" title="Link to this definition"></a></dt>
+<dd><p>close the current task.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni.NIDAQmx.configuration_sequence">
+<span class="sig-name descname"><span class="pre">configuration_sequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">viewer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_device</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/daqmxni.html#NIDAQmx.configuration_sequence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni.NIDAQmx.configuration_sequence" title="Link to this definition"></a></dt>
+<dd><p>Configure each  / modules / channels as giver by the user in the configuration file</p>
+<p>Read the .toml file to get the desired hardware configuration,
+and send the nidaqmx a sequence which set up each channel.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni.NIDAQmx.get_NIDAQ_channels">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_NIDAQ_channels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">devices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/daqmxni.html#NIDAQmx.get_NIDAQ_channels"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni.NIDAQmx.get_NIDAQ_channels" title="Link to this definition"></a></dt>
+<dd><p>Get the list of available channels for all NiDAq connected devices</p>
+<section id="parameters">
+<h3>Parameters<a class="headerlink" href="#parameters" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>devices: list</dt><dd><p>list of strings, each one being a connected device</p>
+</dd>
+<dt>source_type: str</dt><dd><p>Channels possible types</p>
+</dd>
+</dl>
+</section>
+<section id="returns">
+<h3>Returns<a class="headerlink" href="#returns" title="Link to this heading"></a></h3>
+<p>List of str containing device and channel names</p>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni.NIDAQmx.get_NIDAQ_devices">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_NIDAQ_devices</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/daqmxni.html#NIDAQmx.get_NIDAQ_devices"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni.NIDAQmx.get_NIDAQ_devices" title="Link to this definition"></a></dt>
+<dd><p>Get list of NI connected devices</p>
+<section id="id1">
+<h3>Returns<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>list</dt><dd><p>list of devices as strings to be used in subsequent commands</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni.NIDAQmx.refresh_hardware">
+<span class="sig-name descname"><span class="pre">refresh_hardware</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/daqmxni.html#NIDAQmx.refresh_hardware"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.daqmxni.NIDAQmx.refresh_hardware" title="Link to this definition"></a></dt>
+<dd><p>Refresh the NIDAQ hardware from settings values.</p>
+<section id="see-also">
+<h3>See Also<a class="headerlink" href="#see-also" title="Link to this heading"></a></h3>
+<p>update_NIDAQ_devices, update_NIDAQ_channels</p>
+</section>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base">
+<span id="nidaqmx-base-module"></span><h2>NIDAQmx Base module<a class="headerlink" href="#module-pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.DAQ_NIDAQmx_base">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.</span></span><span class="sig-name descname"><span class="pre">DAQ_NIDAQmx_base</span></span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_base.html#DAQ_NIDAQmx_base"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.DAQ_NIDAQmx_base" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Base NIDAQmx class for using DAQmx objects from daqmxni.py in the DAQ_NIDAQmx_Move &amp; DAQ_NIDAQmx_Viewer</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.DAQ_NIDAQmx_base.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_base.html#DAQ_NIDAQmx_base.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.DAQ_NIDAQmx_base.__init__" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.DAQ_NIDAQmx_base.commit_settings">
+<span class="sig-name descname"><span class="pre">commit_settings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">param</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Parameter</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_base.html#DAQ_NIDAQmx_base.commit_settings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.DAQ_NIDAQmx_base.commit_settings" title="Link to this definition"></a></dt>
+<dd><p>Activate the parameters changes in the hardware.</p>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><strong>Parameters</strong></p></td>
+<td><p><strong>Type</strong></p></td>
+<td><p><strong>Description</strong></p></td>
+</tr>
+<tr class="row-even"><td><p><em>param</em></p></td>
+<td><p>instance of pyqtgraph.parameter</p></td>
+<td><p>the parameter to activate</p></td>
+</tr>
+</tbody>
+</table>
+<section id="id2">
+<h3>See Also<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<p>update_NIDAQ_channels, update_task, DAQ_NIDAQ_source, refresh_hardware</p>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.DAQ_NIDAQmx_base.get_channels_from_settings">
+<span class="sig-name descname"><span class="pre">get_channels_from_settings</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_base.html#DAQ_NIDAQmx_base.get_channels_from_settings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.DAQ_NIDAQmx_base.get_channels_from_settings" title="Link to this definition"></a></dt>
+<dd><p>Browse the viewer settings to gather all the channels that will be used.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.DAQ_NIDAQmx_base.stop">
+<span class="sig-name descname"><span class="pre">stop</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_base.html#DAQ_NIDAQmx_base.stop"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.DAQ_NIDAQmx_base.stop" title="Link to this definition"></a></dt>
+<dd><p>Stop the acquisition.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.DAQ_NIDAQmx_base.update_task">
+<span class="sig-name descname"><span class="pre">update_task</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_base.html#DAQ_NIDAQmx_base.update_task"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.DAQ_NIDAQmx_base.update_task" title="Link to this definition"></a></dt>
+<dd><p>Update task according to channels from settings.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.ScalableGroupAI">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.</span></span><span class="sig-name descname"><span class="pre">ScalableGroupAI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">opts</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_base.html#ScalableGroupAI"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.ScalableGroupAI" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">GroupParameter</span></code></p>
+<p>Generic parameter items holding Analog Input parameters</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.ScalableGroupAI.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">opts</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_base.html#ScalableGroupAI.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.ScalableGroupAI.__init__" title="Link to this definition"></a></dt>
+<dd><p>Initialize a Parameter object. Although it is rare to directly create a
+Parameter instance, the options available to this method are also allowed
+by most Parameter subclasses.</p>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><strong>Keyword Arguments:</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>name</p></td>
+<td><p>The name to give this Parameter. This is the name that
+will appear in the left-most column of a ParameterTree
+for this Parameter.</p></td>
+</tr>
+<tr class="row-odd"><td><p>value</p></td>
+<td><p>The value to initially assign to this Parameter.</p></td>
+</tr>
+<tr class="row-even"><td><p>default</p></td>
+<td><p>The default value for this Parameter (most Parameters
+provide an option to ‘reset to default’).</p></td>
+</tr>
+<tr class="row-odd"><td><p>children</p></td>
+<td><p>A list of children for this Parameter. Children
+may be given either as a Parameter instance or as a
+dictionary to pass to Parameter.create(). In this way,
+it is possible to specify complex hierarchies of
+Parameters from a single nested data structure.</p></td>
+</tr>
+<tr class="row-even"><td><p>readonly</p></td>
+<td><p>If True, the user will not be allowed to edit this
+Parameter. (default=False)</p></td>
+</tr>
+<tr class="row-odd"><td><p>enabled</p></td>
+<td><p>If False, any widget(s) for this parameter will appear
+disabled. (default=True)</p></td>
+</tr>
+<tr class="row-even"><td><p>visible</p></td>
+<td><p>If False, the Parameter will not appear when displayed
+in a ParameterTree. (default=True)</p></td>
+</tr>
+<tr class="row-odd"><td><p>renamable</p></td>
+<td><p>If True, the user may rename this Parameter.
+(default=False)</p></td>
+</tr>
+<tr class="row-even"><td><p>removable</p></td>
+<td><p>If True, the user may remove this Parameter.
+(default=False)</p></td>
+</tr>
+<tr class="row-odd"><td><p>expanded</p></td>
+<td><p>If True, the Parameter will initially be expanded in
+ParameterTrees: Its children will be visible.
+(default=True)</p></td>
+</tr>
+<tr class="row-even"><td><p>syncExpanded</p></td>
+<td><p>If True, the <cite>expanded</cite> state of this Parameter is
+synchronized with all ParameterTrees it is displayed in.
+(default=False)</p></td>
+</tr>
+<tr class="row-odd"><td><p>title</p></td>
+<td><p>(str or None) If specified, then the parameter will be
+displayed to the user using this string as its name.
+However, the parameter will still be referred to
+internally using the <em>name</em> specified above. Note that
+this option is not compatible with renamable=True.
+(default=None; added in version 0.9.9)</p></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.ScalableGroupAI.addNew">
+<span class="sig-name descname"><span class="pre">addNew</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">typ</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_base.html#ScalableGroupAI.addNew"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.ScalableGroupAI.addNew" title="Link to this definition"></a></dt>
+<dd><p>Add a child.</p>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><strong>Parameters</strong></p></td>
+<td><p><strong>Type</strong></p></td>
+</tr>
+<tr class="row-even"><td><p><em>typ</em></p></td>
+<td><p>string</p></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.ScalableGroupAO">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.</span></span><span class="sig-name descname"><span class="pre">ScalableGroupAO</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">opts</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_base.html#ScalableGroupAO"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.ScalableGroupAO" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">GroupParameter</span></code></p>
+<p>Generic parameter items holding Analog Output parameters</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.ScalableGroupAO.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">opts</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_base.html#ScalableGroupAO.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.ScalableGroupAO.__init__" title="Link to this definition"></a></dt>
+<dd><p>Initialize a Parameter object. Although it is rare to directly create a
+Parameter instance, the options available to this method are also allowed
+by most Parameter subclasses.</p>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><strong>Keyword Arguments:</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>name</p></td>
+<td><p>The name to give this Parameter. This is the name that
+will appear in the left-most column of a ParameterTree
+for this Parameter.</p></td>
+</tr>
+<tr class="row-odd"><td><p>value</p></td>
+<td><p>The value to initially assign to this Parameter.</p></td>
+</tr>
+<tr class="row-even"><td><p>default</p></td>
+<td><p>The default value for this Parameter (most Parameters
+provide an option to ‘reset to default’).</p></td>
+</tr>
+<tr class="row-odd"><td><p>children</p></td>
+<td><p>A list of children for this Parameter. Children
+may be given either as a Parameter instance or as a
+dictionary to pass to Parameter.create(). In this way,
+it is possible to specify complex hierarchies of
+Parameters from a single nested data structure.</p></td>
+</tr>
+<tr class="row-even"><td><p>readonly</p></td>
+<td><p>If True, the user will not be allowed to edit this
+Parameter. (default=False)</p></td>
+</tr>
+<tr class="row-odd"><td><p>enabled</p></td>
+<td><p>If False, any widget(s) for this parameter will appear
+disabled. (default=True)</p></td>
+</tr>
+<tr class="row-even"><td><p>visible</p></td>
+<td><p>If False, the Parameter will not appear when displayed
+in a ParameterTree. (default=True)</p></td>
+</tr>
+<tr class="row-odd"><td><p>renamable</p></td>
+<td><p>If True, the user may rename this Parameter.
+(default=False)</p></td>
+</tr>
+<tr class="row-even"><td><p>removable</p></td>
+<td><p>If True, the user may remove this Parameter.
+(default=False)</p></td>
+</tr>
+<tr class="row-odd"><td><p>expanded</p></td>
+<td><p>If True, the Parameter will initially be expanded in
+ParameterTrees: Its children will be visible.
+(default=True)</p></td>
+</tr>
+<tr class="row-even"><td><p>syncExpanded</p></td>
+<td><p>If True, the <cite>expanded</cite> state of this Parameter is
+synchronized with all ParameterTrees it is displayed in.
+(default=False)</p></td>
+</tr>
+<tr class="row-odd"><td><p>title</p></td>
+<td><p>(str or None) If specified, then the parameter will be
+displayed to the user using this string as its name.
+However, the parameter will still be referred to
+internally using the <em>name</em> specified above. Note that
+this option is not compatible with renamable=True.
+(default=None; added in version 0.9.9)</p></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.ScalableGroupAO.addNew">
+<span class="sig-name descname"><span class="pre">addNew</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">typ</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_base.html#ScalableGroupAO.addNew"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.ScalableGroupAO.addNew" title="Link to this definition"></a></dt>
+<dd><p>Add a child.</p>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><strong>Parameters</strong></p></td>
+<td><p><strong>Type</strong></p></td>
+</tr>
+<tr class="row-even"><td><p><em>typ</em></p></td>
+<td><p>string</p></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.ScalableGroupCounter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.</span></span><span class="sig-name descname"><span class="pre">ScalableGroupCounter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">opts</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_base.html#ScalableGroupCounter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.ScalableGroupCounter" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">GroupParameter</span></code></p>
+<p>Generic parameter items holding Counter parameters</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.ScalableGroupCounter.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">opts</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_base.html#ScalableGroupCounter.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.ScalableGroupCounter.__init__" title="Link to this definition"></a></dt>
+<dd><p>Initialize a Parameter object. Although it is rare to directly create a
+Parameter instance, the options available to this method are also allowed
+by most Parameter subclasses.</p>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><strong>Keyword Arguments:</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>name</p></td>
+<td><p>The name to give this Parameter. This is the name that
+will appear in the left-most column of a ParameterTree
+for this Parameter.</p></td>
+</tr>
+<tr class="row-odd"><td><p>value</p></td>
+<td><p>The value to initially assign to this Parameter.</p></td>
+</tr>
+<tr class="row-even"><td><p>default</p></td>
+<td><p>The default value for this Parameter (most Parameters
+provide an option to ‘reset to default’).</p></td>
+</tr>
+<tr class="row-odd"><td><p>children</p></td>
+<td><p>A list of children for this Parameter. Children
+may be given either as a Parameter instance or as a
+dictionary to pass to Parameter.create(). In this way,
+it is possible to specify complex hierarchies of
+Parameters from a single nested data structure.</p></td>
+</tr>
+<tr class="row-even"><td><p>readonly</p></td>
+<td><p>If True, the user will not be allowed to edit this
+Parameter. (default=False)</p></td>
+</tr>
+<tr class="row-odd"><td><p>enabled</p></td>
+<td><p>If False, any widget(s) for this parameter will appear
+disabled. (default=True)</p></td>
+</tr>
+<tr class="row-even"><td><p>visible</p></td>
+<td><p>If False, the Parameter will not appear when displayed
+in a ParameterTree. (default=True)</p></td>
+</tr>
+<tr class="row-odd"><td><p>renamable</p></td>
+<td><p>If True, the user may rename this Parameter.
+(default=False)</p></td>
+</tr>
+<tr class="row-even"><td><p>removable</p></td>
+<td><p>If True, the user may remove this Parameter.
+(default=False)</p></td>
+</tr>
+<tr class="row-odd"><td><p>expanded</p></td>
+<td><p>If True, the Parameter will initially be expanded in
+ParameterTrees: Its children will be visible.
+(default=True)</p></td>
+</tr>
+<tr class="row-even"><td><p>syncExpanded</p></td>
+<td><p>If True, the <cite>expanded</cite> state of this Parameter is
+synchronized with all ParameterTrees it is displayed in.
+(default=False)</p></td>
+</tr>
+<tr class="row-odd"><td><p>title</p></td>
+<td><p>(str or None) If specified, then the parameter will be
+displayed to the user using this string as its name.
+However, the parameter will still be referred to
+internally using the <em>name</em> specified above. Note that
+this option is not compatible with renamable=True.
+(default=None; added in version 0.9.9)</p></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.ScalableGroupCounter.addNew">
+<span class="sig-name descname"><span class="pre">addNew</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">typ</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_base.html#ScalableGroupCounter.addNew"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.ScalableGroupCounter.addNew" title="Link to this definition"></a></dt>
+<dd><p>Add a child.</p>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><strong>Parameters</strong></p></td>
+<td><p><strong>Type</strong></p></td>
+</tr>
+<tr class="row-even"><td><p><em>typ</em></p></td>
+<td><p>string</p></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.ScalableGroupDI">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.</span></span><span class="sig-name descname"><span class="pre">ScalableGroupDI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">opts</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_base.html#ScalableGroupDI"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.ScalableGroupDI" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">GroupParameter</span></code></p>
+<p>Generic parameter items holding Digital Input parameters</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.ScalableGroupDI.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">opts</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_base.html#ScalableGroupDI.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.ScalableGroupDI.__init__" title="Link to this definition"></a></dt>
+<dd><p>Initialize a Parameter object. Although it is rare to directly create a
+Parameter instance, the options available to this method are also allowed
+by most Parameter subclasses.</p>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><strong>Keyword Arguments:</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>name</p></td>
+<td><p>The name to give this Parameter. This is the name that
+will appear in the left-most column of a ParameterTree
+for this Parameter.</p></td>
+</tr>
+<tr class="row-odd"><td><p>value</p></td>
+<td><p>The value to initially assign to this Parameter.</p></td>
+</tr>
+<tr class="row-even"><td><p>default</p></td>
+<td><p>The default value for this Parameter (most Parameters
+provide an option to ‘reset to default’).</p></td>
+</tr>
+<tr class="row-odd"><td><p>children</p></td>
+<td><p>A list of children for this Parameter. Children
+may be given either as a Parameter instance or as a
+dictionary to pass to Parameter.create(). In this way,
+it is possible to specify complex hierarchies of
+Parameters from a single nested data structure.</p></td>
+</tr>
+<tr class="row-even"><td><p>readonly</p></td>
+<td><p>If True, the user will not be allowed to edit this
+Parameter. (default=False)</p></td>
+</tr>
+<tr class="row-odd"><td><p>enabled</p></td>
+<td><p>If False, any widget(s) for this parameter will appear
+disabled. (default=True)</p></td>
+</tr>
+<tr class="row-even"><td><p>visible</p></td>
+<td><p>If False, the Parameter will not appear when displayed
+in a ParameterTree. (default=True)</p></td>
+</tr>
+<tr class="row-odd"><td><p>renamable</p></td>
+<td><p>If True, the user may rename this Parameter.
+(default=False)</p></td>
+</tr>
+<tr class="row-even"><td><p>removable</p></td>
+<td><p>If True, the user may remove this Parameter.
+(default=False)</p></td>
+</tr>
+<tr class="row-odd"><td><p>expanded</p></td>
+<td><p>If True, the Parameter will initially be expanded in
+ParameterTrees: Its children will be visible.
+(default=True)</p></td>
+</tr>
+<tr class="row-even"><td><p>syncExpanded</p></td>
+<td><p>If True, the <cite>expanded</cite> state of this Parameter is
+synchronized with all ParameterTrees it is displayed in.
+(default=False)</p></td>
+</tr>
+<tr class="row-odd"><td><p>title</p></td>
+<td><p>(str or None) If specified, then the parameter will be
+displayed to the user using this string as its name.
+However, the parameter will still be referred to
+internally using the <em>name</em> specified above. Note that
+this option is not compatible with renamable=True.
+(default=None; added in version 0.9.9)</p></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.ScalableGroupDI.addNew">
+<span class="sig-name descname"><span class="pre">addNew</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">typ</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_base.html#ScalableGroupDI.addNew"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.ScalableGroupDI.addNew" title="Link to this definition"></a></dt>
+<dd><p>Add a child.</p>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><strong>Parameters</strong></p></td>
+<td><p><strong>Type</strong></p></td>
+</tr>
+<tr class="row-even"><td><p><em>typ</em></p></td>
+<td><p>string</p></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.ScalableGroupDO">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.</span></span><span class="sig-name descname"><span class="pre">ScalableGroupDO</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">opts</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_base.html#ScalableGroupDO"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.ScalableGroupDO" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">GroupParameter</span></code></p>
+<p>Generic parameter items holding Digital Output parameters</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.ScalableGroupDO.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">opts</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_base.html#ScalableGroupDO.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.ScalableGroupDO.__init__" title="Link to this definition"></a></dt>
+<dd><p>Initialize a Parameter object. Although it is rare to directly create a
+Parameter instance, the options available to this method are also allowed
+by most Parameter subclasses.</p>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><strong>Keyword Arguments:</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>name</p></td>
+<td><p>The name to give this Parameter. This is the name that
+will appear in the left-most column of a ParameterTree
+for this Parameter.</p></td>
+</tr>
+<tr class="row-odd"><td><p>value</p></td>
+<td><p>The value to initially assign to this Parameter.</p></td>
+</tr>
+<tr class="row-even"><td><p>default</p></td>
+<td><p>The default value for this Parameter (most Parameters
+provide an option to ‘reset to default’).</p></td>
+</tr>
+<tr class="row-odd"><td><p>children</p></td>
+<td><p>A list of children for this Parameter. Children
+may be given either as a Parameter instance or as a
+dictionary to pass to Parameter.create(). In this way,
+it is possible to specify complex hierarchies of
+Parameters from a single nested data structure.</p></td>
+</tr>
+<tr class="row-even"><td><p>readonly</p></td>
+<td><p>If True, the user will not be allowed to edit this
+Parameter. (default=False)</p></td>
+</tr>
+<tr class="row-odd"><td><p>enabled</p></td>
+<td><p>If False, any widget(s) for this parameter will appear
+disabled. (default=True)</p></td>
+</tr>
+<tr class="row-even"><td><p>visible</p></td>
+<td><p>If False, the Parameter will not appear when displayed
+in a ParameterTree. (default=True)</p></td>
+</tr>
+<tr class="row-odd"><td><p>renamable</p></td>
+<td><p>If True, the user may rename this Parameter.
+(default=False)</p></td>
+</tr>
+<tr class="row-even"><td><p>removable</p></td>
+<td><p>If True, the user may remove this Parameter.
+(default=False)</p></td>
+</tr>
+<tr class="row-odd"><td><p>expanded</p></td>
+<td><p>If True, the Parameter will initially be expanded in
+ParameterTrees: Its children will be visible.
+(default=True)</p></td>
+</tr>
+<tr class="row-even"><td><p>syncExpanded</p></td>
+<td><p>If True, the <cite>expanded</cite> state of this Parameter is
+synchronized with all ParameterTrees it is displayed in.
+(default=False)</p></td>
+</tr>
+<tr class="row-odd"><td><p>title</p></td>
+<td><p>(str or None) If specified, then the parameter will be
+displayed to the user using this string as its name.
+However, the parameter will still be referred to
+internally using the <em>name</em> specified above. Note that
+this option is not compatible with renamable=True.
+(default=None; added in version 0.9.9)</p></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.ScalableGroupDO.addNew">
+<span class="sig-name descname"><span class="pre">addNew</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">typ</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_base.html#ScalableGroupDO.addNew"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.ScalableGroupDO.addNew" title="Link to this definition"></a></dt>
+<dd><p>Add a child.</p>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><strong>Parameters</strong></p></td>
+<td><p><strong>Type</strong></p></td>
+</tr>
+<tr class="row-even"><td><p><em>typ</em></p></td>
+<td><p>string</p></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Move">
+<span id="nidaqmx-actuator-module"></span><h2>NIDAQmx Actuator module<a class="headerlink" href="#module-pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Move" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Move.DAQ_NIDAQmx_Actuator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Move.</span></span><span class="sig-name descname"><span class="pre">DAQ_NIDAQmx_Actuator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">control_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Actuator'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_Move.html#DAQ_NIDAQmx_Actuator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Move.DAQ_NIDAQmx_Actuator" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">DAQ_Move_base</span></code>, <a class="reference internal" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.DAQ_NIDAQmx_base" title="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.DAQ_NIDAQmx_base"><code class="xref py py-class docutils literal notranslate"><span class="pre">DAQ_NIDAQmx_base</span></code></a></p>
+<p>Wrapper object to access the Mock fonctionnalities, similar wrapper for all controllers.</p>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><strong>Attributes</strong></p></td>
+<td><p><strong>Type</strong></p></td>
+</tr>
+<tr class="row-even"><td><p><em>params</em></p></td>
+<td><p>dictionnary</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Move.DAQ_NIDAQmx_Actuator.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">control_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Actuator'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_Move.html#DAQ_NIDAQmx_Actuator.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Move.DAQ_NIDAQmx_Actuator.__init__" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Move.DAQ_NIDAQmx_Actuator.commit_settings">
+<span class="sig-name descname"><span class="pre">commit_settings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">param</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_Move.html#DAQ_NIDAQmx_Actuator.commit_settings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Move.DAQ_NIDAQmx_Actuator.commit_settings" title="Link to this definition"></a></dt>
+<dd><div class="line-block">
+<div class="line">Activate any parameter changes on the PI_GCS2 hardware.</div>
+<div class="line"><br /></div>
+<div class="line">Called after a param_tree_changed signal from DAQ_Move_main.</div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Move.DAQ_NIDAQmx_Actuator.get_actuator_value">
+<span class="sig-name descname"><span class="pre">get_actuator_value</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataActuator</span></span></span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_Move.html#DAQ_NIDAQmx_Actuator.get_actuator_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Move.DAQ_NIDAQmx_Actuator.get_actuator_value" title="Link to this definition"></a></dt>
+<dd><p>Get the current position from the hardware with scaling conversion.</p>
+<section id="id3">
+<h3>Returns<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<p>float: The position obtained after scaling conversion.</p>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Move.DAQ_NIDAQmx_Actuator.ini_stage">
+<span class="sig-name descname"><span class="pre">ini_stage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">controller</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_Move.html#DAQ_NIDAQmx_Actuator.ini_stage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Move.DAQ_NIDAQmx_Actuator.ini_stage" title="Link to this definition"></a></dt>
+<dd><p>Actuator communication initialization</p>
+<section id="id4">
+<h3>Parameters<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<p>controller: (object) custom object of a PyMoDAQ plugin (Slave case). None if only one actuator by controller (Master case)</p>
+</section>
+<section id="id5">
+<h3>Returns<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>self.status (edict): with initialization status: three fields:</dt><dd><ul class="simple">
+<li><p>info (str)</p></li>
+<li><p>controller (object) initialized controller</p></li>
+<li><p>initialized: (bool): False if initialization failed otherwise True</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Move.DAQ_NIDAQmx_Actuator.move_Abs">
+<span class="sig-name descname"><span class="pre">move_Abs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">position</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_Move.html#DAQ_NIDAQmx_Actuator.move_Abs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Move.DAQ_NIDAQmx_Actuator.move_Abs" title="Link to this definition"></a></dt>
+<dd><p>Move the actuator to the absolute target defined by position</p>
+<section id="id6">
+<h3>Parameters<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<p>position: (flaot) value of the absolute target positioning</p>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Move.DAQ_NIDAQmx_Actuator.move_Home">
+<span class="sig-name descname"><span class="pre">move_Home</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_Move.html#DAQ_NIDAQmx_Actuator.move_Home"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Move.DAQ_NIDAQmx_Actuator.move_Home" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Send the update status thread command.</dt><dd><p>daq_utils.ThreadCommand</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Move.DAQ_NIDAQmx_Actuator.move_Rel">
+<span class="sig-name descname"><span class="pre">move_Rel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">position</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_Move.html#DAQ_NIDAQmx_Actuator.move_Rel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Move.DAQ_NIDAQmx_Actuator.move_Rel" title="Link to this definition"></a></dt>
+<dd><p>Move the actuator to the relative target actuator value defined by position</p>
+<section id="id7">
+<h3>Parameters<a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<p>position: (flaot) value of the relative target positioning</p>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Move.DAQ_NIDAQmx_Actuator.stop_motion">
+<span class="sig-name descname"><span class="pre">stop_motion</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_Move.html#DAQ_NIDAQmx_Actuator.stop_motion"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Move.DAQ_NIDAQmx_Actuator.stop_motion" title="Link to this definition"></a></dt>
+<dd><p>Call the specific move_done function (depending on the hardware).</p>
+<section id="id8">
+<h3>See Also<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<p>move_done</p>
+</section>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Viewer">
+<span id="nidaqmx-viewer-module"></span><h2>NIDAQmx Viewer module<a class="headerlink" href="#module-pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Viewer" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Viewer.DAQ_NIDAQmx_Viewer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Viewer.</span></span><span class="sig-name descname"><span class="pre">DAQ_NIDAQmx_Viewer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">control_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'0D'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_Viewer.html#DAQ_NIDAQmx_Viewer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Viewer.DAQ_NIDAQmx_Viewer" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">DAQ_Viewer_base</span></code>, <a class="reference internal" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.DAQ_NIDAQmx_base" title="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_base.DAQ_NIDAQmx_base"><code class="xref py py-class docutils literal notranslate"><span class="pre">DAQ_NIDAQmx_base</span></code></a></p>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><strong>Attributes</strong></p></td>
+<td><p><strong>Type</strong></p></td>
+</tr>
+<tr class="row-even"><td><p><em>data_grabed_signal</em></p></td>
+<td><p>instance of Signal</p></td>
+</tr>
+<tr class="row-odd"><td><p><em>params</em></p></td>
+<td><p>dictionary list</p></td>
+</tr>
+<tr class="row-even"><td><p><em>task</em></p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<section id="id9">
+<h3>See Also<a class="headerlink" href="#id9" title="Link to this heading"></a></h3>
+<p>refresh_hardware</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Viewer.DAQ_NIDAQmx_Viewer.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">control_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'0D'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_Viewer.html#DAQ_NIDAQmx_Viewer.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Viewer.DAQ_NIDAQmx_Viewer.__init__" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Viewer.DAQ_NIDAQmx_Viewer.close">
+<span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_Viewer.html#DAQ_NIDAQmx_Viewer.close"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Viewer.DAQ_NIDAQmx_Viewer.close" title="Link to this definition"></a></dt>
+<dd><p>Mandatory
+To be reimplemented in subclass</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Viewer.DAQ_NIDAQmx_Viewer.commit_settings">
+<span class="sig-name descname"><span class="pre">commit_settings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">param</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_Viewer.html#DAQ_NIDAQmx_Viewer.commit_settings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Viewer.DAQ_NIDAQmx_Viewer.commit_settings" title="Link to this definition"></a></dt>
+<dd><p>Activate the parameters changes in the hardware.</p>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><strong>Parameters</strong></p></td>
+<td><p><strong>Type</strong></p></td>
+<td><p><strong>Description</strong></p></td>
+</tr>
+<tr class="row-even"><td><p><em>param</em></p></td>
+<td><p>instance of pyqtgraph.parameter</p></td>
+<td><p>the parameter to activate</p></td>
+</tr>
+</tbody>
+</table>
+<section id="id10">
+<h4>See Also<a class="headerlink" href="#id10" title="Link to this heading"></a></h4>
+<p>update_NIDAQ_channels, update_task, refresh_hardware</p>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Viewer.DAQ_NIDAQmx_Viewer.get_max_frequency">
+<span class="sig-name descname"><span class="pre">get_max_frequency</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_Viewer.html#DAQ_NIDAQmx_Viewer.get_max_frequency"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Viewer.DAQ_NIDAQmx_Viewer.get_max_frequency" title="Link to this definition"></a></dt>
+<dd><p>Get the maximum frequency according to the material’s limits and display the information.
+This method is destined to be removed once set_max_frequency will work correctly.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Viewer.DAQ_NIDAQmx_Viewer.ini_attributes">
+<span class="sig-name descname"><span class="pre">ini_attributes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_Viewer.html#DAQ_NIDAQmx_Viewer.ini_attributes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Viewer.DAQ_NIDAQmx_Viewer.ini_attributes" title="Link to this definition"></a></dt>
+<dd><p>To be reimplemented in subclass</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Viewer.DAQ_NIDAQmx_Viewer.ini_detector">
+<span class="sig-name descname"><span class="pre">ini_detector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">controller</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_Viewer.html#DAQ_NIDAQmx_Viewer.ini_detector"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Viewer.DAQ_NIDAQmx_Viewer.ini_detector" title="Link to this definition"></a></dt>
+<dd><p>Initialisation procedure of the detector.</p>
+<section id="id11">
+<h4>See Also<a class="headerlink" href="#id11" title="Link to this heading"></a></h4>
+<p>daq_utils.ThreadCommand</p>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Viewer.DAQ_NIDAQmx_Viewer.set_max_frequency">
+<span class="sig-name descname"><span class="pre">set_max_frequency</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_Viewer.html#DAQ_NIDAQmx_Viewer.set_max_frequency"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Viewer.DAQ_NIDAQmx_Viewer.set_max_frequency" title="Link to this definition"></a></dt>
+<dd><p>Set the maximum frequency applicable to the frequency parameter according to material’s limits.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Viewer.DAQ_NIDAQmx_Viewer.stop">
+<span class="sig-name descname"><span class="pre">stop</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymodaq_plugins_daqmx/hardware/national_instruments/NIDAQmx_Viewer.html#DAQ_NIDAQmx_Viewer.stop"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymodaq_plugins_daqmx.hardware.national_instruments.NIDAQmx_Viewer.DAQ_NIDAQmx_Viewer.stop" title="Link to this definition"></a></dt>
+<dd><p>Stop the current grab hardware wise if necessary</p>
+</dd></dl>
+
+</section>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Sébastien Weber, Aurore Finco, Sébastien Guerrero.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
