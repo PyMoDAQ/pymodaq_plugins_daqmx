@@ -193,6 +193,23 @@ extensions already does the job and only the conversion of the measurements or o
 - Do not use the old `pid_models` flag nor the word "preset" in new code: a model script that opens the Dashboard loads
   an experiment file.
 
+## 6b. Families of interchangeable classes (factories)
+
+Before designing the structure of a new piece of code, look at how PyMoDAQ already does the same thing and copy it
+(do not reinvent it): for instance the sequencer elements (`pymodaq/extensions/sequencer/utilities/`), the scanners
+(`ScannerFactory`) or the data processors. For a family of classes chosen by name (waveforms, scan types, exporters...):
+
+- the base class and the factory live in one module, `<name>_factory.py`, **not** in the folder of the classes;
+- the classes live in a sibling folder (`<name>s/`), **one module per class**, each registering itself with a
+  decorator of the factory (`@WaveformFactory.register()`); the name is written once, as a class attribute
+  (like `elt_name` of the sequencer elements), not repeated in the decorator, in a title and in the class name;
+- all the submodules of that folder are imported, by its `__init__.py` (`pkgutil`) or by a function of the factory
+  module as `register_elements` of the sequencer does, so adding a class is adding a file and nothing else, and a
+  plugin package can register its own classes the same way;
+- the factory is a plain class that encapsulates its own registry (a class level dictionary, with `register`,
+  `names`, `get_class`, `create`). Do not inherit from `pymodaq_utils.factory.ObjectFactory`: it complicates the
+  management of the registry.
+
 ## 7. Done checklist
 
 - [ ] Names (package, files, classes) match and the `template` placeholders are gone.
